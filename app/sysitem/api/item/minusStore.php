@@ -36,7 +36,7 @@ class sysitem_api_item_minusStore{
     /**
      * 付款，下单扣减库存
      * @desc 用于付款，下单扣减库存
-     * @return boolean 
+     * @return boolean
      */
     public function storeMinus($params)
     {

@@ -148,7 +148,7 @@ class base_application_dbtable extends base_application_prototype_filepath
 
     public function realLoad()
     {
-        
+
         $real_table_name = $this->real_table_name();
 
         if(!static::$_define[$real_table_name])
@@ -164,7 +164,7 @@ class base_application_dbtable extends base_application_prototype_filepath
             }
 
             $define = $this->loadDefine($path);
-            
+
             static::$_define[$real_table_name] = $define;
         }
 
@@ -239,7 +239,7 @@ class base_application_dbtable extends base_application_prototype_filepath
         $real_table_name = $this->real_table_name();
 
         logger::info('Creating table '.$real_table_name);
-        
+
         if ($db->getSchemaManager()->tablesExist($real_table_name))
         {
             $db->getSchemaManager()->dropTable($real_table_name);

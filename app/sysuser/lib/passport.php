@@ -54,7 +54,7 @@ class sysuser_passport
             throw new \LogicException(app::get('sysuser')->_('用户信息异常!'));
         }
 
-        if(!pam_encrypt::check($password, $account['login_password']))
+        if(!hash::check($password, $account['login_password']))
         {
             throw new \LogicException(app::get('sysuser')->_('密码填写错误！'));
         }
@@ -101,7 +101,7 @@ class sysuser_passport
             throw new \LogicException(app::get('sysuser')->_('用户信息异常!'));
         }
 
-        if(!pam_encrypt::check($data['password'], $account['login_password']))
+        if(!hash::check($data['password'], $account['login_password']))
         {
             throw new \LogicException(app::get('sysuser')->_('密码填写错误！'));
         }
@@ -143,7 +143,7 @@ class sysuser_passport
 
         $filter = array($accountType=>trim($loginName));
         $account = app::get('sysuser')->model('account')->getRow('user_id,login_password',$filter);
-        if ( !$account || !pam_encrypt::check($password, $account['login_password']))
+        if ( !$account || !hash::check($password, $account['login_password']))
         {
             throw new \LogicException(app::get('sysuser')->_('用户名或密码错误'));
         }
@@ -213,7 +213,7 @@ class sysuser_passport
         $account['createtime'] = time();
         $account['modified_time'] = time();
 
-        $account['login_password'] = pam_encrypt::make($data['password']);
+        $account['login_password'] = hash::make($data['password']);
 
         $objMdlUserGrade = app::get('sysuser')->model('user_grade');
         $grade = $objMdlUserGrade->getRow('grade_id',array('default_grade'=>1));
@@ -478,7 +478,7 @@ class sysuser_passport
 
         if($data['type'] == "update" && $data['old_pwd'])
         {
-            if(!pam_encrypt::check($data['old_pwd'], $account['login_password']))
+            if(!hash::check($data['old_pwd'], $account['login_password']))
             {
                 throw new \LogicException(app::get('sysuser')->_('原密码错误'));
             }
@@ -487,7 +487,7 @@ class sysuser_passport
         //检查密码合法，是否一致
         $this->checkPwd($data['new_pwd'],$data['confirm_pwd']);
 
-        $pamUserData['login_password']= pam_encrypt::make($data['new_pwd']);
+        $pamUserData['login_password']= hash::make($data['new_pwd']);
         if($data['uname'])
         {
             $type = kernel::single('pam_tools')->checkLoginNameType($data['uname']);
@@ -673,14 +673,14 @@ class sysuser_passport
     /**
      * 验证支付密码和登录密码是否一致
      * @param int $userId
-     * @param string $DepositPassword 用户输入的预存款密码
+     * @param string $DepositPassword 用户输入的支付密码
      * @return bool
      * */
     public function checkDepositpwdWithLogpwd($userId, $DepositPassword)
     {
         // 验证支付密码和登录密码是否一致
         $account = app::get('sysuser')->model('account')->getRow('login_password',array('user_id'=>$userId));
-        if(pam_encrypt::check($DepositPassword, $account['login_password']))
+        if(hash::check($DepositPassword, $account['login_password']))
         {
             throw new \LogicException(app::get('sysuser')->_('支付密码不能与登录密码一致！'));
         }

@@ -28,10 +28,9 @@ class sysitem_api_item_getSkuGet{
         $data = $objMdlItem->getRow('*', $filter);
         if( empty($data) ) return array();
 
-        $objMdlSkuStore = app::get('sysitem')->model('sku_store');
-        $storeInfo = $objMdlSkuStore->getRow('store,freez,sku_id',array('sku_id'=>$data['sku_id']));
-        $data['store'] = intval($storeInfo['store']);
-        $data['freez'] = intval($storeInfo['freez']);
+        $skuStore = kernel::single('sysitem_item_redisStore')->getStoreBySkuId($params['sku_id']);
+        $data['freez'] = $skuStore['freez'];
+        $data['store'] = $skuStore['store'];
 
         return $data;
     }

@@ -118,21 +118,26 @@
 		});
 	});
   
-  function ajaxSubmit (e) {
+    var flag = true;
+    function ajaxSubmit (e) {
 	    var form = e.target;
 	    e.preventDefault();
-	    $.post(form.action, $(form).serialize(), function(rs) {
-	      if(rs.error) {
-	        $('#messagebox').message(rs.message);
-	        return;
-	      }
-	      if(rs.success) {
-	        $('#messagebox').message(rs.message, 'success');
-	      }
-	      if(rs.redirect) {
-	        setTimeout(function(){location.href=rs.redirect;}, 800);
-	      }
-	    });
-	  }
+	    if(flag){
+		    flag = false;
+		    $.post(form.action, $(form).serialize(), function(rs) {
+		      if(rs.error) {
+				flag = true;
+		        $('#messagebox').message(rs.message);
+		        return;
+		      }
+		      if(rs.success) {
+		        $('#messagebox').message(rs.message, 'success');
+		      }
+		      if(rs.redirect) {
+		        setTimeout(function(){location.href=rs.redirect;}, 800);
+		      }
+		    });
+		}
+	}
 </script>
 

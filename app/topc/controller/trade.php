@@ -20,182 +20,60 @@ class topc_ctl_trade extends topc_controller{
 
     public function create()
     {
-        $postData = input::get();
-        $postData['mode'] = $postData['mode'] ? $postData['mode'] :'cart';
-
-        $cartFilter['mode'] = $postData['mode'];
-        $cartFilter['needInvalid'] = false;
-        $cartFilter['platform'] = 'pc';
-        $md5CartFilter = array('user_id'=>userAuth::id(), 'platform'=>'pc', 'mode'=>$cartFilter['mode'], 'checked'=>1);
-        $cartInfo = app::get('topc')->rpcCall('trade.cart.getBasicCartInfo', $md5CartFilter, 'buyer');
-        // 校验购物车是否为空
-        if (!$cartInfo)
-        {
-            $msg = app::get('topc')->_("购物车信息为空或者未选择商品");
-            return $this->splash('false', '', $msg, true);
-        }
-        // 校验购物车是否发生变化
-        $md5CartInfo = md5(serialize(utils::array_ksort_recursive($cartInfo, SORT_STRING)));
-        if( $postData['md5_cart_info'] != $md5CartInfo )
-        {
-            $msg = app::get('topc')->_("购物车数据发生变化，请刷新后确认提交");
-            return $this->splash('false', '', $msg, true);
-        }
-        unset($postData['md5_cart_info']);
-
-        if(!$postData['addr_id'])
-        {
-            $msg = app::get('topc')->_("请先确认收货地址");
-            return $this->splash('success', '', $msg, true);
-        }
-        else
-        {
-            $addr = app::get('topc')->rpcCall('user.address.info',array('addr_id'=>$postData['addr_id'],'user_id'=>userAuth::id()));
-            list($regions,$region_id) = explode(':',$addr['area']);
-            list($state,$city,$district) = explode('/',$regions);
-
-            $validator = validator::make(
-                ['state' => $state,
-                 'addr' => $addr['addr'] ,
-                 'name' => $addr['name'],
-                 'mobile' => $addr['mobile']
-                ],
-                [
-                'state' => 'required',
-                'addr' => 'required',
-                'name' => 'required',
-                'mobile' => 'required|mobile'
-                ],
-                [
-                 'state' => '收货地区不能为空!',
-                 'addr' => '收货地址不能为空!',
-                 'name' => '收货人姓名不能为空！',
-                 'mobile' => '手机号码必填!|手机号码格式不正确!'
-                ]
-            );
-            if ($validator->fails())
-            {
-                $messages = $validator->messagesInfo();
-
-                foreach( $messages as $error )
-                {
-                    return $this->splash('error',null,$error[0]);
-                }
-            }
-
-        }
-
-        if(!$postData['payment_type'])
-        {
-            $msg = app::get('topc')->_("请先确认支付类型");
-            return $this->splash('success', '', $msg, true);
-        }
-
-        //发票信息
-        if($postData['invoice'])
-        {
-            foreach($postData['invoice'] as $key=>$val)
-            {
-                $postData[$key] = $val;
-            }
-
-            unset($postData['invoice']);
-        }
-        if($postData['invoice_content'])
-        {
-            $validator = validator::make(
-                [$postData['invoice_content']],
-                ['max:100'],
-                ['发票内容最大为100个字符!']
-            );
-            if ($validator->fails())
-            {
-                $messages = $validator->messagesInfo();
-                foreach( $messages as $error )
-                {
-                    return $this->splash('error', '', $error[0], true);
-                }
-            }
-        }
-        //echo '<pre>';print_r($postData);exit();
-        //店铺配送方式处理
-        $shipping = "";
-        if( $postData['shipping'])
-        {
-            foreach($postData['shipping'] as $k=>$v)
-            {
-                //验证店铺类型
-                $shopdata = app::get('topc')->rpcCall('shop.get.detail',array('shop_id'=>$k,'fields'=>'shop_type'))['shop'];
-                $ifOpenZiti = app::get('syslogistics')->getConf('syslogistics.ziti.open');
-                $ifOpenOffline = app::get('ectools')->getConf('ectools.payment.offline.open');
-
-                //验证非自营时，支付方式“货到付款”问题
-                if(($postData['payment_type'] == "offline" ) )
-                {
-                    if(($shopdata['shop_type'] != "self") || ($shopdata['shop_type'] == "self" && $ifOpenOffline == "false"))
-                    {
-                        $msg = app::get('topc')->_("您的支付方式选择有误");
-                        return $this->splash('error', '', $msg, true);
-                    }
-                }
-
-                if($v['shipping_type'] == 'express')
-                {
-
-                    $shipping .= $k.":express;";
-                }
-                elseif($v['shipping_type'] == 'ziti')
-                {
-                    //验证是否有自提资格
-                    if($shopdata['shop_type'] != "self" || $ifOpenZiti == "false")
-                    {
-                        $msg = app::get('topc')->_("您的配送方式选择有误");
-                        return $this->splash('error', '', $msg, true);
-                    }
-
-                    if(!$postData['ziti'][$k]['ziti_id'])
-                    {
-                        $msg = app::get('topc')->_("您已选择自提，请选择自提地址");
-                        return $this->splash('error', '', $msg, true);
-                    }
-                    $shipping .= $k.":ziti;";
-                    $zitiAddr = app::get('topc')->rpcCall('logistics.ziti.get',array('id'=>$postData['ziti'][$k]['ziti_id']));
-
-                    $areaIds = explode('/',$region_id);
-                    $checkAreaIds =  count($areaIds) == 2 ? $zitiAddr['area_city_id'] : $zitiAddr['area_state_id'];
-                    if( $checkAreaIds != $areaIds[0] )
-                    {
-                        $msg = app::get('topc')->_("请重新选择自提地址");
-                        return $this->splash('error', '', $msg, true);
-                    }
-
-                    $ziti .= $k.":".$zitiAddr['area'].$zitiAddr['addr'].";";
-                }
-            }
-            unset($postData['shipping']);
-            unset($postData['ziti']);
-        }
-        else
-        {
-            $msg = app::get('topc')->_("请选择店铺配送方式");
-            return $this->splash('error', '', $msg, true);
-        }
-        $postData['shipping_type'] = $shipping;
-        if($ziti)
-        {
-            $postData['ziti'] = $ziti;
-        }
+        $postData                = input::get();
+        $postData['mode']        = $postData['mode'] ? $postData['mode'] :'cart';
         $postData['source_from'] = 'pc';
 
-        $obj_filter = kernel::single('topc_site_filter');
-        $postData = $obj_filter->check_input($postData);
-
-        $postData['user_id'] = userAuth::id();
+        $postData['user_id']   = userAuth::id();
         $postData['user_name'] = userAuth::getLoginName();
+
+        //配送方式
+        foreach( $postData['shipping'] as $shopId=>$shipping )
+        {
+            $postData['shipping_type'][] = [
+                'shop_id' => $shopId,
+                'type'    => $shipping['shipping_type'],
+                'ziti_id' => ($shipping['shipping_type'] == 'ziti') ? $postData['ziti'][$shopId]['ziti_id'] : null,
+            ];
+        }
+        unset($postData['shipping']);
+        $postData['shipping_type'] = json_encode($postData['shipping_type']);
+
+        //订单备注
+        $markData = $postData['mark'];
+        unset($postData['mark']);
+        if( $markData )
+        {
+            foreach( $markData as $shopId=>$mark )
+            {
+                if( $mark )
+                {
+                    $postData['mark'][] = [
+                        'shop_id' =>$shopId,
+                        'memo' =>$mark,
+                    ];
+                }
+            }
+            $postData['mark'] = json_encode($postData['mark']);
+        }
+
+        //发票信息处理
+        $postData['invoice_type']    = !$postData['invoice']['need_invoice'] ? 'notuse' : $postData['invoice']['invoice_type'];
+        if( $postData['invoice_type'] == 'normal' )
+        {
+            $postData['invoice_content']['title'] = $postData['invoice']['invoice_title'];
+            $postData['invoice_content']['content'] = $postData['invoice']['invoice_content'];
+        }
+        elseif( $postData['invoice_type'] == 'vat' )
+        {
+            $postData['invoice_content'] = $postData['invoice']['invoice_vat'];
+        }
+        $postData['invoice_content'] = json_encode($postData['invoice_content']);
+        unset($postData['invoice']);
 
         try
         {
-           $createFlag = app::get('topc')->rpcCall('trade.create',$postData,'buyer');
+           $createFlag = app::get('topc')->rpcCall('trade.create',$postData);
            if( $createFlag )
            {
                $countData = app::get('topc')->rpcCall('trade.cart.getCount', ['user_id' => userAuth::id()], 'buyer');

@@ -29,12 +29,9 @@ return array(
         'checkinPoint.num' => array('type'=>SET_T_INT,'default'=>5,'desc'=>'签到送积分:','vtype'=>'unsignedint','class'=>'checkinPoint_num'),
         ),
     '基本设置' => array(
-        'user.deposit.password.hour.ttl'=> array( 'type'=>SET_T_INT,'default'=>2,'desc'=>'预存款支付密码停用时间','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：小时(h)</span>'),
-        'user.deposit.password.retry.times'=> array( 'type'=>SET_T_INT,'default'=>10,'desc'=>'预存款支付密码停用错误次数','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：次</span>'),
-        'user.deposit.password.remind.retry.times'=> array( 'type'=>SET_T_INT,'default'=>3,'desc'=>'预存款支付密码停用提示次数','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：次</span>'),
-        'user.deposit.cash.limit.amount'=> array( 'type'=>SET_T_INT,'default'=>5000,'desc'=>'预存款提现单次金额限制','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：元</span>'),
-        'user.deposit.cash.limit.times'=> array( 'type'=>SET_T_INT,'default'=>3,'desc'=>'预存款提现每日次数限制','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：次</span>'),
-        'user.deposit.cash' => array('type'=>SET_T_BOOL,'default'=>0,'desc'=>'开启预存款提现:','vtype'=>'required','helpinfo'=>'<span class=\'notice-inline\'>【预存款提现开启后，会员可以使用预存款提现功能】</span>',),
+        'user.deposit.password.hour.ttl'=> array( 'type'=>SET_T_INT,'default'=>2,'desc'=>'支付密码停用时间','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：小时(h)</span>'),
+        'user.deposit.password.retry.times'=> array( 'type'=>SET_T_INT,'default'=>10,'desc'=>'支付密码停用错误次数','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：次</span>'),
+        'user.deposit.password.remind.retry.times'=> array( 'type'=>SET_T_INT,'default'=>3,'desc'=>'支付密码停用提示次数','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：次</span>'),
 
         'shop.cleanlog.time'=> array( 'type'=>SET_T_INT,'default'=>30,'desc'=>'商家操作日志保存天数','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：天。默认30天</span>'),
         'admin.cleanlog.time'=> array( 'type'=>SET_T_INT,'default'=>30,'desc'=>'平台操作日志保存天数','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：天。默认30天</span>'),

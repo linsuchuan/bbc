@@ -7,284 +7,244 @@
  */
 
 return array (
-    'columns' =>
-    array (
-        'refund_id' =>
-        array (
-            //'type' => 'varchar(20)',
+    'columns' => array (
+        'refund_id' => array (
             'type' => 'string',
             'length' => 20,
             'required' => true,
-            'default' => '',
-            //'pkey' => true,
-            'label' => app::get('ectools')->_('退款单号'),
             'width' => 110,
-            'editable' => false,
             'searchtype' => 'has',
             'filtertype' => 'yes',
             'filterdefault' => true,
             'in_list' => true,
             'default_in_list' => true,
-            'is_title' => true,
+            'label' => app::get('ectools')->_('退款单号'),
+            'comment' => app::get('ectools')->_('退款单号'),
         ),
-        'money' =>
-        array (
+        'money' => array (
             'type' => 'money',
             'default' => '0',
             'required' => true,
-            'editable' => false,
+            'label' => app::get('ectools')->_('退款金额'),
+            'comment' => app::get('ectools')->_('退款金额'),
         ),
-        'cur_money' =>
-        array (
+        'cur_money' => array (
             'type' => 'money',
             'default' => '0',
             'required' => true,
-            'label' =>app::get('ectools')->_('支付金额'),
-            'width' => 75,
-            'searchtype' => 'nequal',
-            'editable' => false,
-            'in_list' => true,
-            'default_in_list' => true,
+            'label' => app::get('ectools')->_('退款金额'),
+            'comment' => app::get('ectools')->_('退款金额'),
         ),
         'refund_bank' => array (
-            //'type' => 'varchar(50)',
             'type' => 'string',
+            'default' => '',
             'length' => 50,
-            'label' => app::get('ectools')->_('退款银行'),
             'width' => 110,
             'searchtype' => 'tequal',
-            'editable' => false,
             'filtertype' => 'normal',
             'filterdefault' => true,
             'in_list' => true,
             'default_in_list' => true,
+            'label' => app::get('ectools')->_('退款银行'),
+            'comment' => app::get('ectools')->_('退款银行'),
         ),
         'refund_account' => array (
-            //'type' => 'varchar(50)',
             'type' => 'string',
+            'default' => '',
             'length' => 50,
-            'label' => app::get('ectools')->_('退款账号'),
             'width' => 110,
-            'editable' => false,
             'filtertype' => 'normal',
             'filterdefault' => true,
             'in_list' => true,
+            'label' => app::get('ectools')->_('退款账号'),
+            'comment' => app::get('ectools')->_('退款账号'),
         ),
-        'refund_people' =>
-        array (
-            //'type' => 'varchar(100)',
+        'refund_people' => array (
             'type' => 'string',
+            'default' => '',
             'length' => 100,
-            'label' => app::get('ectools')->_('退款人'),
             'width' => 75,
-            'editable' => false,
             'filtertype' => 'yes',
             'filterdefault' => true,
             'in_list' => true,
+            'label' => app::get('ectools')->_('退款人'),
+            'coment' => app::get('ectools')->_('退款人'),
         ),
         'receive_bank' => array (
-            //'type' => 'varchar(50)',
             'type' => 'string',
+            'default' => '',
             'length' => 50,
-            'label' => app::get('ectools')->_('收款银行'),
             'width' => 110,
             'searchtype' => 'tequal',
-            'editable' => false,
             'filtertype' => 'normal',
             'filterdefault' => true,
             'in_list' => true,
             'default_in_list' => true,
+            'label' => app::get('ectools')->_('收款银行'),
+            'comment' => app::get('ectools')->_('收款银行'),
         ),
         'receive_account' => array (
-            //'type' => 'varchar(50)',
             'type' => 'string',
+            'default' => '',
             'length' => 50,
-            'label' => app::get('ectools')->_('收款账号'),
             'width' => 110,
-            'editable' => false,
             'filtertype' => 'normal',
             'filterdefault' => true,
             'in_list' => true,
+            'label' => app::get('ectools')->_('收款账号'),
+            'comment' => app::get('ectools')->_('收款账号'),
         ),
         'beneficiary' =>array (
-            //'type' => 'varchar(50)',
             'type' => 'string',
+            'default' => '',
             'length' => 50,
-            'label' => app::get('ectools')->_('收款人'),
             'width' => 110,
-            'editable' => false,
             'filtertype' => 'normal',
             'in_list' => true,
+            'label' => app::get('ectools')->_('收款人'),
+            'comment' => app::get('ectools')->_('收款人'),
         ),
-
-        'currency' =>
-        array (
-            //'type' => 'varchar(10)',
+        'currency' => array (
             'type' => 'string',
             'length' => 10,
             'label' => app::get('ectools')->_('货币'),
+            'comment' => app::get('ectools')->_('货币'),
             'width' => 75,
-            'default' => "CNY",
-            'editable' => false,
+            'default' => 'CNY',
             'in_list' => true,
         ),
-
-        'paycost' =>
-        array (
+        'paycost' => array (
             'type' => 'money',
+            'default' => '0',
             'label' => app::get('ectools')->_('支付网关费用'),
+            'comment' => app::get('ectools')->_('支付网关费用'),
             'width' => 110,
-            'editable' => false,
             'in_list' => false,
         ),
-        'rufund_type' =>
-        array (
-            'type' =>
-            array (
-                'online' => app::get('ectools')->_('在线退款'),
-                'offline' => app::get('ectools')->_('线下退款'),
-                'deposit' => app::get('ectools')->_('预存款退款'),
-            ),
-            'default' => 'offline',
-            'required' => true,
-            'label' => app::get('ectools')->_('退款类型'),
-            'width' => 110,
-            'editable' => false,
-            'filtertype' => 'yes',
-            'filterdefault' => true,
-            'in_list' => true,
-        ),
-        'status' =>
-        array (
-            'type' =>
-            array (
+        'status' => array (
+            'type' => array (
+                'ready' => app::get('ectools')->_('准备中'),
+                'progress' => app::get('ectools')->_('处理中'),
                 'succ' => app::get('ectools')->_('支付成功'),
                 'failed' => app::get('ectools')->_('支付失败'),
-                'cancel' => app::get('ectools')->_('未支付'),
-                'error' => app::get('ectools')->_('处理异常'),
-                'invalid' => app::get('ectools')->_('非法参数'),
-                'progress' => app::get('ectools')->_('处理中'),
-                'timeout' => app::get('ectools')->_('超时'),
-                'ready' => app::get('ectools')->_('准备中'),
+                'cancel' => app::get('ectools')->_('取消'),
             ),
             'default' => 'ready',
             'required' => true,
             'label' => app::get('ectools')->_('支付状态'),
+            'comment' => app::get('ectools')->_('支付状态'),
             'width' => 75,
-            'editable' => false,
             'filtertype' => 'yes',
-            'hidden' => true,
             'filterdefault' => true,
             'in_list' => true,
             'default_in_list' => true,
         ),
-       'pay_ver' =>
-        array (
-            //'type' => 'varchar(50)',
-            'type' => 'string',
-            'length' => 50,
-            'label' => app::get('ectools')->_('支付版本号'),
-            'width' => 110,
-            'editable' => false,
-            'in_list' => true,
-        ),
-        'op_id' =>
-        array (
-            'type' => 'number',
+        'op_id' => array (
+            'type' => 'table:account@desktop',
             'label' => app::get('ectools')->_('操作员'),
             'width' => 110,
-            'editable' => false,
             'filtertype' => 'normal',
             'in_list' => true,
             'default_in_list' => true,
         ),
-        'refunds_type' => array(
+        'rufund_type' => array (
+            'type' => array (
+                'online' => app::get('ectools')->_('在线退款'),
+                'offline' => app::get('ectools')->_('线下退款'),
+                'deposit' => app::get('ectools')->_('预存款退款'),
+            ),
+            'required' => true,
+            'label' => app::get('ectools')->_('退款方式'),
+            'comment' => app::get('ectools')->_('退款方式'),
+            'width' => 110,
+            'filtertype' => 'yes',
+            'filterdefault' => true,
+            'in_list' => true,
+        ),
+        'refunds_type' => array(//命名我也是晕了，傻傻分不清楚
             'type' => array(
                 '0' => '售后申请退款',
                 '1' => '取消订单退款',
+                '2' => '拒收订单退款',
             ),
-            'default' => '0',
             'required' => true,
             'in_list' => true,
             'default_in_list' => true,
             'label' => app::get('sysaftersales')->_('退款类型'),
+            'comment' => app::get('sysaftersales')->_('退款类型'),
         ),
-        'aftersales_bn' =>
-        array (
-            //'type' => 'varchar(32)',
+        'aftersales_bn' => array (
             'type' => 'string',
             'length' => 32,
-            'required' => false,
             'default' => '',
             'label' => app::get('ectools')->_('售后单号'),
             'width' => 140,
-            'editable' => false,
-            //'searchtype' => 'has',
             'filtertype' => 'yes',
             'filterdefault' => true,
             'in_list' => false,
             'default_in_list' => false,
-            'is_title' => true,
         ),
-        'pay_app_id' =>
-        array (
-            //'type' => 'varchar(100)',
+        'pay_app_id' => array (
             'type' => 'string',
             'length' => 100,
             'label' => app::get('ectools')->_('支付方式'),
             'required' => true,
-            'default' => 0,
-            'editable' => false,
+            'default' => '',
             'in_list' => true,
             'default_in_list' => true,
         ),
-        'created_time' =>
-        array (
+        'created_time' => array (
             'type' => 'time',
             'label' => app::get('ectools')->_('支付开始时间'),
             'width' => 110,
-            'editable' => false,
             'filtertype' => 'time',
             'filterdefault' => true,
             'in_list' => true,
         ),
-        'finish_time' =>
-        array (
+        'modified_time' => array (
+            'type' => 'last_modify',
+            'label' => app::get('ectools')->_('最后修改时间'),
+            'comment' => app::get('ectools')->_('最后更新时间'),
+            'in_list' => true,
+            'default_in_list' => false,
+        ),
+        'finish_time' => array (
             'type' => 'time',
             'label' => app::get('ectools')->_('支付完成时间'),
             'width' => 110,
-            'editable' => false,
             'in_list' => true,
         ),
-        'confirm_time' =>
-        array (
-            'type' => 'time',
-            'label' => app::get('ectools')->_('支付确认时间'),
-            'width' => 110,
-            'editable' => false,
-            'in_list' => true,
-        ),
-        'memo' =>
-        array (
+        'memo' => array (
             'type' => 'text',
-            'editable' => false,
             'comment' => app::get('ectools')->_('备注'),
+            'label' => app::get('ectools')->_('备注'),
         ),
-        'oid' =>
-        array (
-            //'type' => 'varchar(30)',
+        'oid' => array (
             'type' => 'string',
             'length' => 30,
-            'editable' => false,
             'comment' => app::get('ectools')->_('交易子订单号'),
+            'label' => app::get('ectools')->_('交易子订单号'),
         ),
-        'tid' =>
-        array (
-            //'type' => 'varchar(30)',
+        'tid' => array (
             'type' => 'string',
             'length' => 30,
-            'editable' => false,
+            'in_list' => true,
+            'default_in_list' => true,
+            'searchtype' => 'tequal',
             'comment' => app::get('ectools')->_('交易主订单号'),
+            'label' => app::get('ectools')->_('交易主订单号'),
+        ),
+        'refunds_id' => array(
+            'type' => 'number',
+            'required' => true,
+            'comment' => app::get('sysaftersales')->_('退款主键(sysaftersales/refunds表主键)，第三方退款后使用'),
+            'label' => app::get('sysaftersales')->_('sysaftersales/refunds表主键'),
+        ),
+        'return_fee' => array(
+            'type' => 'money',
+            'required' => true,
+            'comment' => app::get('sysaftersales')->_('商家退款金额(含红包、积分抵扣金额)，第三方退款后使用'),
+            'label' => app::get('sysaftersales')->_('商家退款金额'),
         ),
     ),
     'primary' => 'refund_id',

@@ -39,12 +39,16 @@ final class syspromotion_api_promotionListTag {
         {
             $filter['used_platform'] = array('0', '2');
         }
+        elseif( $params['platform'] == 'app' )
+        {
+            $filter['used_platform'] = array('0', '3');
+        }
         else
         {
-            $filter['used_platform'] = array('0','1','2');
+            $filter['used_platform'] = array('0','1','2','3');
         }
 
-        $promotionData = app::get('syspromotion')->model('promotions')->getList('promotion_id,start_time,end_time,check_status,promotion_tag', $filter);
+        $promotionData = app::get('syspromotion')->model('promotions')->getList('*', $filter);
         if( !$promotionData ) return [];
 
         $data = [];
@@ -53,7 +57,8 @@ final class syspromotion_api_promotionListTag {
         {
             if( $now > $row['start_time'] &&  $now < $row['end_time'] && $row['check_status'] == 'agree')
             {
-                $data[$row['promotion_id']]['promotion_id'] = $row['promotion_id'];
+                // $data[$row['promotion_id']]['promotion_id'] = $row['promotion_id'];
+                $data[$row['promotion_id']] = $row;
                 $data[$row['promotion_id']]['tag'] = $row['promotion_tag'];
             }
         }

@@ -41,7 +41,7 @@
       </div>
     </div>
     <div class="box-display content-vertical-padded user-">
-      <a class="box-item-flex1 content-center shopex-col-xs-4" href="<{url action=topwap_ctl_member_deposit@index}>"><em class="deposit-amount"><{$deposit.deposit|default:0|cur}></em><br><span class="font-gray-20 fontS"><{t}>预存款<{/t}></span></a>
+      <a class="box-item-flex1 content-center shopex-col-xs-4" href="<{url action=topwap_ctl_member_hongbao@index}>"><em><{$hongbaoCount.hongbao_total|default:0|cur}></em><br><span class="font-gray-20 fontS"><{t}>红包<{/t}></span></a>
       <a class="box-item-flex1 content-center shopex-col-xs-4" href="<{url action=topwap_ctl_member_coupon@index}>"><em><{$coupon.count}></em>张<br><span class="font-gray-20 fontS"><{t}>优惠券<{/t}></span></a>
       <a class="box-item-flex1 content-center shopex-col-xs-4" href="<{url action=topwap_ctl_member_point@point}>"><em><{$userInfo.point|default:0}></em><br><span class="font-gray-20 fontS"><{t}>积分<{/t}></span></a>
     </div>

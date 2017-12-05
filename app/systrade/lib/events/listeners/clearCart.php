@@ -15,6 +15,8 @@ class systrade_events_listeners_clearCart {
      */
     public function handle($data, $special)
     {
+        if(defined('STRESS_TESTING')) return true;
+
         if( ! $special['cartIds'] ) return true;
 
         $cartIds = implode(',', $special['cartIds']);

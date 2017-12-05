@@ -18,6 +18,15 @@ class topc_ctl_member_aftersales extends topc_ctl_member{
                 'fields' => 'tid,user_id,shop_id,status,receiver_state,receiver_city,receiver_district,receiver_name,receiver_mobile,receiver_address,created_time,orders.oid,orders.user_id,orders.sku_id,orders.num,orders.sendnum,orders.title,orders.pic_path,orders.price,orders.payment,orders.gift_data',
             );
             $pagedata['tradeInfo']= app::get('topc')->rpcCall('trade.get', $tradeFiltr,'buyer');
+            foreach($pagedata['tradeInfo']['orders'] as $order)
+            {
+                foreach($order['gift_data'] as $gift)
+                {
+                    if(!$gift['withoutReturn']) $pagedata['giftReturnFlag'] = true;
+                    if($pagedata['giftReturnFlag']) break;
+                }
+                if($pagedata['giftReturnFlag']) break;
+            }
         }
         catch(\LogicException $e)
         {

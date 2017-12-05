@@ -48,11 +48,6 @@ class topm_ctl_member extends topm_controller {
         $pagedata['canceled'] = $cancelData['total'];
         $pagedata['unrate'] = app::get('topm')->rpcCall('trade.notrate.count',array('user_id'=>$userId));
 
-        //预存款金额
-        $pagedata['deposit'] = app::get('topm')->rpcCall('user.deposit.getInfo',['user_id'=>$userId]);
-        $depositConf = app::get('topm')->rpcCall('payment.get.conf',['app_id'=>'deposit']);
-        $pagedata['noDeposit'] = $depositConf['status'] == 'true' ? false : true;
-
         //优惠劵数量
         $pagedata['coupon'] = app::get('topm')->rpcCall('user.coupon.list',['user_id'=>$userId, 'is_valid'=>'1', 'page_size'=>1]);
 

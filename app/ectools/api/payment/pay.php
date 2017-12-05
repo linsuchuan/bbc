@@ -8,11 +8,10 @@ class ectools_api_payment_pay{
             'pay_app_id' => ['type'=>'string','valid'=>'required_without:hongbao_ids', 'description'=>'支付方式', 'default'=>'', 'example'=>'alipay'],
             'platform' => ['type'=>'string','valid'=>'required', 'description'=>'来源平台（wap、pc）', 'default'=>'pc', 'example'=>'pc'],
             'money' => ['type'=>'string','valid'=>'required', 'description'=>'支付金额', 'default'=>'', 'example'=>'234.50'],
-            'deposit_password' => ['type'=>'string','valid'=>'', 'description'=>'预存款支付密码', 'default'=>'', 'example'=>'234.50'],
+            'deposit_password' => ['type'=>'string','valid'=>'required_with:hongbao_ids', 'description'=>'支付密码', 'default'=>'', 'example'=>'234.50'],
             'user_id' => ['type'=>'string','valid'=>'required', 'description'=>'用户id', 'default'=>'', 'example'=>'1'],
             'tids' => ['type'=>'string','valid'=>'required', 'description'=>'被支付的订单号集合,用逗号隔开', 'default'=>'', 'example'=>'1241231213432,2354234523452'],
             'hongbao_ids' => ['type'=>'string','valid'=>'required_without:pay_app_id', 'description'=>'使用支付的红包ID,用逗号隔开', 'default'=>'', 'example'=>'1,2,3'],
-            //'itemtype' => ['type'=>'string','valid'=>'', 'description'=>'商品类型', 'default'=>'', 'example'=>''],
         );
         return $return;
     }
@@ -171,8 +170,13 @@ class ectools_api_payment_pay{
 
         $paymentBill['pay_app_id'] = $params['pay_app_id'];
         $paymentBill['item_title'] = $params['item_title'][0];
-        $paymentBill['deposit_password'] = $params['deposit_password'];
         $objPayment = kernel::single('ectools_pay');
+        if(config::get('app.debug'))
+        {
+            $paymentBill['item_title'] = '[测试]'.$paymentBill['item_title'];
+        }
+
+        $paymentBill['type'] = 'payment'; //此参数一定不能少，判断是否是付款操作
         $result = $objPayment->generate($paymentBill);
         if(!$result)
         {

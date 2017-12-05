@@ -76,7 +76,7 @@ final class ectools_payment_plugin_99bill extends ectools_payment_app {
      * @return string 简介内容
      */
     function admin_intro(){
-        return app::get('ectools')->_('ShopEx联合快钱推出：免费签约，1%优惠费率，更有超值优惠的信用卡支付。<bR>快钱是国内领先的独立第三方支付企业，旨在为各类企业及个人提供安全、便捷和保密的支付清算与账务服务，其推出的支付产品包括但不限于人民币支付，外卡支付，神州行卡支付，联通充值卡支付，VPOS支付等众多支付产品, 支持互联网、手机、电话和POS等多种终端, 以满足各类企业和个人的不同支付需求。截至2009年6月30日，快钱已拥有4100万注册用户和逾31万商业合作伙伴，并荣获中国信息安全产品测评认证中心颁发的“支付清算系统安全技术保障级一级”认证证书和国际PCI安全认证。');
+        return '<img border="0" width="196" height="117" src="' . $this->app->res_url . '/payments/images/99bill.jpg"><br>'.app::get('ectools')->_('快钱是国内领先的独立第三方支付企业，旨在为各类企业及个人提供安全、便捷和保密的支付清算与账务服务，其推出的支付产品包括但不限于人民币支付，外卡支付，神州行卡支付，联通充值卡支付，VPOS支付等众多支付产品, 支持互联网、手机、电话和POS等多种终端, 以满足各类企业和个人的不同支付需求。截至2009年6月30日，快钱已拥有4100万注册用户和逾31万商业合作伙伴，并荣获中国信息安全产品测评认证中心颁发的“支付清算系统安全技术保障级一级”认证证书和国际PCI安全认证。');
     }
 
     /**
@@ -106,6 +106,7 @@ final class ectools_payment_plugin_99bill extends ectools_payment_app {
         //$this->submit_url = "https://sandbox.99bill.com/gateway/recvMerchantInfoAction.htm";
         $this->submit_method = 'POST';
         $this->submit_charset = 'utf-8';
+        $this->refund_submit_url = 'https://www.99bill.com/webapp/receiveDrawbackAction.do';
     }
 
     /**
@@ -363,6 +364,11 @@ final class ectools_payment_plugin_99bill extends ectools_payment_app {
                         'type'=>'string',
                         'validate_type' => 'required',
                 ),
+                // 'merchant_key'=>array(
+                //         'title'=>app::get('ectools')->_('退款密钥'),
+                //         'type'=>'string',
+                //         'label'=>app::get('ectools')->_('严格区分大小写,使用退款接口时必填！'),
+                // ),
                 // 'PrivateKey'=>array(
                 //         'title'=>app::get('ectools')->_('私钥'),
                 //         'type'=>'string',
@@ -443,9 +449,10 @@ final class ectools_payment_plugin_99bill extends ectools_payment_app {
                     'includeBase' => true,
                 ),
                 'pay_type'=>array(
-                     'title'=>app::get('ectools')->_('支付类型(是否在线支付)'),
-                     'type'=>'hidden',
-                     'name' => 'pay_type',
+                    'title'=>app::get('ectools')->_('支付类型(是否在线支付)'),
+                    'type'=>'radio',
+                    'options'=>array('false'=>app::get('ectools')->_('否'),'true'=>app::get('ectools')->_('是')),
+                    'name' => 'pay_type',
                 ),
                 'status'=>array(
                     'title'=>app::get('ectools')->_('是否开启此支付方式'),
@@ -497,6 +504,62 @@ final class ectools_payment_plugin_99bill extends ectools_payment_app {
           return $tmp_form;
 
     }
+
+/* 以下为退款代码 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ */
+
+    /**
+     * 提交退款支付信息的接口
+     * @param array 提交信息的数组
+     * @return array
+     */
+    // public function dorefund($payment){
+    //     $return['merchant_id'] = $this->getConf('mer_id', __CLASS__);//商户编号
+    //     $return['version'] = "bill_drawback_api_1"; //退款接口版本
+    //     $return['command_type'] = "001";  //操作类型，固定值001  代表下订单请求退款
+    //     $return['orderid'] = $payment['payment_id'];   //原商户订单号
+    //     $return['amount'] = number_format($payment['refund_fee'],2,".",""); //退款金额
+    //     $return['postdate'] = date(YmdHis);  //退款提交时间
+    //     $return['txOrder'] = $payment['refund_id']; //退款流水号
+    //     $return['merchant_key'] = $this->getConf('merchant_key', __CLASS__);//退款密钥
+
+    //     if(!$return['merchant_id'] || !$return['merchant_key']){
+    //         throw new Exception(app::get('ectools')->_('请检查快钱支付配置信息！'));
+    //     }
+
+    //     foreach ($return as $key => $value) {
+    //        if ($val){
+    //         $str.=$key."=".$val;
+    //        }
+    //     }
+    //     $return['mac'] = strtoupper(md5($str));
+
+    //     $response = client::post($this->refund_submit_url,['body'=> $return])->getBody();
+    //     $result = $this->xmlToArray($response);
+    //     logger::info('快钱退款返回信息：'.var_export($result,1));
+
+    //     $ret['refund_id'] = $result['txOrder'];
+    //     $ret['refund_fee'] = $result['amount'];
+    //     $ret['trade_no'] = $result['orderid'];
+    //     if($result['result'] == 'Y'){
+    //         $ret['status'] = 'succ';
+    //     }elseif ($result['result'] == 'N') {
+    //         $ret['status'] = 'failed';
+    //     }
+
+    //     return $ret;
+    // }
+
+    /**
+    *  作用：将xml转为array
+    */
+    public function xmlToArray($xml)
+    {
+      //将XML转为array
+      $array_data = json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
+      return $array_data;
+    }
+
+/* 以上为退款代码 ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ */
 }
 
 ?>

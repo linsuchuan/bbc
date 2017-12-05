@@ -23,17 +23,12 @@ class sysitem_item_info {
      */
     public function getItemStore($itemId)
     {
-        $objMdlItemStore = app::get('sysitem')->model('item_store');
-        $tmpItemInfoStore = $objMdlItemStore->getList('*', array('item_id'=>$itemId));
-        if( $tmpItemInfoStore )
+        if( !is_array($itemId) )
         {
-            foreach( $tmpItemInfoStore as $k=>$row )
-            {
-                $itemInfoStore[$row['item_id']]['store'] = $row['store'];
-                $itemInfoStore[$row['item_id']]['freez'] = $row['freez'];
-                $itemInfoStore[$row['item_id']]['realStore'] = $row['store']-$row['freez'];
-            }
+            $itemId = array($itemId);
         }
+
+        $itemInfoStore = kernel::single('sysitem_item_redisStore')->getItemStore($itemId);
         return $itemInfoStore;
     }
 
@@ -220,15 +215,12 @@ class sysitem_item_info {
 
     public function getSkusStore($skuIds)
     {
-        $objMdlSkuStore = app::get('sysitem')->model('sku_store');
-
-        $storeInfo = $objMdlSkuStore->getList('*',array('sku_id'=>$skuIds));
-        foreach( $storeInfo as $k=>$row )
+        if( !is_array($skuIds) )
         {
-            $data[$row['sku_id']] = $row;
-            $data[$row['sku_id']]['realStore'] = $row['store']-$row['freez'];
+            $skuIds = array($skuIds);
         }
 
+        $data = kernel::single('sysitem_item_redisStore')->getSkuStore($skuIds);
         return $data;
     }
 
@@ -377,15 +369,13 @@ class sysitem_item_info {
             {
                 $skuIds[] = $row['sku_id'];
             }
-            $objMdlSkuStore = app::get('sysitem')->model('sku_store');
 
-            $storeInfo = $objMdlSkuStore->getList('store,freez,sku_id',array('sku_id'=>$skuIds));
-            foreach( $storeInfo as $row )
+            $storeInfo = $this->getSkusStore($skuIds);
+            foreach( $storeInfo as $skuId=>$row )
             {
-                $skuList[$row['sku_id']]['store'] = intval($row['store']);
-                $skuList[$row['sku_id']]['freez'] = intval($row['freez']);
-                $skuList[$row['sku_id']]['realStore'] = $row['store'] - $row['freez'];
-                $skuList[$row['sku_id']]['realStore'] = intval($skuList[$row['sku_id']]['realStore']);
+                $skuList[$skuId]['store'] = intval($row['store']);
+                $skuList[$skuId]['freez'] = intval($row['freez']);
+                $skuList[$skuId]['realStore'] = intval($row['realStore']);
             }
         }
         return $skuList;

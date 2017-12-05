@@ -100,43 +100,26 @@ class sysaftersales_ctl_refunds extends desktop_controller {
         $data['user_name'] = $user[$data['user_id']];
         $pagedata['data'] = $data;
         $pagedata['refundFee'] = ecmath::number_minus(array($data['refund_fee'], $data['hongbao_fee']));
+        // 获取退款申请单对应原订单支付信息
+        $params = ['tids'=>$data['tid'],'fields'=>'*','status'=>'succ'];
+        $pagedata['payment'] = app::get('sysaftersales')->rpcCall('trade.payment.list', $params)[$data['tid']];
+
         return $this->page('sysaftersales/refunds.html', $pagedata);
     }
 
     public function dorefund()
     {
-        //echo "<pre>";print_r(input::get());exit;
         $postdata = input::get('data');
         $refundsData = input::get('refundsData');
 
-        $this->begin("?app=sysaftersales&ctl=refunds&act=index");
+        // $this->begin("?app=sysaftersales&ctl=refunds&act=index");
         try
         {
-
             $filter['refunds_id'] = $postdata['refunds_id'];
             $objMdlRefunds = app::get('sysaftersales')->model('refunds');
             $refunds = $objMdlRefunds->getRow('refund_bn,status,aftersales_bn,user_hongbao_id,hongbao_fee,refund_fee,total_price,refunds_type,user_id,shop_id,tid,oid',$filter);
 
-            //退款方式为预存款时，重新查询退款信息
-            if($refundsData['rufund_type'] == 'deposit')
-            {
-                $deposit = $refundsData['receive_account_deposit'];
-                $refundsData['refund_bank'] = "预存款";
-                $refundsData['refund_account'] = "shopadmin";
-                $refundsData['receive_bank'] = "预存款";
-                $refundsData['receive_account'] = $deposit;
-            }
-
-            // 对收款人和退款人信息进行判断
-            if($refundsData['rufund_type'] != 'deposit')
-            {
-                if(is_numeric($refundsData['refund_people']) || is_numeric($refundsData['beneficiary']))
-                {
-                    throw new \Exception('收款人或退款人姓名不能为纯数字');
-                }
-            }
-
-            if( !in_array($refunds['status'],['3','5','6']) )
+            if( !in_array($refunds['status'], ['3','5','6']) )
             {
                 throw new \LogicException(app::get('sysaftersales')->_('当前申请还未审核'));
             }
@@ -147,52 +130,52 @@ class sysaftersales_ctl_refunds extends desktop_controller {
             {
                 $refundsData['aftersales_bn'] = $refunds['aftersales_bn'];
             }
-
+            $refundsData['op_id'] = $this->user->get_id();
+            $refundsData['return_fee'] = $refundsData['total_price']; //退款总金额，包含红包，方便退款
+            $refundsData['refunds_id'] = $postdata['refunds_id']; //sysaftersales/refunds.php主键，方便退款
+            $refundsData['payment_id'] = $refundsData['payment_id']; //退款对应原支付单号
             //创建退款单
-            $refundsId = app::get('sysaftersales')->rpcCall('refund.create',$refundsData);
-            if(!$refundsId)
+            $refundId = app::get('sysaftersales')->rpcCall('refund.create', $refundsData);
+            if(!$refundId)
             {
                 throw new \LogicException(app::get('sysaftersales')->_('退款单创建失败'));
             }
 
-            //预存款退款
-            if($refundsData['rufund_type'] == 'deposit')
+            // 在线原路退款(用什么支付则退到什么地方)
+            if($refundsData['rufund_type'] == 'online' && $refundsData['money']>0)
             {
-                $params['user_id']  = $refundsData['user_id'];
-                $params['operator']  = $this->user->get_login_name();
-                $params['fee']  = $refundsData['money'];
-                $params['memo']  = "订单退款。订单号： ".$refundsData['tid'];
-
-                $return = app::get('sysaftersales')->rpcCall('user.deposit.refund',$params);
-                if(!$return['result'])
-                {
-                    throw new \LogicException(app::get('sysaftersales')->_('预存款退款失败'));
+                $apiParams = [
+                    'refund_id' => $refundId,
+                    'payment_id' => $refundsData['payment_id'],
+                    'money' => number_format($refundsData['money'],2,'.',''),
+                ];
+                $res = app::get('sysaftersales')->rpcCall('payment.trade.refundpay', $apiParams);
+                if($res['status']=='progress'){
+                    if($res['submit_html'])
+                    {
+                        return $this->splash('success',null,$msg,'',$res);
+                    }
                 }
-
-                $refundsUpdate['refund_id'] = $refundsId;
-                $refundsUpdate['tid'] = $refundsData['tid'];
-                $refundsUpdate['status'] = 'succ';
-                //更新退款单状态
-                $result = app::get('sysaftersales')->rpcCall('refund.update',$refundsUpdate);
-                if(!$result)
-                {
-                    throw new \LogicException(app::get('sysaftersales')->_('退款单状态更新失败'));
+                if($res['status']!='succ'){
+                    return $this->splash('error',null,'支付失败或者信息未返回');
                 }
             }
 
             //更改退款申请单
-            $postdata['return_fee'] = $refundsData['total_price'];
-            app::get('sysaftersales')->rpcCall('aftersales.refunds.restore',$postdata);
+            $apiParams = ['return_fee'=>$refundsData['total_price'], 'refunds_id'=>$postdata['refunds_id']];
+            app::get('sysaftersales')->rpcCall('aftersales.refunds.restore', $apiParams);
             $this->adminlog("处理退款[refunds_id:{$postdata['refunds_id']}]", 1);
+            return $this->splash('success', null, '退款操作成功!');
         }
         catch(\Exception $e)
         {
             $this->adminlog("处理退款[refunds_id:{$postdata['refunds_id']}]", 0);
             $msg = $e->getMessage();
-            $this->end(false,$msg);
+            return $this->splash('error',null,$msg);
+            // $this->end(false,$msg);
         }
 
-        $this->end('true');
+        // $this->end('true');
     }
 }
 

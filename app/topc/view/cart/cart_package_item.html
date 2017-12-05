@@ -4,30 +4,30 @@
   <input type="checkbox" class="check-item hide" name="cart_id[<{$goods.cart_id}>]" value="0" <{if $goods.is_checked=='0'}>checked="true"<{/if}> <{if !$goods.valid}>disabled <{/if}>>
   <span class="item-describe-tag">组合促销</span><{$goods.title}>
 </td>
-<td>
+<td class="text-center">
   <{$goods.price.price|cur}>
 </td>
-<td>
+<td class="text-center">
   <!--div class="number is-stockout"-->
-  <div class="number">
+  <span class="number">
     <{if $goods.valid }>
     <span class="number-increase-decrease">
-      <a href="javascript:void(0);" class="btn btn-flat decrease" data-min="1" data-cart-id='<{$goods.cart_id}>'><span><span>-</span></span></a>
+      <a href="javascript:void(0);" class="btn btn-flat decrease" data-min="1" data-cart-id='<{$goods.cart_id}>'>-</a>
       <input type="text" value="<{$goods.quantity}>" name="cart_num[<{$goods.cart_id}>]" class="cart-num" min="1" max="<{if $goods.activityDetail.activity_info.buy_limit}><{$goods.activityDetail.activity_info.buy_limit}><{else}><{$goods.store}><{/if}>">
-      <a href="javascript:void(0);" class="btn btn-flat increase" data-max="<{if $goods.activityDetail.activity_info.buy_limit}><{$goods.activityDetail.activity_info.buy_limit}><{else}><{$goods.store}><{/if}>" data-cart-id="<{$goods.cart_id}>"><span><span>+</span></span></a>
+      <a href="javascript:void(0);" class="btn btn-flat increase" data-max="<{if $goods.activityDetail.activity_info.buy_limit}><{$goods.activityDetail.activity_info.buy_limit}><{else}><{$goods.store}><{/if}>" data-cart-id="<{$goods.cart_id}>">+</a>
     </span>
     <!--div class="number-stockout">限购6件</div-->
     <{else}>
     <{t}>已失效<{/t}>
     <{/if}>
-  </div>
+  </span>
 </td>
-<td>
-  <em><{$goods.price.total_price|cur}></em>
+<td class="text-center">
+  <span><{$goods.price.total_price|cur}></span>
 </td>
 <td class="col-operate">
-  <a href="javascript:void(0);" rel="_request">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
-  <a href="javascript:void(0);" class="delete-item" data-cart-id="<{$goods.cart_id}>">删除</a>
+  <div><a href="javascript:void(0);" rel="_request">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a></div>  
+  <div><a href="javascript:void(0);" class="delete-item" data-cart-id="<{$goods.cart_id}>">删除</a></div>
 </td>
 <!-- 组合促销的商品-start -->
 <{foreach from=$goods.skuList item=skuList}>
@@ -43,19 +43,20 @@
     </div>
   </td>
   <td>
-      <a class="cart-goods-name" href="<{url action=topc_ctl_item@index item_id=$skuList.item_id }>" >
+      <div>
+        <a class="cart-goods-name" href="<{url action=topc_ctl_item@index item_id=$skuList.item_id }>" >
         <{$skuList.title}>
       </a>
-      <{if $skuList.spec_info}><{$skuList.spec_info}><{/if}>
+      </div>
+      <span><{if $skuList.spec_info}><{$skuList.spec_info}><{/if}></span>
   </td>
   <td>
     <{$skuList.price.price|cur}>&nbsp;(<del><{$skuList.price.old_price|cur}></del>)
   </td>
   <td></td>
-  <td>
-  </td>
+  <td></td>
   <td class="col-operate">
-    <a href="<{url action=topc_ctl_collect@ajaxFav}>" data-ajax-data="item_id=<{$skuList.item_id}>" rel="_request">收藏</a>
+    <div><a href="<{url action=topc_ctl_collect@ajaxFav}>" data-ajax-data="item_id=<{$skuList.item_id}>" rel="_request">收藏</a></div>
   </td>
 </tr>
 <{/foreach}>

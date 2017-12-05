@@ -84,7 +84,7 @@ return array(
             'default_in_list' => true,
         ),
         'modified_time' => array (
-            'type' => 'time',
+            'type' => 'last_modify',
             'label' => app::get('ectools')->_('最后修改时间'),
             'comment' => app::get('ectools')->_('最后更新时间'),
             'in_list' => true,
@@ -93,7 +93,7 @@ return array(
    ),
 
    'primary' => 'paybill_id',
-    'comment' => app::get('ectools')->_('订单支付单据记录'),
+    'comment' => app::get('ectools')->_('订单支付单关联表'),
 );
 
 

@@ -37,21 +37,23 @@
             <{/if}>
           </div>
         </div>
+        <{if !$traffic_disabled}>
         <div class="small-box bg-red col-lg-2">
           <div class="inner">
-            <div>已完成订单数(笔)</div>
-             <h3><{$sysstat.commonday.complete_trade|default:0}></h3>
+            <div>独立访问量UV(次)</div>
+             <h3><{$trafficData.commonday|default:0}></h3>
             <{if $sendtype=='yesterday' || $sendtype=='beforday'}>
-            <p class="text-light-gray">上周同期<{$sysstat.beforeweek.complete_trade|default:0}></p>
+            <p class="text-light-gray">上周同期<{$trafficData.beforeweek|default:0}></p>
             <{/if}>
           </div>
         </div>
+        <{/if}>
         <div class="small-box bg-maroon col-lg-2">
           <div class="inner">
-             <div>已发货订单数(笔)</div>
-            <h3><{$sysstat.commonday.already_send_trade|default:0}></h3>
+             <div>售后订单数(笔)</div>
+            <h3><{$sysstat.commonday.refund_trade + $sysstat.commonday.changing_trade}></h3>
             <{if $sendtype=='yesterday' || $sendtype=='beforday'}>
-            <p class="text-light-gray">上周同期<{$sysstat.beforeweek.already_send_trade|default:0}></p>
+            <p class="text-light-gray">上周同期<{$sysstat.beforeweek.refund_trade + $sysstat.beforeweek.changing_trade}></p>
             <{/if}>
           </div>
         </div>

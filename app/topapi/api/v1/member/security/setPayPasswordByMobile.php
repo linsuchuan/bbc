@@ -10,7 +10,7 @@ class topapi_api_v1_member_security_setPayPasswordByMobile implements topapi_int
      * api接口的名称
      * @var string
      */
-    public $apiDescription = '忘记预存款密码的短信验证';
+    public $apiDescription = '忘记支付密码的短信验证';
 
     public function setParams()
     {

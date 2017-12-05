@@ -46,16 +46,11 @@ class sysuser_api_point_computeDeduction{
 
         //计算可抵扣的最大积分值
         $maxPoints = floor($point_deduction_max*$total_money*$point_deduction_rate);
-        
+
         if(intval($usePoint) > intval($maxPoints) )
         {
             throw new \LogicException('积分使用超出上限'.$point_deduction_max*$total_money);
         }
-
-        //会员现有的积分值
-        $objMdlUserPoint = app::get('sysuser')->model('user_points');
-        $points = $objMdlUserPoint->getRow('point_count',array('user_id'=>$params));
-        $userPoints = $points['point_count'];
 
         $proportion_money = ecmath::number_div(array($usePoint, $point_deduction_rate) );
         $min = ecmath::number_div(array(1, $point_deduction_rate) );

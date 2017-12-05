@@ -74,6 +74,7 @@ class topc_ctl_item extends topc_controller {
             foreach($promotionInfo as $vp)
             {
                 $basicPromotionInfo = app::get('topc')->rpcCall('promotion.promotion.get', array('promotion_id'=>$vp['promotion_id'], 'platform'=>'pc'));
+                $basicPromotionInfo['sku_id'] = $vp['sku_id'] ? explode(',',$vp['sku_id']) : null;
                 if($basicPromotionInfo['valid']===true)
                 {
                     $pagedata['promotionDetail'][] = $basicPromotionInfo;
@@ -83,9 +84,10 @@ class topc_ctl_item extends topc_controller {
         $pagedata['promotion_count'] = count($pagedata['promotionDetail']);
 
         //获取赠品促销信息
-        $giftDetail = app::get('topc')->rpcCall('promotion.gift.item.info',array('item_id'=>$itemId,'valid'=>1),'buyer');
+        $giftDetail = app::get('topc')->rpcCall('promotion.gift.item.info',array('item_id'=>$itemId,'valid'=>1),'buyer')['0'];
         if($giftDetail)
         {
+            $giftDetail['sku_ids'] = $giftDetail['sku_ids'] ? explode(',',$giftDetail['sku_ids']) : null;
             $pagedata['giftDetail'] = $giftDetail;
         }
 
@@ -251,6 +253,7 @@ class topc_ctl_item extends topc_controller {
     public function miniSpec()
     {
         $itemId = intval(input::get('item_id'));
+
         if( empty($itemId) )
         {
             return redirect::action('topc_ctl_default@index');
@@ -268,8 +271,8 @@ class topc_ctl_item extends topc_controller {
         {
             $pagedata['error'] = "很抱歉，您查看的宝贝不存在，可能已下架或者被转移";
             return view::make('topc/list/error.html', $pagedata);
-            //return $this->page('topc/items/error.html', $pagedata);
         }
+
         if(count($detailData['sku']) == 1)
         {
             $detailData['default_sku_id'] = array_keys($detailData['sku'])[0];
@@ -283,7 +286,29 @@ class topc_ctl_item extends topc_controller {
             redirect::action('topwap_ctl_item_detail@index',array('item_id'=>$itemId))->send();exit;
         }
 
-        $detailData['spec'] = $this->__getSpec($detailData['spec_desc'], $detailData['sku']);
+        $skuData = null;
+        //是否有限定SKU促销
+        //如果有限定则只显示限定的sku
+        if( input::get('sku_id') )
+        {
+            $specDesc = null;
+            foreach( (array)explode(',',input::get('sku_id')) as $skuId )
+            {
+                $skuData[$skuId] = $detailData['sku'][$skuId];
+                $specDescValue = $skuData[$skuId]['spec_desc']['spec_value_id'];
+                foreach( $specDescValue as $specId=>$specValueId )
+                {
+                    $specDesc[$specId][$specValueId] = $detailData['spec_desc'][$specId][$specValueId];
+                }
+            }
+            $detailData['spec_desc'] = $specDesc;
+        }
+        else
+        {
+            $skuData = $detailData['sku'];
+        }
+
+        $detailData['spec'] = $this->__getSpec($detailData['spec_desc'], $skuData);
         $detailData['qrCodeData'] = $this->__qrCode($itemId);
         $pagedata['item'] = $detailData;
         return view::make('topc/list/spec_dialog.html', $pagedata);
@@ -295,8 +320,13 @@ class topc_ctl_item extends topc_controller {
         $params['item_id'] = intval (input::get('item_id'));
         $pagedata = app::get('topc')->rpcCall('promotion.package.getPackageItemsByItemId', $params);
         $basicPackageTag = [];
-        foreach($pagedata['data'] as &$v)
+        foreach($pagedata['data'] as $k=>&$v)
         {
+            if( !in_array($v['used_platform'], ['0','1']) )
+            {
+                unset($pagedata['data'][$k]); continue;
+            }
+
             $oldTotalPrice = 0;
             $packageTotalPrice = 0;
             foreach($v['items'] as $v1)
@@ -309,6 +339,7 @@ class topc_ctl_item extends topc_controller {
             $v['cut_total_price'] = ecmath::number_minus(array($v['old_total_price'], $v['package_total_price']));
             $basicPackageTag[] = array('name'=>$v['package_name'], 'package_id'=>$v['package_id']);
         }
+
         if(!$pagedata)return;
         $pagedata['package_tags'] = $basicPackageTag;
         return view::make('topc/items/package.html', $pagedata);
@@ -326,7 +357,7 @@ class topc_ctl_item extends topc_controller {
         $params = array(
             'page_no' => 1,
             'page_size' => 10,
-            'fields' =>'item_id,shop_id,title,image_default_id,price,package_price',
+            'fields' =>'item_id,shop_id,title,image_default_id,price,package_price,sku_ids',
             'package_id' => $inputdata['package_id'],
         );
         $packageItemList = app::get('topc')->rpcCall('promotion.packageitem.list', $params);
@@ -359,7 +390,28 @@ class topc_ctl_item extends topc_controller {
             {
                 $pagedata['valid'] = false;
             }
-            $detailData[$itemId]['spec'] = $this->__getSpec($detailData[$itemId]['spec_desc'], $detailData[$itemId]['sku']);
+
+            $skuData = null;
+            if( $packageItemList[$itemId]['sku_ids'] )
+            {
+                $specDesc = null;
+                foreach( (array)explode(',',$packageItemList[$itemId]['sku_ids']) as $skuId )
+                {
+                    $skuData[$skuId] = $detailData[$itemId]['sku'][$skuId];
+                    $specDescValue = $skuData[$skuId]['spec_desc']['spec_value_id'];
+                    foreach( $specDescValue as $specId=>$specValueId )
+                    {
+                        $specDesc[$specId][$specValueId] = $detailData[$itemId]['spec_desc'][$specId][$specValueId];
+                    }
+                }
+                $detailData[$itemId]['spec_desc'] = $specDesc;
+            }
+            else
+            {
+                $skuData = $detailData[$itemId]['sku'];
+            }
+
+            $detailData[$itemId]['spec'] = $this->__getSpec($detailData[$itemId]['spec_desc'], $skuData);
             $detailData[$itemId]['package_price'] = $packageItemList[$itemId]['package_price'];
             $specSkuData[$itemId] = $detailData[$itemId]['spec']['specSku'];
             if(count($detailData[$itemId]['sku']) == 1)

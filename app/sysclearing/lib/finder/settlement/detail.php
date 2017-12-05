@@ -4,7 +4,7 @@ class sysclearing_finder_settlement_detail{
     public $column_pay_type = '订单支付方式';
     public $column_pay_type_order = 20;
     public $column_pay_type_width = 60;
-    
+
     public function column_pay_type(&$colList, $list)
     {
         $tids = array_column($list, 'tid');
@@ -21,14 +21,14 @@ class sysclearing_finder_settlement_detail{
             {
                 $colList[$k] = $data[$row['tid']]['pay_name'];
             }
-            
+
         }
-    } 
-    
+    }
+
     public $column_refund_type = '退款方式';
     public $column_refund_type_order = 30;
     public $column_refund_type_width = 60;
-    
+
     public function column_refund_type(&$colList, $list)
     {
         $oids = array_column($list, 'oid');
@@ -40,7 +40,6 @@ class sysclearing_finder_settlement_detail{
         $refundType = array (
                 'online' => app::get('sysclearing')->_('在线退款'),
                 'offline' => app::get('sysclearing')->_('线下退款'),
-                'deposit' => app::get('sysclearing')->_('预存款退款'),
             );
         foreach($list as $k=>$row)
         {
@@ -52,7 +51,7 @@ class sysclearing_finder_settlement_detail{
                     $colList[$k] = $refundType[$val['rufund_type']];
                 }
             }
-           
+
         }
     }
 }

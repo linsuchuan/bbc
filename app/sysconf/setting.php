@@ -14,13 +14,9 @@ $setting =  array(
     //'point.deduction.max' => array('type'=>SET_T_ENUM,'options'=>array('10'=>'10%','20'=>'20%','30'=>'30%','40'=>'40%','50'=>'50%','60'=>'60%','70'=>'70%','80'=>'80%','90'=>'90%'),'default'=>90,'desc'=>'每单积分抵扣金额上限:','vtype'=>'','helpinfo'=>'<span class=\'notice-inline\'>默认为订单总金额*0.9 </span>','class'=>'point-deduction-setting'),
     'point.deduction.max' => array('type'=>SET_T_INT,'default'=>99,'desc'=>'每单积分抵扣金额上限:','vtype'=>'positive&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'> 1 <= x <=99;默认为订单总金额*0.99 </span>','class'=>'point-deduction-setting'),
 
-    /*
-    'user.deposit_password.expire'=> array( 'type'=>SET_T_INT,'default'=>3,'desc'=>'预存款支付密码停用时间','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：小时(h)</span>'),
-    'user.deposit_password.limit'=> array( 'type'=>SET_T_INT,'default'=>5,'desc'=>'预存款支付密码停用错误次数','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：次</span>'),
-    */
-    'user.deposit.password.hour.ttl'=> array( 'type'=>SET_T_INT,'default'=>2,'desc'=>'预存款支付密码停用时间','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：小时(h)</span>'),
-    'user.deposit.password.retry.times'=> array( 'type'=>SET_T_INT,'default'=>10,'desc'=>'预存款支付密码停用错误次数','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：次</span>'),
-    'user.deposit.password.remind.retry.times'=> array( 'type'=>SET_T_INT,'default'=>3,'desc'=>'预存款支付密码停用提示次数','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：次</span>'),
+    'user.deposit.password.hour.ttl'=> array( 'type'=>SET_T_INT,'default'=>2,'desc'=>'支付密码停用时间','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：小时(h)</span>'),
+    'user.deposit.password.retry.times'=> array( 'type'=>SET_T_INT,'default'=>10,'desc'=>'支付密码停用错误次数','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：次</span>'),
+    'user.deposit.password.remind.retry.times'=> array( 'type'=>SET_T_INT,'default'=>3,'desc'=>'支付密码停用提示次数','vtype'=>'required&&unsignedint','helpinfo'=>'<span class=\'notice-inline\'>单位：次</span>'),
 
     'im.enable'=> array( 'type'=>SET_T_BOOL,'default'=>false,'desc'=>'是否启用新版的即时聊天工具','vtype'=>'required'),
     'im.plugin'=> array( 'type'=>SET_T_ENUM,'options'=>array('toputil_im_plugin_webcall'=>'365WebCall', 'toputil_im_plugin_qq'=>'QQ', 'toputil_im_plugin_wangwang'=>'旺旺'),'default'=>'toputil_im_plugin_wangwang','desc'=>'请选择采用im通讯工具','vtype'=>'required'),

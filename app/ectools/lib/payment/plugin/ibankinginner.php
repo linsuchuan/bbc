@@ -63,6 +63,21 @@ final class ectools_payment_plugin_ibankinginner extends ectools_payment_app imp
             $this->callback_url = "https://" . $this->callback_url;
         }
         $this->submit_url = 'https://pay3.chinabank.com.cn/PayGate?encoding=UTF-8';
+        //退款异步返回地址
+        $this->notify_url_refund = kernel::openapi_url('openapi.ectools_payment/parse/'.$this->app->app_id.'/ectools_payment_plugin_ibankinginner_server','refundcallback');
+        if (preg_match("/^(http):\/\/?([^\/]+)/i", $this->notify_url_refund, $matches))
+        {
+            $this->notify_url_refund = str_replace('http://','',$this->notify_url_refund);
+            $this->notify_url_refund = preg_replace("|/+|","/", $this->notify_url_refund);
+            $this->notify_url_refund = "http://" . $this->notify_url_refund;
+        }
+        else
+        {
+            $this->notify_url_refund = str_replace('https://','',$this->notify_url_refund);
+            $this->notify_url_refund = preg_replace("|/+|","/", $this->notify_url_refund);
+            $this->notify_url_refund = "https://" . $this->notify_url_refund;
+        }
+        $this->refund_submit_url = "https://tmapi.jdpay.com/jd.htm";
         $this->submit_method = 'POST';
         $this->submit_charset = 'utf-8';
     }
@@ -96,6 +111,10 @@ final class ectools_payment_plugin_ibankinginner extends ectools_payment_app imp
                         'title'=>app::get('ectools')->_('交易安全校密钥(key)'),
                         'type'=>'string',
 						'validate_type' => 'required',
+                    ),
+                    'mer_refund_key'=>array(
+                        'title'=>app::get('ectools')->_('退款安全校秘钥(refundkey)'),
+                        'type'=>'string',
                     ),
                     'order_by' =>array(
                         'title'=>app::get('ectools')->_('排序'),
@@ -146,7 +165,7 @@ final class ectools_payment_plugin_ibankinginner extends ectools_payment_app imp
     {
         $mer_id = trim($this->getConf('mer_id', __CLASS__));
         $mer_key = trim($this->getConf('mer_key', __CLASS__));
-        $payment[shopName] = app::get('site')->getConf('site.name');
+        $payment['shopName'] = app::get('site')->getConf('site.name');
         $payment['cur_money'] = number_format($payment['cur_money'],2,'.','');
         $pay = array(
             'v_mid'=>$mer_id,
@@ -237,5 +256,108 @@ final class ectools_payment_plugin_ibankinginner extends ectools_payment_app imp
         $linkstring .= $mer_key;
         return strtoupper(md5($linkstring));
     }
+
+/* 以下为退款代码 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ */
+
+    /**
+     * 提交退款支付信息的接口
+     * @param array 提交信息的数组
+     * @return mixed false or null
+     */
+    public function dorefund($payment){
+        $mer_id = trim($this->getConf('mer_id', __CLASS__));
+        $mer_refund_key = trim($this->getConf('mer_refund_key', __CLASS__));
+        if(!$mer_id || !$mer_refund_key){
+            throw new Exception(app::get('ectools')->_('请检查后台网银在线支付方式配置！'));
+        }
+        $params  = array(
+            'VERSION' => "1.0.0",  //版本号 1.0.0
+            'MERCHANT' => $mer_id, //商户号
+            'TYPE' => "R",         // 交易类型，退款：R
+            'TRADE' => $payment['refund_id'],  //商户订单号
+            'ORDER' => $payment['trade_no'],  //原商户订单号
+            'AMOUNT' => bcmul($payment['refund_fee'], 100, 0),  //交易金额
+            'CURRENCY' => "CNY",//交易币种
+            // 'DATETIME' => date('Y-m-d H:i:s'),
+            'NOTICE' => $this->notify_url_refund,
+        );
+
+        $requestData = base64_encode(json_encode($params));
+
+        $sign = md5($requestData."".$mer_refund_key);
+
+        $requestArgs['CHAR'] = "UTF-8";
+        $requestArgs['DATA'] = $requestData;
+        $requestArgs['SIGN'] = $sign;
+
+        $response = client::post($this->refund_submit_url, ['verify'=>false, 'body'=>$requestArgs])->getBody();
+        logger::info('response：'.var_export($response,1));
+
+
+        $responseData = $this->convertStringToArray($response);
+        $result = json_decode(base64_decode($responseData['DATA']),true);
+
+        logger::info('网银在线退款返回信息格式化：'.var_export($result,1));
+
+        $ret['refund_id'] = $payment['refund_id'];
+        $ret['trade_no'] = $payment['trade_no'];
+        $ret['refund_fee'] = $payment['refund_fee'];
+        if($result['STATUS'] =='S'){
+            $ret['status'] = 'succ';
+        }elseif($result['STATUS'] =='F'){
+            $ret['status'] = 'failed';
+        }
+
+        return $ret;
+
+    }
+
+    /**
+     * 处理第三方支付方式退款返回的信息
+     * @param array 第三方支付方式返回的信息
+     * @return mixed
+     */
+    public function refundcallback(&$recv){
+        logger::info('refundcallback'.var_export($recv,1));
+        if($recv['STATUS'] =='S'){
+            $ret['refund_id'] = $recv['TRADE'];
+            $ret['trade_no'] = $recv['OEDER'];
+            $ret['refund_fee'] = number_format(($payment['AMOUNT']/100),2,".","");
+            $ret['status'] = 'REFUND_SUCCESS';
+        }
+
+        return $ret;
+
+    }
+
+    /**
+     * CHAR=value1&DATA=value2&SIGN=value3转array
+     * @param $response CHAR=value1&DATA=value2&SIGN=value3的字符串
+     */
+    public function convertStringToArray($response)
+    {
+
+        $arrStr = [];
+        $arrSplits = [];
+        $arrQueryStrs = [];
+
+        if ($response)
+        {
+            $arrStr = explode("&", $response);
+            foreach ($arrStr as $str)
+            {
+                $arrSplits = explode("=", $str);
+                $index = strpos($str,"=");
+                if(count($arrSplits)<2){
+                    continue;
+                }else {
+                    $arrQueryStrs[substr($str, 0, $index)] = substr($str, $index+1);
+                }
+            }
+        }
+        return $arrQueryStrs;
+    }
+
+/* 以上为退款代码 ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ */
 }
 

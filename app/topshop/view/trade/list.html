@@ -42,6 +42,16 @@
         <div class="col-xs-6">
           <span class="order-form-w1">收货人电话：</span><input class="x-input" type="text" name="receiver_phone">
         </div>
+        <div class="form-group">
+          <div class="col-xs-6">
+            <span class="order-form-w1">结算状态：</span>
+            <select name="settlement_status" class="x-input">
+              <{foreach from=$settlement_status item=value key=key}>
+              <option value="<{$key|escape:"html"}>"><{$value|escape:"html"}></option>
+              <{/foreach}>
+            </select>
+            <input type="hidden" value="<{$filter.settlement_status}>" id="filter_settlement_status">
+          </div>
       </div>
       <div class="text-center">
         <button type="submit" class="btn btn-primary">提交</button>
@@ -175,7 +185,11 @@ $('#tabs a[data-toggle="tab"]').on('show.bs.tab', function (e) {
   var tabhref = $(this).attr('href');
   var tab = tabhref.split("#")[1];
   var status = tab.split("_")[1];
-  $('#'+tab).load(tabhref,{'status':status});
+  var useSessionFilter = '<{$useSessionFilter}>';
+  if(useSessionFilter)
+    $('#'+tab).load(tabhref,{'status':status,'useSessionFilter':useSessionFilter});
+  else
+    $('#'+tab).load(tabhref,{'status':status});
   //$("form input[name=status]").val($(this).text());
   $("form select[name=status]").val(status);
 }).eq($('#filter_status').val()).trigger('click');

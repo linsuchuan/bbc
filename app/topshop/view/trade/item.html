@@ -89,7 +89,6 @@
             <div>会员用户名:<{$item.user_login_name}></div>
             <div>收货人:<{$item.receiver_name}></div>
             <div>收货人手机:<{$item.receiver_mobile}></div>
-            <div>收货人电话:<{$item.receiver_phone}></div>
           </div>
         </td>
         <td class="col-5">
@@ -187,7 +186,7 @@
 <script>
   $('.pagination li a').click(function(e){
     e.preventDefault();
-    if($(this).parent('li').hasClass('disabled')) return;
+    if($(this).parent().hasClass('disabled') || $(this).parent().hasClass('ellipsis')) return;
     var urlData = $(this).attr('href');
     $(this).parents('.data-list').empty().load(urlData)
   })

@@ -15,7 +15,6 @@ class ectools_mdl_payment_cfgs extends dbeav_model
             'app_display_name'=>array('label'=>app::get('ectools')->_('支付方式'),'width'=>200,'is_title'=>true),
             'app_id'=>array('label'=>app::get('ectools')->_('支付方式key'),'width'=>200,'is_title'=>true),
             'app_staus'=>array('label'=>app::get('ectools')->_('状态'),'width'=>120),
-            'app_version'=>array('label'=>app::get('ectools')->_('应用程序版本'),'width'=>120),
             'app_order_by'=>array('label'=>app::get('ectools')->_('排序'),'width'=>120),
             'is_frontend'=>array('type' => 'bool','label'=>app::get('ectools')->_('是否应用与后台'),'width'=>120),
             'def_payment'=>array('type' => 'bool','label'=>app::get('ectools')->_('默认支付方式'),'width'=>120),
@@ -90,7 +89,6 @@ class ectools_mdl_payment_cfgs extends dbeav_model
             $payName = $arrPaymnet['setting']['pay_name'] ? $arrPaymnet['setting']['pay_name'] : $object->name;
             $row['app_name'] = $object->name;
             $row['app_staus'] = (($arrPaymnet['status']===true||$arrPaymnet['status']==='true') ? app::get('ectools')->_('开启') : app::get('ectools')->_('关闭'));
-            $row['app_version'] = $object->ver;
             $row['app_id'] = $object->app_key;
             $row['app_rpc_id'] = (isset($object->app_rpc_key) && $object->app_rpc_key) ? $object->app_rpc_key : $object->app_key;
             $row['app_class'] = $class_name;
@@ -199,7 +197,6 @@ class ectools_mdl_payment_cfgs extends dbeav_model
             return array(
                 'app_name'=>app::get('ectools')->_('无支付方式'),
                 'app_staus' => app::get('ectools')->_('关闭'),
-                'app_version' => '1.0',
                 'app_id' => app::get('ectools')->_('无支付方式'),
                 'app_class' => 'No Class',
                 'app_des' => '',
@@ -240,7 +237,6 @@ class ectools_mdl_payment_cfgs extends dbeav_model
                     return array(
                         'app_name'=>$pay_app_id,
                         'app_staus' => app::get('ectools')->_('开启'),
-                        'app_version' => '1.0',
                         'app_id' => $pay_app_id,
                         'app_rpc_id' => $pay_app_id,
                         'app_class' => $class_name,
@@ -261,7 +257,6 @@ class ectools_mdl_payment_cfgs extends dbeav_model
                 return array(
                         'app_name'=>$pay_app_id,
                         'app_staus' => app::get('ectools')->_('开启'),
-                        'app_version' => '1.0',
                         'app_id' => $pay_app_id,
                         'app_rpc_id' => $pay_app_id,
                         'app_class' => '',
@@ -277,7 +272,6 @@ class ectools_mdl_payment_cfgs extends dbeav_model
             $row = array(
                 'app_name' => $objPayment->name,
                 'app_staus' => (($arrPaymnet['status']===true||$arrPaymnet['status']==='true') ? app::get('ectools')->_('开启') : app::get('ectools')->_('关闭')),
-                'app_version' => $objPayment->ver,
                 'app_id' => $objPayment->app_key,
                 'app_rpc_id' => (isset($objPayment->app_rpc_key) && $objPayment->app_rpc_key) ? $objPayment->app_rpc_key : $objPayment->app_key,
                 'app_class' => $class_name,
@@ -295,7 +289,6 @@ class ectools_mdl_payment_cfgs extends dbeav_model
             $row = array(
                 'app_name' => 'COD',
                 'app_staus' => app::get('ectools')->_('开启'),
-                'app_version' => '1.0',
                 'app_id' => 'COD',
                 'app_rpc_id' => '-1',
                 'app_class' => 'COD',
@@ -378,4 +371,20 @@ class ectools_mdl_payment_cfgs extends dbeav_model
         }
         return true;
     }
+
+    public function modifier_app_staus(&$colList)
+    {
+        if( $colList )
+        {
+            foreach($colList as $k=>$row)
+            {
+                if($row=='开启'){
+                    $colList[$k] = '<i style="color:#0fd0a4;">'.$row.'</i>';
+                }else{
+                    $colList[$k] = '<i style="color:#a94442;">'.$row.'</i>';
+                }
+            }
+        }
+    }
+
 }

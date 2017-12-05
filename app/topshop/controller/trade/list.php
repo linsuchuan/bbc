@@ -23,6 +23,14 @@ class topshop_ctl_trade_list extends topshop_controller{
         $pagedata['status'] = $orderStatusList;
         $pagedata['filter']['status'] = $status;
         $pagedata['shop_type'] = $this->shopInfo['shop_type'];
+        $pagedata['useSessionFilter'] = input::get('useSessionFilter');
+        $pagedata['settlement_status'] = array(
+            '-1'=>'全部',
+            '1'=>'普通结算',
+            '2'=>'运费结算',
+            '3'=>'售后结算',
+            '4'=>'拒收结算',
+        );
         $this->contentHeaderTitle = app::get('topshop')->_('订单列表');
 
         return $this->page('topshop/trade/list.html', $pagedata);
@@ -52,7 +60,13 @@ class topshop_ctl_trade_list extends topshop_controller{
         );
         $this->contentHeaderTitle = app::get('topshop')->_('订单查询');
         $postFilter = input::get();
-        $filter = $this->_checkParams($postFilter);
+        if($postFilter['useSessionFilter'])
+        {
+            $filter = $this->__getTradeSearchFilter();
+        } else {
+            $filter = $this->_checkParams($postFilter);
+            $this->__saveTradeSearchFilter($filter);
+        }
         $limit = $this->limit;
         $status = $filter['status'];
         if(is_array($filter['status']))
@@ -72,10 +86,11 @@ class topshop_ctl_trade_list extends topshop_controller{
             'user_name' =>$filter['user_name'],
             'pay_type' =>$filter['pay_type'],
             'shipping_type' =>$filter['shipping_type'],
+            'settlement_status' =>$filter['settlement_status'],
             'page_no' => intval($page),
             'page_size' =>intval($limit),
             'order_by' =>'created_time desc',
-            'fields' =>'order.spec_nature_info,shipping_type,tid,shop_id,user_id,status,payment,points_fee,total_fee,post_fee,payed_fee,receiver_name,trade_memo,created_time,receiver_mobile,discount_fee,adjust_fee,order.title,order.price,order.num,order.pic_path,order.tid,order.oid,order.item_id,need_invoice,invoice_name,invoice_type,invoice_main,pay_type,cancel_status,order.gift_data',
+            'fields' =>'order.spec_nature_info,shipping_type,tid,shop_id,user_id,status,settlement_status,payment,points_fee,total_fee,post_fee,payed_fee,receiver_name,trade_memo,created_time,receiver_mobile,discount_fee,adjust_fee,order.title,order.price,order.num,order.pic_path,order.tid,order.oid,order.item_id,need_invoice,invoice_name,invoice_type,invoice_main,pay_type,cancel_status,order.gift_data',
         );
 
         //显示订单售后状态
@@ -128,6 +143,9 @@ class topshop_ctl_trade_list extends topshop_controller{
 
     private function _checkParams($filter)
     {
+        if($filter['settlement_status'] == '-1'){
+            unset($filter['settlement_status']);
+        }
         $statusLUT = array(
             '1' => 'WAIT_BUYER_PAY',
             '2' => 'WAIT_SELLER_SEND_GOODS',
@@ -389,5 +407,14 @@ class topshop_ctl_trade_list extends topshop_controller{
         $msg = app::get('topshop')->_('提货码验证成功');
         return $this->splash('success',$url,$msg,true);
     }
-}
 
+    private function __saveTradeSearchFilter($filter)
+    {
+        $_SESSION['topshop_trade_search_filter'] = $filter;
+    }
+
+    private function __getTradeSearchFilter($filter)
+    {
+        return $_SESSION['topshop_trade_search_filter'];
+    }
+}

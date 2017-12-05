@@ -73,6 +73,21 @@ final class ectools_payment_plugin_alipayApp extends ectools_payment_app impleme
             $this->notify_url = preg_replace("|/+|","/", $this->notify_url);
             $this->notify_url = "https://" . $this->notify_url;
         }
+
+        // 退款异步返回地址
+        $this->notify_url_refund = kernel::openapi_url('openapi.ectools_payment/parse/' . $this->app->app_id . '/ectools_payment_plugin_alipayApp', 'refundcallback');
+        if (preg_match("/^(http):\/\/?([^\/]+)/i", $this->notify_url_refund, $matches))
+        {
+            $this->notify_url_refund = str_replace('http://','',$this->notify_url_refund);
+            $this->notify_url_refund = preg_replace("|/+|","/", $this->notify_url_refund);
+            $this->notify_url_refund = "http://" . $this->notify_url_refund;
+        }
+        else
+        {
+            $this->notify_url_refund = str_replace('https://','',$this->notify_url_refund);
+            $this->notify_url_refund = preg_replace("|/+|","/", $this->notify_url_refund);
+            $this->notify_url_refund = "https://" . $this->notify_url_refund;
+        }
         $this->submit_charset = 'utf-8';
     }
 
@@ -118,20 +133,11 @@ final class ectools_payment_plugin_alipayApp extends ectools_payment_app impleme
                 'type'=>'string',
                 'label'=>app::get('ectools')->_('整数值越小,显示越靠前,默认值为1'),
             ),
-            'support_cur'=>array(
-                'title'=>app::get('ectools')->_('支持币种'),
-                'type'=>'text hidden cur',
-                'options'=>$this->arrayCurrencyOptions,
-            ),
             'pay_fee'=>array(
                 'title'=>app::get('ectools')->_('交易费率'),
                 'type'=>'pecentage',
                 'validate_type' => 'number',
             ),
-            //                     'pay_brief'=>array(
-            //                         'title'=>app::get('ectools')->_('支付方式简介'),
-            //                          'type'=>'textarea',
-            //                     ),
             'pay_desc'=>array(
                 'title'=>app::get('ectools')->_('描述'),
                 'type'=>'html',
@@ -170,15 +176,6 @@ final class ectools_payment_plugin_alipayApp extends ectools_payment_app impleme
         $mer_id = trim($this->getConf('mer_id', __CLASS__));
         $mer_key = trim($this->getConf('mer_key', __CLASS__));
         $seller_account_name = trim($this->getConf('seller_account_name', __CLASS__));
-
-        $subject = $payment['account'].$payment['payment_id'];
-        $subject = str_replace("'",'`',trim($subject));
-        $subject = str_replace('"','`',$subject);
-        $orderDetail = str_replace("'",'`',trim($orderDetail));
-        $orderDetail = str_replace('"','`',$orderDetail);
-
-        $virtual_method = $this->getConf('virtual_method', __CLASS__);#$config['virtual_method'];
-        $real_method = $this->getConf('real_method', __CLASS__);#$config['real_method'];
 
         $parameter = array(
             'service'        => 'mobile.securitypay.pay',                        // 必填，接口名称，固定值
@@ -251,26 +248,6 @@ final class ectools_payment_plugin_alipayApp extends ectools_payment_app impleme
         return $ret;
     }
 
-
-    /**
-     * 生成签名
-     * @param mixed $form 包含签名数据的数组
-     * @param mixed $key 签名用到的私钥
-     * @access private
-     * @return string
-     */
-    public function _get_mac($key){
-        ksort($this->fields);
-        reset($this->fields);
-        $mac= "";
-        foreach($this->fields as $k=>$v){
-            $mac .= "&{$k}={$v}";
-        }
-        $mac = substr($mac,1);
-        $mac = md5($mac.$key);  //验证信息
-        return $mac;
-    }
-
     /**
      * 检验返回数据合法性
      * @param mixed $form 包含签名数据的数组
@@ -331,6 +308,219 @@ final class ectools_payment_plugin_alipayApp extends ectools_payment_app impleme
 
         return '';
     }
+
+/* 以下为退款代码 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ */
+
+    /**
+     * 提交退款支付信息的接口
+     * @param array 提交信息的数组
+     * @return mixed false or null
+     */
+    public function dorefund($payment)
+    {
+        $mer_id    = trim($this->getConf('mer_id',    __CLASS__));
+        $mer_key   = trim($this->getConf('mer_key',   __CLASS__));
+        $mer_email = trim($this->getConf('seller_account_name', __CLASS__));
+
+        if(!$mer_id || !$mer_key || !$mer_email)
+        {
+            throw new Exception('请检查支付宝后台配置信息是否都填写了');
+        }
+        if($payment['refund_fee']<=0)
+        {
+            throw new Exception('退款金额必须要大于0');
+        }
+
+        $detail = array(
+            'trade_no'   => $payment['trade_no'], //交易号
+            'refund_fee' => number_format($payment['refund_fee'],2,".",""), //退款金额
+            'remark'     => "协议退款", //退款理由
+        );
+        $detail_data = $detail['trade_no'] . "^" . $detail['refund_fee'] . "^" . $detail['remark'];
+        //构造请求参数
+        $this->add_field('service',        'refund_fastpay_by_platform_pwd');
+        $this->add_field('partner',        $mer_id);
+        $this->add_field('_input_charset', $this->submit_charset);
+        $this->add_field('sign_type',      'MD5');
+        $this->add_field('notify_url',     $this->notify_url_refund);
+        $this->add_field('seller_email',   $mer_email);
+        $this->add_field('seller_user_id', $mer_id);
+        $this->add_field('refund_date',    date("Y-m-d H:i:s"));
+        $this->add_field('batch_no',       date("Ymd") . $payment['refund_id']);
+        $this->add_field('batch_num',      1);
+        $this->add_field('detail_data',    $detail_data);
+        $sign = $this->buildSign($this->fields, $mer_key);
+        $this->add_field('sign', $sign);
+        logger::info('请求alipayApp参数：'.var_export($this->fields,1));
+
+        // echo $this->gen_refund_form();exit;
+        // Generate html and send payment.
+        $submit_html = $this->gen_refund_form();
+        return [
+          'status'=>'progress',
+          'refund_id'=>$payment['refund_id'],
+          'trade_no'=>$payment['trade_no'],
+          'submit_html'=>$submit_html,
+        ];
+    }
+
+    /**
+     * 处理第三方支付方式退款返回的信息
+     * @param array 第三方支付方式返回的信息
+     * @return mixed
+     */
+    public function refundcallback(&$recv)
+    {
+        // 验证支付宝通知信息
+        $verify_result = $this->verifyNotify($recv);
+
+        if($verify_result)
+        {
+            // 由于退款时每次只退一条，所以返回数据也就是一条
+            $result_details = explode('^', $recv['result_details']); // 交易号^退款金额^处理结果$退费账号^退费账户ID^退费金额^处理结果
+            $ret['refund_id']   = substr($recv['batch_no'], 8); // 原请求退款批次号,前八位为日期，后面的为系统的refund_id
+            $ret['money']       = $result_details['1'];
+            $ret['cur_money']   = $result_details['1'];
+            $ret['trade_no']    = $result_details['0']; //支付宝的交易号，退款时候传过去的支付宝交易号
+            $ret['memo']        = $recv['detail_data'];
+
+            if(strtoupper($result_details['2'])=='SUCCESS')
+            {
+                $ret['status'] = 'REFUND_SUCCESS';
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
+     * 生成支付表单 - 自动提交
+     * @params null
+     * @return null
+     */
+    public function gen_refund_form()
+    {
+        $refund_submit_url = 'https://mapi.alipay.com/gateway.do?_input_charset=utf-8';
+        $sHtml = "<form id='applyForm' target='_blank' name='applyForm' method='POST' action='" . $refund_submit_url . "'>";
+        foreach($this->fields as $key => $val)
+        {
+            $sHtml .= "<input type='hidden' name='" . $key . "' value='" . $val . "'/>";
+        }
+        $sHtml = $sHtml . "<input type='submit' value='submitForm'></form>";
+        $sHtml = $sHtml."<script>document.forms['applyForm'].submit();</script>";
+        return $sHtml;
+    }
+
+    /**
+     * 支付成功回打支付成功信息给支付网关
+     */
+    public function refund_result($paymentId)
+    {
+        echo "success";exit;
+    }
+
+    /**
+     * 获取远程服务器ATN结果,验证返回URL是否来自支付宝
+     * @param $notify_id 通知校验ID
+     * @return 服务器ATN结果
+     * 验证结果集：
+     * invalid命令参数不对 出现这个错误，请检测返回处理中partner和key是否为空 
+     * true 返回正确信息
+     * false 请检查防火墙或者是服务器阻止端口问题以及验证时间是否超过一分钟
+     */
+    private function verifyNotifySource($notify_id)
+    {
+        $mer_id = trim($this->getConf('mer_id', __CLASS__));
+        $veryfy_url = 'https://mapi.alipay.com/gateway.do?service=notify_verify&';
+
+        $veryfy_url = $veryfy_url."partner=" . $mer_id . "&notify_id=" . $notify_id;
+        $responseTxt = client::get($veryfy_url)->getBody();
+        return $responseTxt;
+    }
+
+    /**
+     * 针对notify_url验证消息是否是支付宝发出的合法消息
+     * @return 验证结果
+     */
+    private function verifyNotify($recv)
+    {
+        if(!$recv)
+        {
+            return false;
+        }
+        else
+        {
+            $mer_id    = trim($this->getConf('mer_id',  __CLASS__));
+            $mer_key   = trim($this->getConf('mer_key', __CLASS__));
+            //生成签名结果
+            $sign = $this->buildSign($recv, $mer_key);
+            //获取支付宝远程服务器ATN结果（验证是否是支付宝发来的消息）
+            $responseTxt = 'false';
+            if( !empty($recv['notify_id']) )
+            {
+                $responseTxt = $this->verifyNotifySource($recv['notify_id']);
+            }
+
+            //写日志记录
+            if($recv['sign']==$sign)
+            {
+                $isSignStr = '验签通过';
+            }
+            else
+            {
+                $isSignStr = '验签失败';
+            }
+            #记录返回信息
+            $log_text  = app::get('ectools')->_('支付宝退款验证来源返回信息：') . $responseTxt . "\n";
+            $log_text .= app::get('ectools')->_('验签结果：') . $isSignStr . "\n";
+            $log_text .= app::get('ectools')->_('支付宝退款异步通知数据：') . http_build_query($recv);
+            logger::error($log_text);
+
+            //验证
+            //$responsetTxt的结果不是true，与服务器设置问题、合作身份者ID、notify_id一分钟失效有关
+            //isSign的结果不是true，与安全校验码、请求时的参数格式（如：带自定义参数等）、编码格式有关
+            if( preg_match("/true$/i", $responseTxt) && ($recv['sign']==$sign) )
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * 生成签名
+     * @param mixed $form 包含签名数据的数组
+     * @param mixed $key 签名用到的私钥
+     * @access private
+     * @return string
+     */
+    private function buildSign($para, $mer_key)
+    {
+        ksort($para);
+        reset($para);
+        $signstr = '';
+        foreach($para as $k=>$v)
+        {
+            if( $k != 'sign' && $k != 'sign_type' && $v!='')
+            {
+                $signstr .= $k . '=' . $v . '&';
+            }
+        }
+        //去掉最后一个&字符
+        $signstr = rtrim($signstr, '&');
+        //如果存在转义字符，那么去掉转义
+        if(get_magic_quotes_gpc())
+        {
+            $signstr = stripslashes($signstr);
+        }
+        $sign = md5($signstr . $mer_key);
+        return $sign;
+    }
+
+/* 以上为退款代码 ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ */
 
 
 }

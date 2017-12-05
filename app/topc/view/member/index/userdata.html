@@ -1,8 +1,7 @@
-<!-- 无预存款时添加样式“no-deposit”，否则不添加 -->
-<div<{if $noDeposit}> class="no-deposit"<{/if}>>
+<div>
   <div class="col-lg-6 txt-list assets">
     <div>我的资产</div>
-    <ul class="inlist">
+    <ul>
       <li class="redpacket">
         <a href="<{url action=topc_ctl_member_hongbao@index}>">
           <i class="icon-redpacket deposit"></i>
@@ -24,15 +23,6 @@
         <span style="text-align:center;display:block"><{$coupon.count|default:0}></span>
         </a>
       </li>
-      <{if !$noDeposit}>
-      <li class="deposit">
-        <a href="<{url action=topc_ctl_member_deposit@view}>">
-        <i class="icon-cash deposit"></i>
-        <br/> <span class="deposit">预存款</span>
-        <span style="text-align:center;display:block"><{$deposit.deposit|cur}></span>
-        </a>
-      </li>
-      <{/if}>
     </ul>
   </div>
   <div class="col-lg-6 txt-list safe-center">

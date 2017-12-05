@@ -2,9 +2,6 @@
     <service id="desktop_finder.sysuser_mdl_user">
         <class>sysuser_finder_user</class>
     </service>
-    <service id="desktop_finder.sysuser_mdl_user_deposit_cash">
-        <class>sysuser_finder_user_deposit_cash</class>
-    </service>
     <service id="desktop_finder.sysuser_mdl_user_grade">
         <class>sysuser_finder_grade</class>
     </service>

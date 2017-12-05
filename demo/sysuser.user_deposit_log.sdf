@@ -274,3 +274,4 @@ a:7:{s:6:"log_id";i:273;s:4:"type";s:7:"expense";s:7:"user_id";i:44;s:8:"operato
 a:7:{s:6:"log_id";i:274;s:4:"type";s:7:"expense";s:7:"user_id";i:44;s:8:"operator";s:6:"用户";s:3:"fee";s:8:"4399.000";s:7:"message";s:62:"用户支付订单消费。支付单号：16101402256616114441";s:7:"logtime";i:1476383154;}
 a:7:{s:6:"log_id";i:275;s:4:"type";s:7:"expense";s:7:"user_id";i:44;s:8:"operator";s:6:"用户";s:3:"fee";s:8:"4399.000";s:7:"message";s:62:"用户支付订单消费。支付单号：16101402284332514441";s:7:"logtime";i:1476383317;}
 a:7:{s:6:"log_id";i:276;s:4:"type";s:7:"expense";s:7:"user_id";i:44;s:8:"operator";s:6:"用户";s:3:"fee";s:7:"399.000";s:7:"message";s:62:"用户支付订单消费。支付单号：16101402310514314441";s:7:"logtime";i:1476383482;}
+a:7:{s:6:"log_id";i:277;s:4:"type";s:3:"add";s:7:"user_id";i:44;s:8:"operator";s:5:"admin";s:3:"fee";s:5:"0.010";s:7:"message";s:44:"订单退款。订单号： 1610140210010044";s:7:"logtime";i:1483683968;}

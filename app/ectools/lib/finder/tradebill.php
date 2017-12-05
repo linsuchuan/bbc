@@ -10,7 +10,7 @@ class ectools_finder_tradebill{
         if($paymentId)
         {
             $objMdlPayments = app::get('ectools')->model('payments');
-            $pagedata['detail'] = $objMdlPayments->getRow('status,pay_type,pay_app_id,pay_name,account,bank,pay_account,currency,paycost,pay_ver,ip,memo,trade_no,thirdparty_account,user_id,user_name,op_id,op_name',array('payment_id'=>$paymentId));
+            $pagedata['detail'] = $objMdlPayments->getRow('status,pay_type,pay_app_id,pay_name,account,bank,pay_account,currency,paycost,ip,memo,trade_no,thirdparty_account,user_id,user_name,op_id,op_name',array('payment_id'=>$paymentId));
         }
         return view::make('ectools/pay_detail.html', $pagedata)->render();
     }

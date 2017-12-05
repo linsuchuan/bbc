@@ -21,7 +21,7 @@
 						<input type="text" <{if $setting_item.validate_type}>vtype="<{$setting_item.validate_type}>"<{/if}> id="dom_el_<{$key}>" <{if $setting_item.name}>name="<{$setting_item.name}>"<{else}>name="setting[<{$key}>]"<{/if}> value="<{$setting_item.value}>" title="<{$setting_item.title}>" class="x-input" autocomplete="off">%
 
 						<{elseif $setting_item.type == 'file'}>
-                        <input type="file" <{if $setting_item.validate_type}>vtype="<{$setting_item.validate_type}>"<{/if}> id="dom_el_<{$key}>" <{if $setting_item.name}>name="<{$setting_item.name}>"<{else}>name="setting[<{$key}>]"<{/if}> title="<{$setting_item.title}>"><em><{$setting_item.value}></em>
+                        <input type="file" <{if $setting_item.validate_type}>vtype="<{$setting_item.validate_type}>"<{/if}> id="dom_el_<{$key}>" <{if $setting_item.name}>name="<{$setting_item.name}>"<{else}>name="setting[<{$key}>]"<{/if}> title="<{$setting_item.title}>"><em><{$setting_item.value}></em><span class="note"> <{$setting_item.label}></span>
 
                         <{elseif $setting_item.type == 'textarea'}>
                         <textarea <{if $setting_item.validate_type}>vtype="<{$setting_item.validate_type}>"<{/if}> id="dom_el_<{$key}>" <{if $setting_item.name}>name="<{$setting_item.name}>"<{else}>name="setting[<{$key}>]"<{/if}> title="<{$setting_item.title}>" rows="4" style="width:99%;"><{$setting_item.value}></textarea>

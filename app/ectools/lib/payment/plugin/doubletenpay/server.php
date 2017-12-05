@@ -50,6 +50,7 @@ class ectools_payment_plugin_doubletenpay_server extends ectools_payment_app {
         $sdf = array(
             'payment_id'=>$in['out_trade_no'],
             'bank'=>app::get('ectools')->_('腾讯财付通'),
+            'trade_no'=>$in['transaction_id'],
             'pay_account'=>app::get('ectools')->_('付款帐号'),
             'currency'=>'CNY',
             'money'=>$money,

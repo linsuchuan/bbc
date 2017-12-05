@@ -15,7 +15,7 @@ class base_hashing_hasher_bcrypt implements base_hashing_hasher_interface
 	 *
 	 * @var int
 	 */
-	protected $rounds = 10;
+	protected $rounds = 4;
 
 	/**
 	 * Hash the given value.

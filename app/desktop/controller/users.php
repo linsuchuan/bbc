@@ -39,7 +39,7 @@ class desktop_ctl_users extends desktop_controller{
                     $_POST['roles'][]=array('role_id'=>$roles);
                 }
                 $_POST['pam_account']['createtime'] = time();
-                $_POST['pam_account']['login_password'] = pam_encrypt::make($_POST['pam_account']['login_password']);
+                $_POST['pam_account']['login_password'] = hash::make($_POST['pam_account']['login_password']);
                 $_POST['pam_account']['account_type'] = pamAccount::getAuthType($this->app->app_id);
                 if($users->save($_POST))
                 {
@@ -95,7 +95,7 @@ class desktop_ctl_users extends desktop_controller{
             }
 
             $pass_row = app::get('desktop')->model('account')->getRow('account_id,login_password',$filter);
-            if (!$pass_row || !pam_encrypt::check(input::get('old_login_password'), $pass_row['login_password']))
+            if (!$pass_row || !hash::check(input::get('old_login_password'), $pass_row['login_password']))
             {
                 $this->end(false,app::get('desktop')->_('管理员密码或原始密码不正确'));
             }elseif(!(strlen($_POST['new_login_password']) >= 6 && preg_match("/\d+/",$_POST['new_login_password']) && preg_match("/[a-zA-Z]+/",$_POST['new_login_password']))){
@@ -106,7 +106,7 @@ class desktop_ctl_users extends desktop_controller{
                 $this->end(false,app::get('desktop')->_('两次密码不一致'));
             }else{
                 $_POST['pam_account']['account_id'] = $_POST['user_id'];
-                $_POST['pam_account']['login_password'] = pam_encrypt::make(trim($_POST['new_login_password']));
+                $_POST['pam_account']['login_password'] = hash::make(trim($_POST['new_login_password']));
                 $users->save($_POST);
                 $this->end(true,app::get('desktop')->_('密码修改成功'));
             }

@@ -21,7 +21,7 @@
     <div class="division goods-selector">
 
       <div data-extend = "select" <{if $setting.selector=="filter"}>style="display:none;"<{/if}>>
-        <{input type="object" value=$setting.item_select object="item" app="sysitem" filter="use_platform|noequal=1" name="item_select" select="checkbox" multiple="true" textcol="title"}>
+        <{input type="object" value=$setting.item_select object="item" app="sysitem" filter="use_platform|noequal=1" name="item_select" select="checkbox" vtype="required" multiple="true" textcol="title"}>
       </div>
     </div>
   </div>

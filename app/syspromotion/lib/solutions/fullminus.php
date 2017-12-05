@@ -35,8 +35,8 @@ class syspromotion_solutions_fullminus implements syspromotion_interface_promoti
             // throw new \LogicException('可参与的满减次数已经用完!');
         }
         $valid_grade = explode(',', $fullminusInfo['valid_grade']);
-        $gradeInfo = app::get('syspromotion')->rpcCall('user.grade.basicinfo',['user_id'=>$params['user_id']]);
-        if( !in_array($gradeInfo['grade_id'], $valid_grade) )
+        // $gradeInfo = app::get('syspromotion')->rpcCall('user.grade.basicinfo',['user_id'=>$params['user_id']]);
+        if( !in_array($params['grade_id'], $valid_grade) )
         {
             return 0;
             // throw new \LogicException('您的当前会员等级不可参加此促销!');

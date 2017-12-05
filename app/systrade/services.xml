@@ -9,6 +9,9 @@
     <service id="desktop_finder.systrade_mdl_order_complaints">
         <class>systrade_finder_complaints</class>
     </service>
+    <service id="desktop_finder.systrade_mdl_trade_cancel">
+        <class>systrade_finder_canceltrade</class>
+    </service>
     <!--清除初始化数据-->
     <service id="desktop_debug_clean_data">
         <class>systrade_data_clean</class>

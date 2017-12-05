@@ -25,14 +25,11 @@ class topapi_api_v1_payment_dopay implements topapi_interface_api{
         return [
             'payment_id' => ['type'=>'string', 'valid'=>'required', 'desc'=>'支付单号', 'msg'=>'请输入支付单号'],
             'pay_app_id' => ['type'=>'string','valid'=>'required', 'desc'=>'支付方式', 'msg'=>'请输入支付单号'],
-            'deposit_password' => ['type'=>'string','valid'=>'required_if:pay_app_id,deposit', 'desc'=>'预存款支付密码','msg'=>'请输入支付密码'],
+            'deposit_password' => ['type'=>'string','valid'=>'required_with:hongbao_ids', 'desc'=>'支付密码','msg'=>'请输入支付密码|请输入支付密码'],
 //          'tids' => ['type'=>'string','valid'=>'required', 'description'=>'被支付的订单号集合,用逗号隔开', 'default'=>'', 'example'=>'1241231213432,2354234523452'],
 //          'platform' => ['type'=>'string','valid'=>'required', 'description'=>'来源平台（wap、pc）', 'default'=>'pc', 'example'=>'pc'],
 //          'money' => ['type'=>'string','valid'=>'required', 'description'=>'支付金额', 'default'=>'', 'example'=>'234.50'],
-//          'hongbao_ids' => ['type'=>'string','valid'=>'required_without:pay_app_id', 'description'=>'使用支付的红包ID,用逗号隔开', 'default'=>'', 'example'=>'1,2,3'],
-
-
-
+            'hongbao_ids' => ['type'=>'string','valid'=>'required_without:pay_app_id', 'description'=>'使用支付的红包ID,用逗号隔开', 'default'=>'', 'example'=>'1,2,3'],
             ];
     }
 
@@ -54,6 +51,7 @@ class topapi_api_v1_payment_dopay implements topapi_interface_api{
         $requestParams['deposit_password'] = $params['deposit_password'];
         $requestParams['user_id'] = $params['user_id'];
         $requestParams['tids'] = implode(',',  array_keys($paymentBill['trade']));
+        $requestParams['hongbao_ids'] = $params['hongbao_ids'];
 
         echo app::get('topwap')->rpcCall('payment.trade.pay',$requestParams);
         exit;

@@ -19,9 +19,11 @@ return array(
         'v1' => [
             'region.json' => ['uses'=>'topapi_api_v1_regionJson'],
             //物流模块
-            'logistics.list.get' => ['uses'=>'topapi_api_v1_logistics_list', 'auth'=>true],
-            'logistics.send' => ['uses'=>'topapi_api_v1_logistics_send', 'auth'=>true],
-            'logistics.get' => ['uses'=>'topapi_api_v1_logistics_get', 'auth'=>true],
+            //
+            'logistics.list.get' => ['uses' => 'topapi_api_v1_logistics_list', 'auth' => true],
+            'logistics.send'     => ['uses' => 'topapi_api_v1_logistics_send', 'auth' => true],
+            'logistics.get'      => ['uses' => 'topapi_api_v1_logistics_get',  'auth' => true],
+            'logistics.ziti.list'=> ['uses' => 'topapi_api_v1_logistics_ziti_list', 'auth' => true],
 
             // 模板模块
             'theme.modules'         => ['uses'=>'topapi_api_v1_theme_modules'],
@@ -30,55 +32,53 @@ return array(
             'category.itemCategory' => ['uses'=>'topapi_api_v1_category_itemCategory'],
 
             //用户登录注册
-            'user.login'         => ['uses'=>'topapi_api_v1_user_login'],
-            'user.logout'        => ['uses'=>'topapi_api_v1_user_logout', 'auth'=>true],
-            'user.signup'        => ['uses'=>'topapi_api_v1_user_signup'],
-            'user.license'       => ['uses'=>'topapi_api_v1_user_license'],
-            'user.protocol'       => ['uses'=>'topapi_api_v1_user_useProtocol'],
-            'user.verifyAccount' => ['uses'=>'topapi_api_v1_user_verifyAccount'],
-            'user.sendSms'       => ['uses'=>'topapi_api_v1_user_sendSms'],
-            'user.verifySms'     => ['uses'=>'topapi_api_v1_user_verifySms'],
-            'user.vcode'         => ['uses'=>'topapi_api_v1_user_vcode'],
-            'user.forgot.resetpassword' => ['uses'=>'topapi_api_v1_user_resetPassword'],
+            'user.login'                => ['uses' => 'topapi_api_v1_user_login'],
+            'user.logout'               => ['uses' => 'topapi_api_v1_user_logout', 'auth'  => true],
+            'user.signup'               => ['uses' => 'topapi_api_v1_user_signup'],
+            'user.license'              => ['uses' => 'topapi_api_v1_user_license'],
+            'user.protocol'             => ['uses' => 'topapi_api_v1_user_useProtocol'],
+            'user.verifyAccount'        => ['uses' => 'topapi_api_v1_user_verifyAccount'],
+            'user.sendSms'              => ['uses' => 'topapi_api_v1_user_sendSms'],
+            'user.verifySms'            => ['uses' => 'topapi_api_v1_user_verifySms'],
+            'user.vcode'                => ['uses' => 'topapi_api_v1_user_vcode'],
+            'user.forgot.resetpassword' => ['uses' => 'topapi_api_v1_user_resetPassword'],
 
             //会员中心
-            'member.index' => ['uses'=>'topapi_api_v1_member_index', 'auth'=>true],
-            'member.basics.update' => ['uses'=>'topapi_api_v1_member_updateBasics', 'auth'=>true],
-            'member.basics.get' => ['uses'=>'topapi_api_v1_member_getBasics', 'auth'=>true],
-            'member.setAccount' => ['uses'=>'topapi_api_v1_member_setAccount', 'auth'=>true],
+            'member.index'         => ['uses' => 'topapi_api_v1_member_index',        'auth' => true],
+            'member.basics.update' => ['uses' => 'topapi_api_v1_member_updateBasics', 'auth' => true],
+            'member.basics.get'    => ['uses' => 'topapi_api_v1_member_getBasics',    'auth' => true],
+            'member.setAccount'    => ['uses' => 'topapi_api_v1_member_setAccount',   'auth' => true],
 
             //收货地址
-            'member.address.list' => ['uses'=>'topapi_api_v1_member_address_list', 'auth'=>true],
-            'member.address.get' => ['uses'=>'topapi_api_v1_member_address_get', 'auth'=>true],
-            'member.address.create' => ['uses'=>'topapi_api_v1_member_address_create', 'auth'=>true],
-            'member.address.update' => ['uses'=>'topapi_api_v1_member_address_update', 'auth'=>true],
-            'member.address.delete' => ['uses'=>'topapi_api_v1_member_address_delete', 'auth'=>true],
-            'member.address.setDefault' => ['uses'=>'topapi_api_v1_member_address_setDefault', 'auth'=>true],
+            'member.address.list'       => ['uses' => 'topapi_api_v1_member_address_list',       'auth' => true],
+            'member.address.get'        => ['uses' => 'topapi_api_v1_member_address_get',        'auth' => true],
+            'member.address.create'     => ['uses' => 'topapi_api_v1_member_address_create',     'auth' => true],
+            'member.address.update'     => ['uses' => 'topapi_api_v1_member_address_update',     'auth' => true],
+            'member.address.delete'     => ['uses' => 'topapi_api_v1_member_address_delete',     'auth' => true],
+            'member.address.setDefault' => ['uses' => 'topapi_api_v1_member_address_setDefault', 'auth' => true],
 
-            //预存款
-            'member.deposit.detail' => ['uses'=>'topapi_api_v1_member_deposit_detail', 'auth'=>true],
-            'member.deposit.recharge' => ['uses'=>'topapi_api_v1_member_deposit_recharge', 'auth'=>true],
             //优惠券列表
             'member.coupon.list' => ['uses'=>'topapi_api_v1_member_coupon_list', 'auth'=>true],
             //积分明细
             'member.point.detail' => ['uses'=>'topapi_api_v1_member_point_detail', 'auth'=>true],
 
-            'member.aftersales.list' => ['uses'=>'topapi_api_v1_member_aftersales_list', 'auth'=>true],
-            'member.aftersales.get' => ['uses'=>'topapi_api_v1_member_aftersales_get', 'auth'=>true],
-            'member.aftersales.applyInfo.get' => ['uses'=>'topapi_api_v1_member_aftersales_getApplyInfo', 'auth'=>true],
-            'member.aftersales.apply' => ['uses'=>'topapi_api_v1_member_aftersales_apply', 'auth'=>true],
+            'member.aftersales.list'          => ['uses' => 'topapi_api_v1_member_aftersales_list',         'auth' => true],
+            'member.aftersales.get'           => ['uses' => 'topapi_api_v1_member_aftersales_get',          'auth' => true],
+            'member.aftersales.applyInfo.get' => ['uses' => 'topapi_api_v1_member_aftersales_getApplyInfo', 'auth' => true],
+            'member.aftersales.apply'         => ['uses' => 'topapi_api_v1_member_aftersales_apply',        'auth' => true],
 
-            'member.favorite.all' => ['uses'=>'topapi_api_v1_member_favorite_all', 'auth'=>true],
-            'member.favorite.item.list' => ['uses'=>'topapi_api_v1_member_favorite_item', 'auth'=>true],
-            'member.favorite.item.remove' => ['uses'=>'topapi_api_v1_member_favorite_removeItem', 'auth'=>true],
-            'member.favorite.item.add' => ['uses'=>'topapi_api_v1_member_favorite_addItem', 'auth'=>true],
-            'member.favorite.shop.list' => ['uses'=>'topapi_api_v1_member_favorite_shop', 'auth'=>true],
-            'member.favorite.shop.remove' => ['uses'=>'topapi_api_v1_member_favorite_removeShop', 'auth'=>true],
-            'member.favorite.shop.add' => ['uses'=>'topapi_api_v1_member_favorite_addShop', 'auth'=>true],
+            'member.favorite.all'             => ['uses' => 'topapi_api_v1_member_favorite_all',        'auth' => true],
+            'member.favorite.item.list'       => ['uses' => 'topapi_api_v1_member_favorite_item',       'auth' => true],
+            'member.favorite.item.remove'     => ['uses' => 'topapi_api_v1_member_favorite_removeItem', 'auth' => true],
+            'member.favorite.item.add'        => ['uses' => 'topapi_api_v1_member_favorite_addItem',    'auth' => true],
+            'member.favorite.shop.list'       => ['uses' => 'topapi_api_v1_member_favorite_shop',       'auth' => true],
+            'member.favorite.shop.remove'     => ['uses' => 'topapi_api_v1_member_favorite_removeShop', 'auth' => true],
+            'member.favorite.shop.add'        => ['uses' => 'topapi_api_v1_member_favorite_addShop',    'auth' => true],
 
             'member.rate.list' => ['uses'=>'topapi_api_v1_member_rate_list', 'auth'=>true],
             'member.rate.add' => ['uses'=>'topapi_api_v1_member_rate_add', 'auth'=>true],
             'member.ratetrade.get' => ['uses'=>'topapi_api_v1_member_rate_rateTrade', 'auth'=>true],
+            'member.rate.append' => ['uses'=>'topapi_api_v1_member_rate_append', 'auth'=>true],
 
             'member.complaints.create' => ['uses'=>'topapi_api_v1_member_complaints_create', 'auth'=>true],
             'member.complaints.close' => ['uses'=>'topapi_api_v1_member_complaints_close', 'auth'=>true],
@@ -96,6 +96,7 @@ return array(
             'member.security.updateMobile' => ['uses'=>'topapi_api_v1_member_security_updateMobile', 'auth'=>true],
             'member.security.saveMobile' => ['uses'=>'topapi_api_v1_member_security_saveMobile', 'auth'=>true],
             'member.security.userConf' => ['uses'=>'topapi_api_v1_member_security_getUserSecurityConf', 'auth'=>true],
+            'member.security.validatePayPassword' => ['uses'=>'topapi_api_v1_member_security_validatePayPassword', 'auth'=>true],
 
             //订单
             'trade.list' => ['uses'=>'topapi_api_v1_trade_list', 'auth'=>true],
@@ -112,6 +113,7 @@ return array(
             'item.search' => ['uses'=>'topapi_api_v1_item_itemSearch'],
             'item.detail' => ['uses'=>'topapi_api_v1_item_itemDetail'],
             'item.desc' => ['uses'=>'topapi_api_v1_item_itemDesc'],
+            'item.packageInfo' => ['uses'=>'topapi_api_v1_item_packageInfo'],
             'item.rate.list' => ['uses'=>'topapi_api_v1_item_itemRateList'],
 
             //购物车
@@ -138,14 +140,15 @@ return array(
             'promotion.coupon.cancel' => ['uses'=>'topapi_api_v1_promotion_cancelCoupon', 'auth'=>true],
             'promotion.coupon.code.get' => ['uses'=>'topapi_api_v1_promotion_getCouponCode', 'auth'=>true],
             'promotion.coupon.list.get' => ['uses'=>'topapi_api_v1_promotion_shopCouponList'],
+            //促销的红包接口
+            'promotion.hongbao.list' => ['uses'=>'topapi_api_v1_promotion_hongbaoList', 'auth'=>true],
+            'promotion.page.info' => ['uses'=>'topapi_api_v1_promotion_pageInfo'],
 
             //支付
             'payment.pay.paycenter' => ['uses'=>'topapi_api_v1_payment_paymentList', 'auth'=>true],
             'payment.pay.getPayment' => ['uses'=>'topapi_api_v1_payment_paymentBill', 'auth'=>true],
             'payment.pay.create' => ['uses'=>'topapi_api_v1_payment_createPayment', 'auth'=>true],
             'payment.pay.do' => ['uses'=>'topapi_api_v1_payment_dopay', 'auth'=>true],
-            'payment.recharge.do' => ['uses'=>'topapi_api_v1_payment_recharge', 'auth'=>true],
-
 
             // 店铺
             'shop.index' => ['uses'=>'topapi_api_v1_shop_indexmodule'],
@@ -155,6 +158,11 @@ return array(
             'content.info' => ['uses'=>'topapi_api_v1_content_getContentInfo'],
             'content.list' => ['uses'=>'topapi_api_v1_content_getContentList'],
             'content.node.list' =>['uses'=>'topapi_api_v1_content_getNodeList'],
+            //商家文章
+            'content.shop.info' => ['uses'=>'topapi_api_v1_content_shopArticleInfo'],
+
+            //图片
+            'image.upload' =>['uses'=>'topapi_api_v1_image_upload', 'auth'=>true],
         ],
         'v2' => [
             'item.detail' => ['uses'=>'topapi_api_v2_item_itemDetail'],

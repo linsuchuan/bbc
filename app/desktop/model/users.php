@@ -42,7 +42,7 @@ class desktop_mdl_users extends dbeav_model{
     function editUser(&$data){
         if($data['userpass'])
         {
-            $data[':account@desktop']['login_password'] = pam_encrypt::make(trim($data['userpass']));
+            $data[':account@desktop']['login_password'] = hash::make(trim($data['userpass']));
         }
         $data['pam_account']['account_type'] = pamAccount::getAuthType($this->app->app_id);
         $data['pam_account']['createtime'] = time();

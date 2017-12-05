@@ -36,32 +36,7 @@ class sysuser_check{
             return false;
         }
 
-        //验证是否有预存款，有预存款的用户不能删除
-        if($this->depositCheck(array('user_id'=>$userIds)))
-        {
-            throw new \LogicException(app::get('sysuser')->_('该会员有未使用的预存款'));
-            return false;
-        }
-
         return true;
-    }
-
-    public function depositCheck($filter)
-    {
-        $noDel = array();
-        $objMdlPoints = app::get('sysuser')->model('user_deposit');
-        $deposits = $objMdlPoints->getList('deposit,user_id',$filter);
-        if($deposits)
-        {
-            foreach($deposits as $key=>$val)
-            {
-                if($val['deposit'] > 0)
-                {
-                    $noDel[] = $val['user_id'];
-                }
-            }
-        }
-        return $noDel;
     }
 
     public function pointCheck($filter)

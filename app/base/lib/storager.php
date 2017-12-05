@@ -106,7 +106,16 @@ class base_storager {
         {
             $imageUrlName = stristr($imageUrl,'/',true);
             $imgHostKey = $imageUrlName ?: 0;
-            $imageUrl = kernel::get_host_mirror_img($imgHostKey).substr($imageUrl,strlen($imageUrlName));
+
+            if( $imgHostKey && $imgHostKey == 'shopexdemoimage' )
+            {
+                $shopexDemoImageLink = config::get('link.shopexdemoimage');
+                $imageUrl = $shopexDemoImageLink.substr($imageUrl,strlen($imageUrlName));
+            }
+            else
+            {
+               $imageUrl = kernel::get_host_mirror_img($imgHostKey).substr($imageUrl,strlen($imageUrlName));
+            }
         }
 
         if( $size && $imageUrl )

@@ -28,11 +28,11 @@ class syslogistics_ctl_admin_regions extends desktop_controller {
     public function getChildNode()
     {
         $id = input::get('regionId');
-        $data = area::getAreaIdPath()[$id];
+        $data = area::getAreaIdPath($id);
         foreach( $data as $key)
         {
-            $childData[$key] = area::areaKvdata()[$key];
-            if( area::getAreaIdPath()[$key] )
+            $childData[$key] = area::areaKvdata($key);
+            if( area::getAreaIdPath($key) )
             {
                 $childData[$key]['is_child'] = true;
             }

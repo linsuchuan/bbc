@@ -23,7 +23,6 @@ class sysuser_finder_user {
     public $column_area_order = 130;
     public $detail_basic;
     public $detail_pwd;
-    public $detail_deposit;
     public $detail_grade;
     public $detail_experience;
     public $detail_point;
@@ -40,7 +39,6 @@ class sysuser_finder_user {
         $this->column_area = app::get('sysuser')->_('地区');
         $this->detail_basic = app::get('sysuser')->_('会员信息及修改');
         $this->detail_pwd = app::get('sysuser')->_('密码修改');
-        $this->detail_deposit = app::get('sysuser')->_('会员预存款');
         $this->detail_grade = app::get('sysuser')->_('会员等级');
         $this->detail_experience = app::get('sysuser')->_('会员经验值');
         $this->detail_point = app::get('sysuser')->_('会员积分');
@@ -118,11 +116,6 @@ class sysuser_finder_user {
                 'detail_pwd'=>array(
                     'href'=>'javascript:void(0);',
                     'submit'=>'?'.$newu.'&finderview=detail_pwd&id='.$row['user_id'].'&_finder[finder_id]='.$_GET['_finder']['finder_id'],'label'=>app::get('sysuser')->_('修改密码'),
-                    'target'=>'tab',
-                ),
-                'detail_deposit'=>array(
-                    'href'=>'javascript:void(0);',
-                    'submit'=>'?'.$newu.'&finderview=detail_deposit&id='.$row['user_id'].'&_finder[finder_id]='.$_GET['_finder']['finder_id'],'label'=>app::get('sysuser')->_('会员预存款'),
                     'target'=>'tab',
                 ),
                 'detail_experience'=>array(
@@ -273,23 +266,6 @@ class sysuser_finder_user {
         $pagedata['data'] = $sysinfo;
         return view::make('sysuser/admin/user/updatepwd.html', $pagedata)->render();
         //return 'ok';
-    }
-
-    /**
-     * @brief 会员密码管理(update)
-     *
-     * @param $row
-     *
-     * @return
-     */
-    public function detail_deposit($row)
-    {
-        $deposit['user_id'] = $row;
-        $deposit['deposit'] = kernel::single('sysuser_data_deposit_deposit')->get($row);
-
-        $deposit['list'] = kernel::single('sysuser_data_deposit_log')->getAll($row);
-
-        return view::make('sysuser/admin/user/detail_deposit.html', $deposit);
     }
 
     /**

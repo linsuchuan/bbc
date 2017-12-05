@@ -7,11 +7,21 @@ class topc_ctl_topics extends topc_controller{
         $this->setLayoutFlag('topics');
     }
 
-    function index($catId)
+    function index()
     {
-        $catId = intval($catId);
-        $data = app::get('topc')->rpcCall('category.cat.get.info',array('cat_id'=>$catId,'fields'=>'cat_name,cat_template'));
-        $this->setLayout($data[$catId]['cat_template']);
+        $filter = input::get();
+        if($filter['cat_id']){
+            $data = app::get('topc')->rpcCall('category.cat.get.info',array('cat_id'=>$filter['cat_id'],'fields'=>'cat_name,cat_template'));
+            $this->setLayout($data[$filter['cat_id']]['cat_template']);
+        }elseif ($filter['virtual_cat_id']) {
+            $data = app::get('topc')->rpcCall('category.virtualcat.getData',array('virtual_cat_id'=>$filter['virtual_cat_id'],'fields'=>'virtual_cat_name,virtual_cat_template'));
+            if($data['lv1']){
+                $this->setLayout($data['lv1']['virtual_cat_template']);
+            }else{
+                $this->setLayout($data['lv2']['virtual_cat_template']);
+            }            
+        }
+
         return $this->page('topc/topics.html');
     }
 }

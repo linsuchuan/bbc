@@ -169,6 +169,18 @@ class topapi_api_v1_cart_checkoutCart implements topapi_interface_api{
             $shipping['shipping_type'] = 'express';//默认为在线支付
             $shipping['shipping_name'] = $this->shippingType[$shipping['shipping_type']];
             $val['shipping'] = $shipping;
+
+            $ifOpenZiti = app::get('syslogistics')->getConf('syslogistics.ziti.open');
+
+            if($ifOpenZiti == 'true' && $val['shop_type'] == "self")
+            {
+                $val['ziti'] = true;
+            }
+            else
+            {
+                $val['ziti'] = false;
+            }
+
             $val['cartCount']['payment'] = $totalInfoWithUserPoint['total']['shop'][$val['shop_id']]['payment'];
             $val['cartCount']['obtain_point_fee'] = $totalInfoWithUserPoint['total']['shop'][$val['shop_id']]['obtain_point_fee'] ?: 0;
             $val['cartCount']['post_fee'] = $totalInfoWithUserPoint['total']['shop'][$val['shop_id']]['post_fee'] ?: 0;
@@ -228,7 +240,7 @@ class topapi_api_v1_cart_checkoutCart implements topapi_interface_api{
             'user_id' => $user_id,
             'shop_id' => intval($shop_id),
             'is_valid' => 1,
-            'platform' => 'wap',
+            'platform' => 'app',
         );
         $couponListData = app::get('topapi')->rpcCall('user.coupon.list', $params);
         $couponList = $couponListData['coupons'];

@@ -164,6 +164,8 @@ return array(
         'clearing.getList' => ['uses' => 'sysclearing_api_getSettlementList@getList', 'version' => ['v1']],
         //根据商品信息获取子订单列表
         'trade.order.list.item' =>['uses' => 'systrade_api_getOrderListByItem@getData', 'version' => ['v1']],
+        //更新订单结算状态
+        'update.settleStatus' =>['uses' => 'systrade_api_trade_updateSettleStatus@update', 'version' => ['v1']],
         /*
          *  商品相关API
          *=======================================
@@ -173,7 +175,7 @@ return array(
         //库存报警总数
         'item.store.police.count' => ['uses' => 'sysitem_api_item_storePoliceCount@storePolice', 'version'=>['v1']],
          //库存报警
-        'item.store.add' => ['uses' => 'sysshop_api_shop_saveStorePolice@saveStorePolice', 'version'=>['v1']],
+        'item.store.police.add' => ['uses' => 'sysshop_api_shop_saveStorePolice@saveStorePolice', 'version'=>['v1']],
          //库存报警信息
         'item.store.info' => ['uses' => 'sysshop_api_shop_getStorePolice@getStorePolice', 'version'=>['v1']],
         //订单取消时恢复库存
@@ -206,6 +208,8 @@ return array(
         'item.promotion.deleteTag' => ['uses' => 'sysitem_api_promotion_itemPromotionTagDelete@itemPromotionTagDelete', 'version'=>['v1']],
         // 获取商品的促销标签及促销信息
         'item.promotion.get' => ['uses' => 'sysitem_api_promotion_itemPromotionTagGet@itemPromotionTagGet', 'version'=>['v1']],
+        // 批量获取商品的促销标签及促销信息
+        'item.promotion.list' => ['uses' => 'sysitem_api_promotion_itemPromotionTagList@itemPromotionTagList', 'version'=>['v1']],
 
 
         //统计商品的数量
@@ -395,36 +399,17 @@ return array(
         'user.updatenotifyitem' => ['uses' => 'sysuser_api_updateUserNotifyItem@updateUserNotifyItem', 'version' => ['v1']],
         'user.notifyItemList' => ['uses' => 'sysuser_api_getUserNotifyItemList@getUserNotifyItemList', 'version' => ['v1']],
 
-        //预存款相关
-        //或许预存款相关信息
-        'user.deposit.getInfo' =>['uses' => 'sysuser_api_user_deposit_getDeposit@getInfo', 'version' => ['v1']],
-        //预存款支付接口
-        'user.deposit.pay' =>['uses' => 'sysuser_api_user_deposit_pay@doPay', 'version' => ['v1']],
-        //预存款充值接口
-        'user.deposit.recharge' =>['uses' => 'sysuser_api_user_deposit_recharge@doRecharge', 'version' => ['v1']],
-
-        //设置预存款密码
+        //设置支付密码
         'user.deposit.password.set' =>['uses' => 'sysuser_api_user_deposit_setPassword@setPassword', 'version' => ['v1']],
-        //修改预存款密码
+        //修改支付密码
         'user.deposit.password.change' =>['uses' => 'sysuser_api_user_deposit_changePassword@changePassword', 'version' => ['v1']],
-        //判断是否存在预存款密码
+        //判断是否存在支付密码
         'user.deposit.password.has' =>['uses' => 'sysuser_api_user_deposit_hasPassword@hasPassword', 'version' => ['v1']],
-        // 验证预存款原支付密码
+        // 验证原支付密码
         'user.check.deposit.oldpwd' =>['uses' => 'sysuser_api_user_deposit_checkOldPassword@checkOldPwd', 'version' => ['v1']],
 
-        //退款至预存款
-        'user.deposit.refund' =>['uses' => 'sysuser_api_user_deposit_refund@doRefund', 'version' => ['v1']],
         // 验证支付密码和登录密码不能一致
         'user.check.loginPwd.DepositPwd' =>['uses' => 'sysuser_api_user_checkloginPwdAndDepositPwd@checkpwd', 'version' => ['v1']],
-
-        //提现
-        'user.deposit.applyCash' =>['uses' => 'sysuser_api_user_deposit_cashApply@apply', 'version' => ['v1']],
-        //检查会员的提现状况
-        'user.deposit.checkCash' =>['uses' => 'sysuser_api_user_deposit_cashCheckAmount@check', 'version' => ['v1']],
-        //获取提现的配置情况，比如取现上限等
-        'user.deposit.getCashConf' =>['uses' => 'sysuser_api_user_deposit_cashGetConf@get', 'version' => ['v1']],
-        //获取提现单列表
-        'user.deposit.getCash' =>['uses' => 'sysuser_api_user_deposit_cashList@get', 'version' => ['v1']],
 
         //用户领取红包
         'user.hongbao.get' => ['uses' => 'sysuser_api_user_hongbao_getHongbao@get', 'version' => ['v1']],
@@ -478,6 +463,20 @@ return array(
 
         /*
          *=======================================
+         *虚拟分类相关
+         *=======================================
+         */
+        //获取虚拟类目信息
+        'category.virtualcat.info' => ['uses' => 'syscategory_api_virtualcat_virtualcatInfo@getInfo', 'version' => ['v1']],
+        //获取分类类目列表（所有类目树形结构）
+        'category.virtualcat.get.list' => ['uses' => 'syscategory_api_virtualcat_virtualcatList@getList', 'version' => ['v1']],
+        //获取的父类下子类列表
+        'category.virtualcat.get' => ['uses' => 'syscategory_api_virtualcat_get@get', 'version' => ['v1']],
+        //根据三级分类id获取相关信息
+        'category.virtualcat.getData' => ['uses' => 'syscategory_api_virtualcat_getData@getList', 'version' => ['v1']],
+
+        /*
+         *=======================================
          *店铺相关
          *=======================================
          */
@@ -485,8 +484,10 @@ return array(
         'shop.name.check' => ['uses' => 'sysshop_api_checkShopName@check','version'=>['v1']],
         //获取店铺签约的类目和品牌的id（只对内）
         'shop.authorize.catbrandids.get' => ['uses' => 'sysshop_api_shopAuthorize@getCatBrand', 'version' => ['v1']],
-        //获取店铺自有类目
+        //获取店铺自有类目(树形)
         'shop.cat.get' => ['uses' => 'sysshop_api_getShopCat@getShopCat', 'version' => ['v1']],
+        //获取店铺自有类目(普通列表)
+        'shop.cat.list' => ['uses' => 'sysshop_api_getShopCatList@getShopCatList', 'version' => ['v1']],
         //获取店铺基本信息
         'shop.get' => ['uses' => 'sysshop_api_shop_get@get', 'version' => ['v1']],
         //根据店铺名称查询店铺列表数据
@@ -601,14 +602,6 @@ return array(
         'promotion.fulldiscountitem.list' => ['uses' => 'syspromotion_api_fulldiscount_fulldiscountItemList@fulldiscountItemList', 'version' => ['v1']],
         'promotion.fulldiscount.cancel' => ['uses' => 'syspromotion_api_fulldiscount_fulldiscountCancel@fulldiscountCancel', 'version' => ['v1']],
         'promotion.fulldiscount.approve' => ['uses' => 'syspromotion_api_fulldiscount_fulldiscountApprove@approve', 'version' => ['v1']],
-        // 免邮接口
-        'promotion.freepostage.add' => ['uses' => 'syspromotion_api_freepostage_freepostageAdd@freepostageAdd', 'version' => ['v1']],
-        'promotion.freepostage.update' => ['uses' => 'syspromotion_api_freepostage_freepostageUpdate@freepostageUpdate', 'version' => ['v1']],
-        'promotion.freepostage.delete' => ['uses' => 'syspromotion_api_freepostage_freepostageDelete@freepostageDelete', 'version' => ['v1']],
-        'promotion.freepostage.get' => ['uses' => 'syspromotion_api_freepostage_freepostageGet@freepostageGet', 'version' => ['v1']],
-        'promotion.freepostage.list' => ['uses' => 'syspromotion_api_freepostage_freepostageList@freepostageList', 'version' => ['v1']],
-        'promotion.freepostage.apply' => ['uses' => 'syspromotion_api_freepostage_freepostageApply@freepostageApply', 'version' => ['v1']],
-        'promotion.freepostageitem.list' => ['uses' => 'syspromotion_api_freepostage_freepostageItemList@freepostageItemList', 'version' => ['v1']],
         // X件Y折接口
         'promotion.xydiscount.add' => ['uses' => 'syspromotion_api_xydiscount_xydiscountAdd@xydiscountAdd', 'version' => ['v1']],
         'promotion.xydiscount.update' => ['uses' => 'syspromotion_api_xydiscount_xydiscountUpdate@xydiscountUpdate', 'version' => ['v1']],
@@ -652,6 +645,8 @@ return array(
         'promotion.setting' =>['uses' =>'syspromotion_api_setting@get', 'version' => ['v1']],
         // 促销专题页接口
         'promotion.get.page.info' =>['uses' =>'syspromotion_api_getPageInfo@getInfo', 'version' => ['v1']],
+        // 促销专题页接口
+        'promotion.get.pagetmpl.info' =>['uses' =>'syspromotion_api_getPagetmpl@getInfo', 'version' => ['v1']],
 
         //赠品促销相关
         'promotion.gift.add' => ['uses' => 'syspromotion_api_gift_giftAdd@giftAdd','version' => ['v1']],
@@ -683,6 +678,19 @@ return array(
 
         'promotion.hongbao.updateStatus' =>['uses' =>'syspromotion_api_hongbao_updateStatus@update', 'version' => ['v1']],
 
+        /*---------转盘相关---------------*/
+        //获取单个转盘抽奖活动详情
+        'promotion.lottery.get' =>['uses' =>'syspromotion_api_lottery_info@get', 'version' => ['v1']],
+        //转盘活动更新
+        'promotion.lottery.updateStatus' =>['uses' =>'syspromotion_api_lottery_updateStatus@update', 'version' => ['v1']],
+        //发放奖励
+        'promotion.bonus.issue' =>['uses' =>'syspromotion_api_lottery_bonusIssue@issue', 'version' => ['v1']],
+        //更新转盘抽奖收货地址
+        'promotion.lottery.updateAddr' =>['uses' =>'syspromotion_api_lottery_updateAddr@update', 'version' => ['v1']],
+        //获取中奖记录列表
+        'lottery.result.list' =>['uses' =>'syspromotion_api_lottery_list@getList', 'version' => ['v1']],
+
+
         /*
          *=======================================
          * 支付相关
@@ -700,8 +708,8 @@ return array(
         'payment.bill.create' => ['uses' => 'ectools_api_payment_createBill@create', 'version' => ['v1']],
         //订单支付请求支付网关
         'payment.trade.pay' => ['uses' => 'ectools_api_payment_pay@doPay', 'version' => ['v1']],
-        //预存款充值生成支付单并且跳转支付页面
-        'payment.deposit.recharge' => ['uses' => 'ectools_api_payment_recharge@doRecharge', 'version' => ['v1']],
+        //订单退款支付请求支付网关
+        'payment.trade.refundpay' => ['uses' => 'ectools_api_payment_refundPay@refundPay', 'version' => ['v1']],
         //创建并完成支付单
         'payment.trade.payandfinish' => ['uses' => 'ectools_api_payment_payAndFinish@payAndFinish', 'version' => ['v1']],
         //退款单创建
@@ -729,6 +737,11 @@ return array(
         //获取指定时间商家的统计数据
         'stat.trade.data.count.get' => ['uses' => 'sysstat_api_getTradeDataCount@getTradeInfo', 'version' => ['v1']],
 
+        //创建网站流量统计数据
+        'sysstat.traffic.data.create' => ['uses' => 'sysstat_api_trafficStat_create@create', 'version' => ['v1']],
+        //获取网站流量统计数据
+        'sysstat.traffic.data.get' => ['uses' => 'sysstat_api_trafficStat_get@getData', 'version' => ['v1']],
+
         /*
          *=======================================
          *物流及运费和运费模板
@@ -753,6 +766,8 @@ return array(
         'delivery.create' => ['uses' => 'syslogistics_api_delivery_create@create', 'version' => ['v1']],
         //发货单更新
         'delivery.update' => ['uses' => 'syslogistics_api_delivery_update@update', 'version' => ['v1']],
+        //配送信息更新
+        'delivery.updateLogistic' => ['uses' => 'syslogistics_api_delivery_updateLogistic@update', 'version' => ['v1']],
         //获取发货信息
         'delivery.get' => ['uses' => 'syslogistics_api_delivery_getInfo@getInfo', 'version' => ['v1']],
 
@@ -766,6 +781,7 @@ return array(
         'logistics.ziti.list' => ['uses' => 'syslogistics_api_ziti_list@get','version' => ['v1']],
         'logistics.ziti.get' => ['uses' => 'syslogistics_api_ziti_get@get','version' => ['v1']],
         'logistics.ziti.update' => ['uses' => 'syslogistics_api_ziti_update@update','version' => ['v1']],
+        'logistics.ziti.list.get' => ['uses' => 'syslogistics_api_ziti_listById@get','version' => ['v1']],
 
         /*
          *=======================================
@@ -830,6 +846,8 @@ return array(
 
          //demo站点辅助工具
          'demo.shop.create' => ['uses'=>'sysshop_api_demo_createShop@create', 'version'=>['v1']],
+         //更新店铺状态
+         'demo.shop.status' => ['uses' => 'sysshop_api_demo_status@update', 'version' => ['v1']],
 
          //这里给开放接口用的
          //oauth登陆

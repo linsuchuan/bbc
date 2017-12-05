@@ -76,7 +76,7 @@ class systrade_data_trade_create {
             //保存订单数据
             foreach( $tradeData as $shopId=>$row )
             {
-                $result = $this->objMdlTrade->save($tradeData[$shopId],null,true);
+                $result = $this->objMdlTrade->save($tradeData[$shopId]);
                 if(  !$result )
                 {
                     throw new \LogicException(app::get('systrade')->_('订单生成失败'));
@@ -97,10 +97,27 @@ class systrade_data_trade_create {
         catch (Exception $e)
         {
             $db->rollback();
+            $this->__rollbackStore();
             throw $e;
         }
 
         return $this->getTids();
+    }
+
+    /**
+     * 创建订单失败回滚redis库存
+     */
+    private function __rollbackStore()
+    {
+        if( $this->minuStoreData )
+        {
+            foreach( $this->minuStoreData as $row )
+            {
+                app::get('systrade')->rpcCall('item.store.recover',$row);
+            }
+        }
+
+        return true;
     }
 
     //触发订单创建后的事件
@@ -145,16 +162,30 @@ class systrade_data_trade_create {
      */
     protected function genId($userId, $isTid=true )
     {
-        if( ! $this->genidData )
+        if(!defined('STRESS_TESTING'))
         {
-            $data['tradeBaseTime'] = date('ymdHi');
-            $data['tradeBaseRandNum'] = rand(0,49);//str_pad($tradeBaseRandNum,2,'0',STR_PAD_LEFT);
-            $data['tradeModUserId'] = str_pad($userId%10000,4,'0',STR_PAD_LEFT);
+            if( !$this->day )
+            {
+                $startTime = 1325347200;//2012-01-01 做为初始年
+                //当前时间相距初始年的天数，4位可使用20年
+                $this->day =  floor( ($this->getTime() - $startTime) / 86400);
+            }
 
-            $this->genidData = $data;
+            //确定每90秒的的订单生成 一天总共有960个90秒，控制在三位
+            if( !$this->minute )
+            {
+                $this->minute = floor(($this->getTime() - strtotime(date('Y-m-d')) ) / 90);
+            }
+
+            $redisId = redis::scene('tradeOrderId')->hincrby(date('Ymd'), $this->minute, rand(0,9));
+
+            $id = $this->day . str_pad($this->minute,3,'0',STR_PAD_LEFT) . str_pad($redisId,5,'0',STR_PAD_LEFT) . str_pad($this->userId%10000,4,'0',STR_PAD_LEFT);//16位
+        }
+        else
+        {
+            $id = redis::scene('sysitem')->incr('stress_testing_tid');
         }
 
-        $id = $this->genidData['tradeBaseTime'].str_pad(++$this->genidData['tradeBaseRandNum'],2,'0',STR_PAD_LEFT).$this->genidData['tradeModUserId'];
         if( $isTid ) $this->tids[] = $id;
 
         return $id;
@@ -272,10 +303,15 @@ class systrade_data_trade_create {
         {
             foreach($cartItem['gift']['gift_item'] as $key=>&$value)
             {
-                if($value['realStore'] <= 0 || $value['realStore'] < $value['gift_num'])
+                //当库存为零时不送赠品，当赠品不为零并且小于赠品数量送最大库存的赠品
+                if($value['realStore'] <= 0 )
                 {
                     unset($cartItem['gift']['gift_item'][$key]);
                     continue;
+                }
+                elseif($value['realStore'] < $value['gift_num'])
+                {
+                    $value['gift_num'] = $value['realStore'];
                 }
                 unset($value['realStore']);
             }
@@ -451,12 +487,6 @@ class systrade_data_trade_create {
     private function __unsetCartUseCoupon()
     {
         return kernel::single('systrade_cart_coupon_redis')->clean($this->userId);
-      //foreach( $this->shopIds as $shopId )
-      //{
-      //    unset($_SESSION['cart_use_coupon'][$this->userIdent][$shopId]);
-      //}
-
-        return true;
     }
 
     /**
@@ -503,6 +533,9 @@ class systrade_data_trade_create {
             throw new \LogicException(app::get('systrade')->_('冻结库存失败'));
         }
 
+        $params['tradePay'] = 0;
+        $this->minuStoreData[] = $params;
+
         if(isset($orderData['gift_data']) && $orderData['gift_data'])
         {
             foreach($orderData['gift_data'] as $key=>$value)
@@ -519,6 +552,9 @@ class systrade_data_trade_create {
                 {
                     throw new \LogicException(app::get('systrade')->_('冻结赠品库存失败'));
                 }
+
+                $params['tradePay'] = 0;
+                $this->minuStoreData[] = $params;
             }
         }
 
@@ -541,6 +577,10 @@ class systrade_data_trade_create {
         $totalPayment = array_sum($payment);
         $postFee = array_column($tradeData,'post_fee');
         $totalPostFee = array_sum($postFee);
+
+        $point_deduction_rate = app::get('sysconf')->getConf('point.deduction.rate');
+        $point_deduction_rate = $point_deduction_rate ? $point_deduction_rate : 100;
+
         foreach($tradeData as $key=>$value)
         {
             $trade_money = $value['payment']-$value['post_fee'];
@@ -552,9 +592,6 @@ class systrade_data_trade_create {
             );
             $result = app::get('systrade')->rpcCall('point.deduction.num',$params);
             if(!$result) continue;
-
-            $point_deduction_rate = app::get('sysconf')->getConf('point.deduction.rate');
-            $point_deduction_rate = $point_deduction_rate ? $point_deduction_rate : 100;
 
             $min = ecmath::number_div(array(1, $point_deduction_rate) );
 

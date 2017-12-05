@@ -124,30 +124,32 @@
         </tr>
         <{if $info.gift_data}>
             <{foreach from=$info.gift_data item=giftdata}>
-            <tr>
-          <td>
-            <div class="goods">
-              <a href="<{url action=topc_ctl_item@index item_id=$giftdata.item_id}>" target="_blank">
-                <{if $giftdata.image_default_id}>
-                <img src="<{$giftdata.image_default_id|storager:t}>" alt="">
-                <{else}>
-                <img src="<{$defaultImageId.T.default_image|storager}>">
-                <{/if}>
-                <sapn class="txt-required">[赠品]</sapn><{$giftdata.title}>&nbsp;&nbsp;<{$giftdata.spec_nature_info}></a>
-            </div>
-          </td>
-          <td>
-            <{0|cur}>
-          </td>
-          <td>
-            <{$giftdata.gift_num}>
-          </td>
-          <td>
-            <span class="text-orange">
-              <{0|cur}>
-            </span>
-          </td>
-        </tr>
+              <{if !$giftdata.withoutReturn}>
+                <tr>
+                  <td>
+                    <div class="goods">
+                      <a href="<{url action=topc_ctl_item@index item_id=$giftdata.item_id}>" target="_blank">
+                        <{if $giftdata.image_default_id}>
+                        <img src="<{$giftdata.image_default_id|storager:t}>" alt="">
+                        <{else}>
+                        <img src="<{$defaultImageId.T.default_image|storager}>">
+                        <{/if}>
+                        <sapn class="txt-required">[赠品]</sapn><{$giftdata.title}>&nbsp;&nbsp;<{$giftdata.spec_nature_info}></a>
+                    </div>
+                  </td>
+                  <td>
+                    <{0|cur}>
+                  </td>
+                  <td>
+                    <{$giftdata.gift_num}>
+                  </td>
+                  <td>
+                    <span class="text-orange">
+                      <{0|cur}>
+                    </span>
+                  </td>
+                </tr>
+              <{/if}>
             <{/foreach}>
             <{/if}>
       </tbody>

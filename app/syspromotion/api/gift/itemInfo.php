@@ -1,12 +1,15 @@
 <?php
-class syspromotion_api_gift_itemInfo{
+// promotion.gift.item.info
+class syspromotion_api_gift_itemInfo {
+
     public $apiDescription = "获取参与活动的商品详情";
+
     public function getParams()
     {
         $data['params'] = array(
-            'gift_id' => ['type'=>'int', 'valid'=>'sometimes|required|integer', 'default'=>'', 'example'=>'', 'description'=>'活动id'],
-            'item_id' => ['type'=>'int', 'valid'=>'required|integer', 'default'=>'', 'example'=>'', 'description'=>'参加活动的商品id'],
-            'valid' => ['type'=>'bool', 'valid'=>'boolean', 'default'=>'', 'example'=>'', 'description'=>'活动状态'],
+            'gift_id' => ['type'=>'int',    'valid'=>'sometimes|required|integer', 'description'=>'赠品活动id'],
+            'item_id' => ['type'=>'string', 'valid'=>'required',                   'description'=>'参加活动的商品id,多个商品id请通过半角逗号隔开，如 1,2,3 '],
+            'valid'   => ['type'=>'bool',   'valid'=>'boolean',                    'description'=>'活动状态'],
         );
         return $data;
     }
@@ -14,7 +17,7 @@ class syspromotion_api_gift_itemInfo{
     public function getInfo($params)
     {
         $data = array();
-        $objItemGift = kernel::single('syspromotion_gift');
+        $objItemGift = kernel::single('syspromotion_data_object')->setPromotion('gift');
         if($params['valid'])
         {
             $itemFilter['start_time|lthan'] = time();
@@ -30,18 +33,19 @@ class syspromotion_api_gift_itemInfo{
                 $data = $objItemGift->getGiftItemByItemId($params['item_id'],$itemFilter);
             }
         }
-        $data = $data[0];
-
-        if($data['gift_id'])
+        foreach($data as $k=>&$v)
         {
-            $gift_info = $objItemGift->getGiftInfo($data['gift_id'],'*');
-            $data = array_merge($data,$gift_info);
+            if($v['gift_id'])
+            {
+                $gift_info = $objItemGift->getPromoitonInfo($v['gift_id'], '*');
+                $v = array_merge($v, $gift_info);
+            }
+            if($v['gift_status'] == 'cancel')
+            {
+                unset($data[$k]);
+            }
         }
 
-        if($data['gift_status'] == 'cancel')
-        {
-            return array();
-        }
         return $data;
     }
 }

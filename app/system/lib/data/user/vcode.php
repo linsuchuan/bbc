@@ -220,7 +220,7 @@ class system_data_user_vcode{
         case 'findPw_shop': //商家找回密码
             $tmpl = 'findPw-shop';
             break;
-        case 'depost_forgot'://预存款忘记密码
+        case 'depost_forgot'://支付密码忘记密码
             $tmpl = 'deposit-lostPw';
             break;
         }

@@ -64,8 +64,12 @@ final class ectools_payment_plugin_wxqrpay extends ectools_payment_app implement
         parent::__construct($app);
 
         $this->notify_url = url::to('wxqrpay.html');
+        $this->refund_url = "https://api.mch.weixin.qq.com/secapi/pay/refund";
         $this->submit_charset = 'UTF-8';
-        $this->signtype = 'sha1';
+        $this->signtype = 'MD5';
+        $certdir = DATA_DIR . '/cert/payment_plugin_wxqrpay/';
+        $this->SSLCERT_PATH = $certdir.trim($this->getConf('apiclient_cert', __CLASS__));
+        $this->SSLKEY_PATH = $certdir.trim($this->getConf('apiclient_key', __CLASS__));
     }
 
     /**
@@ -112,16 +116,23 @@ final class ectools_payment_plugin_wxqrpay extends ectools_payment_app implement
                 'type'=>'string',
                 'validate_type' => 'required',
             ),
+            'apiclient_cert'=>array(
+                'title'=>app::get('ectools')->_('证书'),
+                'type'=>'file',
+                'validate_type' => 'required',
+                'label'=>app::get('ectools')->_('官方下载文件名是apiclient_cert.pem'),
+            ),
+            'apiclient_key'=>array(
+                'title'=>app::get('ectools')->_('证书密钥'),
+                'type'=>'file',
+                'validate_type' => 'required',
+                'label'=>app::get('ectools')->_('官方下载文件名是apiclient_key.pem'),
+            ),
             'order_by' =>array(
                 'title'=>app::get('ectools')->_('排序'),
                 'type'=>'string',
                 'label'=>app::get('ectools')->_('整数值越小,显示越靠前,默认值为1'),
             ),
-            // 'support_cur'=>array(
-            //     'title'=>app::get('ectools')->_('支持币种'),
-            //     'type'=>'text hidden cur',
-            //     'options'=>$this->arrayCurrencyOptions,
-            // ),
             'pay_desc'=>array(
                 'title'=>app::get('ectools')->_('描述'),
                 'type'=>'html',
@@ -164,17 +175,6 @@ final class ectools_payment_plugin_wxqrpay extends ectools_payment_app implement
 
     public function dopay($payment)
     {
-        if($payment['pay_type'] == 'recharge')
-        {
-            $return_url = unserialize( $payment['return_url'] );
-            if($return_url[0]&&$return_url[1])
-                $return_url = url::action($return_url[0], $return_url[1]);
-            else
-                $return_url = url::action('topc_ctl_member_deposit@rechargeResult', ['payment_id'=>$payment['payment_id']]);
-            $this->add_field('return_url', $return_url);
-        }
-
-
         $appid      = trim($this->getConf('appId',    __CLASS__));
         $mch_id     = trim($this->getConf('Mchid',    __CLASS__));
         $key        = trim($this->getConf('Key',      __CLASS__));
@@ -196,7 +196,7 @@ final class ectools_payment_plugin_wxqrpay extends ectools_payment_app implement
             'nonce_str'        => ectools_payment_plugin_wxpay_util::create_noncestr(),
             'spbill_create_ip' => strval( $_SERVER['SERVER_ADDR'] ),
         );
-//echo '<pre>';print_r($payment);exit;
+
         $parameters['sign'] = $this->getSign($parameters, $key);
         $xml                = $this->arrayToXml($parameters);
         $url                = "https://api.mch.weixin.qq.com/pay/unifiedorder";
@@ -204,13 +204,12 @@ final class ectools_payment_plugin_wxqrpay extends ectools_payment_app implement
         $result             = $this->xmlToArray($response);
         $code_url           = $result['code_url'];
         $return_msg         = $result['return_msg'];
-	 // 用于微信支付后跳转页面传order_id,不作为传微信的字段
-  //      $this->add_field("order_id",        $payment['order_id'] );
+        // 用于微信支付后跳转页面传order_id,不作为传微信的字段
+        // $this->add_field("order_id",        $payment['order_id'] );
         $this->add_field("payment_id",      $payment['payment_id'] );
         $this->add_field('code_url',        $code_url);
         $this->add_field('return_msg',      $return_msg);
 
-//echo '<pre>';print_r($payment);exit;
         echo $this->get_html();exit;
     }
     /**
@@ -301,8 +300,6 @@ final class ectools_payment_plugin_wxqrpay extends ectools_payment_app implement
     }
 
     protected function get_html(){
-
-//    echo '<pre>';print_r($this->fields); exit;
         $qrcode_url = $this->fields['code_url'];
         $qrcode_url = getQrcodeUri($qrcode_url, 250, 100);
         $image = app::get('topc')->res_url.'/images/wx.png';
@@ -310,13 +307,12 @@ final class ectools_payment_plugin_wxqrpay extends ectools_payment_app implement
         $paymentId = $this->fields['payment_id'];
 
         //因为预存款充值时跳转页面不是这个结果页面。所以加了这个
-        //$succUrl = url::action('topc_ctl_paycenter@finish',['payment_id'=>$this->fields['payment_id']]);
         $succUrl = $this->fields['return_url'] ? $this->fields['return_url'] : url::action('topc_ctl_paycenter@finish',['payment_id'=>$this->fields['payment_id']]);
         $path = app::get('public')->res_full_url;
         $path_site = app::get('site')->res_full_url;
         $strHtml ="<!DOCTYPE HTML><html><head><meta charset='utf-8'><title>微信扫码支付</title><meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'/>";
         $strHtml .= "</head>";
-     $strHtml .=
+        $strHtml .=
             '<body>
             <div>';
         if( empty($this->fields['code_url']) ){
@@ -370,8 +366,8 @@ final class ectools_payment_plugin_wxqrpay extends ectools_payment_app implement
                 }
             }
             check_trade();
-</script></html>';
-  return       $strHtml;
+        </script></html>';
+    return $strHtml;
     }
 
 
@@ -446,53 +442,77 @@ final class ectools_payment_plugin_wxqrpay extends ectools_payment_app implement
     }
 
     /**
-     *  作用：格式化参数，签名过程需要使用
-     */
-    function formatBizQueryParaMap($paraMap, $urlencode)
-    {
-        $buff = "";
-        ksort($paraMap);
-        foreach ($paraMap as $k => $v)
-        {
-            if($urlencode)
-            {
-               $v = urlencode($v);
-            }
-            //$buff .= strtolower($k) . "=" . $v . "&";
-            $buff .= $k . "=" . $v . "&";
-        }
-        $reqPar;
-        if (strlen($buff) > 0)
-        {
-            $reqPar = substr($buff, 0, strlen($buff)-1);
-        }
-        return $reqPar;
-    }
-
-    /**
      *  作用：生成签名
      */
-    public function getSign($Obj,$key)
+    public function getSign($Parameters, $key)
     {
-        foreach ($Obj as $k => $v)
+        ksort($Parameters); //签名步骤一：按字典序排序参数
+        $buff = "";
+        foreach ($Parameters as $k => $v)
         {
-            $Parameters[$k] = $v;
+            if($k != "sign" && $v != "" && !is_array($v))
+            {
+                $buff .= $k . "=" . $v . "&";
+            }
         }
-        //签名步骤一：按字典序排序参数
-        ksort($Parameters);
-        $String = $this->formatBizQueryParaMap($Parameters, false);
-        //echo '【string1】'.$String.'</br>';
-        //签名步骤二：在string后加入KEY
-        $String = $String."&key=".$key;
-        //echo "【string2】".$String."</br>";
-        //签名步骤三：MD5加密
-        $String = md5($String);
-        //echo "【string3】 ".$String."</br>";
-        //签名步骤四：所有字符转为大写
-        $result_ = strtoupper($String);
-        //echo "【result】 ".$result_."</br>";
-        return $result_;
+        $String = trim($buff, "&");
+        $String = $String."&key=".$key; //签名步骤二：在string后加入KEY
+        $String = md5($String); //签名步骤三：MD5加密
+        $result = strtoupper($String); //签名步骤四：所有字符转为大写
+        return $result;
     }
 
 //↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑公共函数部分↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+/* 以下为退款代码 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ */
+
+    /**
+     * 提交退款支付信息的接口
+     * 微信退款不需要异步返回，调用的时候直接返回处理信息，不需要refundcallback方法了
+     * @param array 提交信息的数组
+     * @return mixed false or null
+     */
+    public function dorefund($payment)
+    {
+        $appid  = trim($this->getConf('appId', __CLASS__));
+        $mch_id = trim($this->getConf('Mchid', __CLASS__));
+        $key    = trim($this->getConf('Key',   __CLASS__));
+
+        $parameters = array(
+            'appid'           => strval($appid),
+            'mch_id'          => strval($mch_id),
+            'nonce_str'       => ectools_payment_plugin_wxpay_util::create_noncestr(),
+            'sign_type'       => 'MD5',
+            'transaction_id'  => $payment['trade_no'],
+            // 'out_trade_no'    => strval( $payment['payment_id'] ),
+            'out_refund_no'   => strval( $payment['refund_id'] ),
+            'total_fee'       => bcmul($payment['total_fee'], 100, 0),
+            'refund_fee'      => bcmul($payment['refund_fee'], 100, 0),
+            'refund_fee_type' => 'CNY',
+            'op_user_id'      => strval($appid),
+        );
+        $parameters['sign'] = $this->getSign($parameters, $key);
+        $xml      = $this->arrayToXml($parameters);
+        $response = client::post($this->refund_url, ['verify'=>true,'cert'=>$this->SSLCERT_PATH,'ssl_key'=>$this->SSLKEY_PATH,'body' => $xml])->getBody();
+        $result   = $this->xmlToArray($response);
+        logger::info('微信扫码支付退款返回信息：'.var_export($result,1));
+
+        $ret['refund_id'] = $payment['refund_id'];
+        $ret['trade_no']  = $payment['trade_no'];
+        // $ret['third_transaction_id'] = $payment['refund_id'];//退款的第三方退款交易号
+        if(strtoupper($result['return_code']) == 'SUCCESS')
+        {
+            $ret['status'] = 'succ';
+        }
+        else
+        {
+            $ret['status'] = 'failed';
+        }
+        return $ret;
+
+    }
+
+/* 以上为退款代码 ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ */
+
+
 }

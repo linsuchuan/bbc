@@ -69,6 +69,7 @@ class base_demo
                 app::get($app_id)->model($model)->db_save($sdf);
                 $buffer = '';
             }
+            echo 'install demodata: '.$app_id.'/'.$model."\n";
             fclose($handle);
         }
     }//End Function

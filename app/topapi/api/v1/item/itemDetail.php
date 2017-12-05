@@ -23,7 +23,7 @@ class topapi_api_v1_item_itemDetail implements topapi_interface_api{
     public function setParams()
     {
         return [
-            'item_id' => ['type'=>'int',      'valid'=>'required|numeric|min:1','example'=>'1',                     'desc'=>'商品id。必须是正整数',             'msg'=>'商品id必须为正整数'],
+            'item_id' => ['type'=>'int',      'valid'=>'required|integer|min:1','example'=>'1',                     'desc'=>'商品id。必须是正整数',             'msg'=>'商品id必须为正整数'],
             'fields' => ['type'=>'field_list','valid'=>'',                      'example'=>'title,item_store.store','desc'=>'要获取的商品字段集。多个字段用“,”分隔','msg'=>''],
         ];
     }
@@ -82,29 +82,12 @@ class topapi_api_v1_item_itemDetail implements topapi_interface_api{
         {
             $pagedata['freeConf'] = $dlytmplInfo['is_free'];
         }
-        //获取商品的促销信息
-        $promotionInfo = app::get('topapi')->rpcCall('item.promotion.get', array('item_id'=>$itemId));
-        if($promotionInfo)
-        {
-            $pagedata['promotionTag'] = [];
-            foreach($promotionInfo as $vp)
-            {
-                $basicPromotionInfo = app::get('topapi')->rpcCall('promotion.promotion.get', array('promotion_id'=>$vp['promotion_id'], 'platform'=>'wap'));
 
-                if($basicPromotionInfo['valid']===true)
-                {
-                    $pagedata['promotionTag'][$basicPromotionInfo['promotion_type']][] = [
-                        'promotion_id' => $basicPromotionInfo['promotion_id'],
-                        'rel_promotion_id' => $basicPromotionInfo['rel_promotion_id'],
-                        'promotion_name' => $basicPromotionInfo['promotion_name'],
-                        'promotion_tag' => $basicPromotionInfo['promotion_tag'],
-                    ];
-                }
-            }
-        }
+        //获取促销
+        $pagedata['promotionTag'] = $this->__getPromotion($itemId);
 
         //获取赠品促销信息
-        $giftDetail = app::get('topapi')->rpcCall('promotion.gift.item.info',array('item_id'=>$itemId,'valid'=>1));
+        $giftDetail = app::get('topapi')->rpcCall('promotion.gift.item.info',array('item_id'=>$itemId,'valid'=>1))['0'];
         if($giftDetail)
         {
             foreach ($giftDetail['gift_item'] as $gv)
@@ -117,10 +100,12 @@ class topapi_api_v1_item_itemDetail implements topapi_interface_api{
                     'image_default_id' => base_storager::modifier($gv['image_default_id'], 't'),
                 ];
             }
+
+            $pagedata['giftTag']['sku_ids']        = $giftDetail['sku_ids'] ? explode(',',$giftDetail['sku_ids']) : null;
             $pagedata['giftTag']['limit_quantity'] = $giftDetail['limit_quantity'];
-            $pagedata['giftTag']['valid_grade'] = $giftDetail['valid_grade'];
-            $pagedata['giftTag']['gift_name'] = $giftDetail['gift_name'];
-            $pagedata['giftTag']['gift_desc'] = $giftDetail['gift_desc'];
+            $pagedata['giftTag']['valid_grade']    = $giftDetail['valid_grade'];
+            $pagedata['giftTag']['gift_name']      = $giftDetail['gift_name'];
+            $pagedata['giftTag']['gift_desc']      = $giftDetail['gift_desc'];
             $pagedata['giftTag']['condition_type'] = $giftDetail['condition_type'];
         }
 
@@ -135,6 +120,8 @@ class topapi_api_v1_item_itemDetail implements topapi_interface_api{
                 'price'=>$activityDetail['price'],
             ];
         }
+
+        $pagedata['packages'] = $this->__getPackage($itemId);
 
         // 格式化规格信息
         if($detailData['spec_desc'])
@@ -152,39 +139,119 @@ class topapi_api_v1_item_itemDetail implements topapi_interface_api{
         {
             $pagedata['shop']['shop_logo'] = base_storager::modifier($pagedata['shop']['shop_logo'], 't');
         }
-        //商品收藏和店铺收藏情况
-        $pagedata['collect'] = $this->__CollectInfo($itemId,$pagedata['shop']['shop_id']);
 
         // 获取当前平台设置的货币符号和精度
         $cur_symbol = app::get('topapi')->rpcCall('currency.get.symbol',array());
         $pagedata['cur_symbol'] = $cur_symbol;
 
+        //流量统计
+        $disabled = config::get('stat.disabled');
+        if(!$disabled){
+            $params['page'] = 'item';
+            $params['page_rel_id'] = $itemId;
+            $params['use_platform'] = 'wap';
+            $params['shop_id'] = $pagedata['shop']['shop_id'];
+            $params['remote_addr'] = $_SERVER['REMOTE_ADDR'];
+            app::get('sysstat')->rpcCall('sysstat.traffic.data.create',$params);
+        }
+
         return $pagedata;
     }
 
-    //当前商品收藏和店铺收藏的状态
-    private function __CollectInfo($itemId,$shopId)
+    private function __getPromotion($itemId)
     {
-        $userId = userAuth::id();
-        $collect = unserialize($_COOKIE['collect']);
-        if(in_array($itemId, $collect['item']))
+        //获取商品的促销信息
+        $promotionInfo = app::get('topapi')->rpcCall('item.promotion.get', array('item_id'=>$itemId));
+        if( !$promotionInfo ) return null;
+
+        $pagedata['promotionTag'] = [];
+        foreach($promotionInfo as $vp)
         {
-            $pagedata['itemCollect'] = 1;
-        }
-        else
-        {
-            $pagedata['itemCollect'] = 0;
-        }
-        if(in_array($shopId, $collect['shop']))
-        {
-            $pagedata['shopCollect'] = 1;
-        }
-        else
-        {
-            $pagedata['shopCollect'] = 0;
+            $basicPromotionInfo = app::get('topapi')->rpcCall('promotion.promotion.get', array('promotion_id'=>$vp['promotion_id'], 'platform'=>'app'));
+            if($basicPromotionInfo['valid']===true)
+            {
+                $basicPromotionInfo['sku_id'] = $vp['sku_id'] ? explode(',',$vp['sku_id']) : null;
+                if( !$vp['sku_id'] || (isset($skuId[$basicPromotionInfo['promotion_type']]) && $skuId[$basicPromotionInfo['promotion_type']] === null) )
+                {
+                    $skuId[$basicPromotionInfo['promotion_type']] = null;
+                }
+                else
+                {
+                    if($skuId[$basicPromotionInfo['promotion_type']])
+                    {
+                        $skuId[$basicPromotionInfo['promotion_type']] = array_merge($skuId[$basicPromotionInfo['promotion_type']],$basicPromotionInfo['sku_id']);
+                    }
+                    else
+                    {
+                        $skuId[$basicPromotionInfo['promotion_type']] = $basicPromotionInfo['sku_id'];
+                    }
+                }
+
+                $pagedata['promotionTag'][$basicPromotionInfo['promotion_type']][] = [
+                    'promotion_id'     => $basicPromotionInfo['promotion_id'],
+                    'rel_promotion_id' => $basicPromotionInfo['rel_promotion_id'],
+                    'promotion_name'   => $basicPromotionInfo['promotion_name'],
+                    'promotion_tag'    => $basicPromotionInfo['promotion_tag'],
+                    'sku_id'           => $basicPromotionInfo['sku_id'] ? $basicPromotionInfo['sku_id'] : null,
+                ];
+            }
         }
 
-        return $pagedata;
+        foreach( $pagedata['promotionTag'] as $promotionType=>$promotionTypeVal )
+        {
+            foreach( $promotionTypeVal as $key=>$row )
+            {
+                //促销tag，所有满足的sku 如果有两个满减的促销，那么两个满减促销sku合并
+                $pagedata['promotionTag'][$promotionType][$key]['tag_sku_ids'] = $skuId[$promotionType];
+            }
+        }
+
+        return $pagedata['promotionTag'];
+    }
+
+    // 获取商品的组合促销商品
+    private function __getPackage($itemId)
+    {
+        $params['item_id'] = $itemId;
+        $package = app::get('topapi')->rpcCall('promotion.package.getPackageItemsByItemId', $params);
+
+        $packageList = null;
+        foreach($package['data'] as &$v)
+        {
+            //全场可用或者用于APP
+            if( in_array($v['used_platform'], ['0','3']) )
+            {
+                $oldTotalPrice = 0;
+                $packageTotalPrice = 0;
+                $packageItems = [];
+                foreach($v['items'] as $v1)
+                {
+                    $packageItems[] = [
+                        'item_id' => $v1['item_id'],
+                        'title' => $v1['title'],
+                        'image_default_id' => $v1['image_default_id'],
+                        'package_price' => $v1['package_price'],
+                        'price' => $v1['price'],
+                    ];
+                    $oldTotalPrice += $v1['price'];
+                    $packageTotalPrice = ecmath::number_plus(array($v1['package_price'],$packageTotalPrice));
+                }
+
+                $packageList[] = [
+                    'package_id' => $v['package_id'],
+                    'package_name' => $v['package_name'],
+                    'valid_grade' => $v['valid_grade'],
+                    'free_postage' => $v['free_postage'],
+                    'promotion_tag' => $v['promotion_tag'],
+                    'old_total_price' => $oldTotalPrice,
+                    'package_total_price' => $packageTotalPrice,
+                    'cut_total_price' => ecmath::number_minus(array($oldTotalPrice, package_total_price)),
+                    'items' => $packageItems
+                ];
+            }
+        }
+
+        return $packageList;
     }
 
     private function __getSpec($spec, $sku, $activityPrice)

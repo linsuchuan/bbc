@@ -53,7 +53,6 @@ class sysdecorate_widgets {
         $config['wap']['params']['waplogo']['dialog'] = ['default'];
         $config['wap']['params']['waplogo']['sort'] = 6;
 
-
         return $config;
     }
 

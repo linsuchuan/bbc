@@ -113,28 +113,30 @@
       </tr>
       <{if $data.gift_data}>
       <{foreach from=$data.gift_data item=giftdata}>
-      <tr>
-        <td><{$trade.tid}></td>
-        <td>
-            <a href="<{url action=topc_ctl_item@index item_id=$giftdata.item_id}>" target="_blank">
-              <{if $giftdata.image_default_id}>
-              <img src="<{$giftdata.image_default_id|storager:t}>" alt="" width="100" height="100">
-              <{/if}>
-              <em class="red">【 赠品】</em><{$giftdata.title}>
-            </a>
-        </td>
-        <td>
-          <{$giftdata.price|cur}>
-        </td>
-        <td>
-          <{$giftdata.gift_num}>
-        </td>
-        <td>
-          <span class="text-orange">
-            <{0|cur}>
-          </span>
-        </td>
-      </tr>
+        <{if $giftdata.withoutReturn}>
+          <tr>
+            <td><{$trade.tid}></td>
+            <td>
+                <a href="<{url action=topc_ctl_item@index item_id=$giftdata.item_id}>" target="_blank">
+                  <{if $giftdata.image_default_id}>
+                  <img src="<{$giftdata.image_default_id|storager:t}>" alt="" width="100" height="100">
+                  <{/if}>
+                  <em class="red">【 赠品】</em><{$giftdata.title}>
+                </a>
+            </td>
+            <td>
+              <{$giftdata.price|cur}>
+            </td>
+            <td>
+              <{$giftdata.gift_num}>
+            </td>
+            <td>
+              <span class="text-orange">
+                <{0|cur}>
+              </span>
+            </td>
+          </tr>
+        <{/if}>
       <{/foreach}>
       <{/if}>
     </tbody>

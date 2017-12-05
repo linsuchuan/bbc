@@ -1,4 +1,5 @@
 <?php
+// promotion.activity.list
 class syspromotion_api_activity_list{
     public $apiDescription = "获取活动列表";
     public function getParams()

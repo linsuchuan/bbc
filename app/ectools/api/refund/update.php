@@ -1,13 +1,14 @@
 <?php
+// refund.update
 class ectools_api_refund_update{
 
-    public $apiDescription = '退款单更新';
+    public $apiDescription = '退款单状态更新';
+
     public function getParams()
     {
         $return['params'] = array(
-            'tid' => ['type'=>'string','valid'=>'required', 'description'=>'申请售后的主订单编号', 'default'=>'', 'example'=>''],
-            'refund_id' => ['type'=>'string','valid'=>'required', 'description'=>'退款单编号', 'default'=>'', 'example'=>''],
-            'status' => ['type'=>'string','valid'=>'required', 'description'=>'退款状态', 'default'=>'', 'example'=>''],
+            'refund_id' => ['type'=>'numeric','valid'=>'required', 'description'=>'退款单编号'],
+            'status' => ['type'=>'string','valid'=>'required|in:ready,progress,succ,failed,cancel', 'description'=>'退款状态'],
         );
         return $return;
     }
@@ -18,20 +19,32 @@ class ectools_api_refund_update{
         $db->beginTransaction();
         try
         {
-            $objRefund = kernel::single('ectools_data_refunds');
-            $result = $objRefund->update(['status'=>$params['status']],['tid'=>$params['tid'],'refund_id'=>$params['refund_id']]);
+            $objMdlRefunds = app::get('ectools')->model('refunds');
+            $refundInfo = $objMdlRefunds->getRow('status', ['refund_id'=>$params['refund_id']]);
+            if($refundInfo['status']==$params['status'])
+            {
+                return true;
+            }
+            $data = [
+                'status'=>$params['status'],
+                'finish_time'=>time(),
+            ];
+            $filter = [
+                'refund_id'=>$params['refund_id']
+            ];
+            $result = $objMdlRefunds->update($data, $filter);
             if(!$result)
             {
-                throw new \LogicException(app::get('ectools')->_('退款单更新失败'));
+                throw new \LogicException("更新退款单状态失败");
+                return false;
             }
+            $db->commit();
         }
         catch(\Exception $e)
         {
             $db->rollback();
-            throw new \LogicException(app::get('ectools')->_($e->getMessage()));
-            return false;
+            throw new \LogicException("更新退款单状态失败");
         }
-        $db->commit();
         return true;
     }
 

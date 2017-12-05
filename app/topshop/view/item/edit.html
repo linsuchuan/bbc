@@ -9,14 +9,14 @@
         <span class="act-handle breadcrumb breadcrumb-primary pull-left">
           <span></span>
         </span>
-        <button type="button" data-toggle="modal" data-target="#catDialog" class="btn btn-default btn-sm">选择类目</button>
+        <button type="button" data-toggle="modal" data-target="#catDialog" class="btn btn-default btn-sm">选择平台分类</button>
         <span class="brandErr"></span>
         <div id="catDialog" class="modal fade">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">关闭</span></button>
-                <h4 class="modal-title">选择类目</h4>
+                <h4 class="modal-title">选择平台分类</h4>
               </div>
               <div class="modal-body">
                 <{input type="category" name="item[cat_id]" shop_id=$shopId value=$item.cat_id callback="categoryCallback"}>
@@ -37,43 +37,11 @@
       <{if $item.approve_status != "pending"}>
         <h4>编辑商品</h4>
       <{else}><h4>查看商品</h4><{/if}>
-        <div class="panel panel-default">
+        <div id="floor_1" class="panel panel-default">
           <div class="panel-heading">
             基本内容
           </div>
           <div class="panel-body">
-            <div class="form-group">
-              <label for="" class="col-sm-2 control-label">店铺分类：</label>
-              <div class="col-sm-3">
-                <select name="item[shop_cids][]" multiple id="act-selectshopcat" class="form-control">
-                  <{foreach from=$shopCatList item=shop_cat}>
-                  <{if $shop_cat.children}>
-                  <optgroup label='<{$shop_cat.cat_name}>'>
-                    <{else}>
-                    <option value='<{$shop_cat.cat_id}>'
-                    <{if $shop_cat.selected}>
-                    selected=selected
-                    <{/if}>
-                    ><{$shop_cat.cat_name}></option>
-                    <{/if}>
-
-                    <{if $shop_cat.children}>
-                    <{foreach from=$shop_cat.children item=shop_cat_children}>
-                    <option value='<{$shop_cat_children.cat_id}>'
-                    <{if $shop_cat_children.selected}>
-                    selected
-                    <{/if}>
-                    ><{$shop_cat_children.cat_name}></option>
-                    <{/foreach}>
-                    <{/if}>
-
-                    <{if $shop_cat.children}>
-                  </optgroup>
-                  <{/if}>
-                  <{/foreach}>
-                </select>
-              </div>
-            </div>
             <div class="form-group">
               <label for="" class="col-sm-2 control-label"><span class="txt-required">*</span> 商品标题：</label>
               <div class="col-sm-3">
@@ -85,7 +53,7 @@
               <div class="col-sm-3">
                 <textarea name="item[sub_title]" class="form-control" maxlength="150" rows="4"><{$item.sub_title}></textarea>
               </div>
-              <span class="label label-info">标题广告语<span>
+              <span class="label label-info">标题广告语</span>
             </div>
             <div class="form-group">
               <label for="" class="col-sm-2 control-label"><span class="txt-required">*</span> 品牌：</label>
@@ -94,20 +62,6 @@
                <{include file="topshop/item/brand.html"}>
                <input type="hidden" name="item[brand_id]" value="" />
               </div>
-            </div>
-            <div class="form-group">
-              <label for="" class="col-sm-2 control-label">商品货号：</label>
-              <div class="col-sm-3">
-                <input type="text" name="item[bn]" maxlength="30" value="<{$item.bn}>" class="form-control">
-              </div>
-              <span class="label label-info">不是多规格时使用<span>
-            </div>
-            <div class="form-group">
-              <label for="" class="col-sm-2 control-label">条形码：</label>
-              <div class="col-sm-3">
-                <input type="text" name="item[barcode]" maxlength="30" value="<{$item.barcode}>" class="form-control">
-              </div>
-              <span class="label label-info">不是多规格时使用<span>
             </div>
             <div class="form-group">
               <label for="" class="col-sm-2 control-label">商品图片：</label>
@@ -136,36 +90,39 @@
             <div class="form-group">
               <label for="" class="col-sm-2 control-label">发布平台：</label>
               <div class="col-sm-10">
-                <input type="radio" name="item[use_platform]" value="0" <{if !$item.use_platform}>checked<{/if}> > 电脑端和手机端
+                <input type="radio" name="item[use_platform]" value="0" <{if !$item.use_platform}>checked<{/if}> > 电脑端和移动端
                 <input type="radio" name="item[use_platform]" value="1" <{if $item.use_platform == 1}>checked<{/if}>> 电脑端
-                <input type="radio" name="item[use_platform]" value="2" <{if $item.use_platform == 2}>checked<{/if}>> 手机端
+                <input type="radio" name="item[use_platform]" value="2" <{if $item.use_platform == 2}>checked<{/if}>> 移动端
               </div>
 
             </div>
           </div>
         </div>
+
+        <div id="floor_2" class="panel panel-default">
+          <div class="panel-heading">
+            自然属性
+          </div>
+          <div class="panel-body" id="nature_props">
+            <!-- 自然属性start -->
+            <!-- 自然属性end -->
+          </div>
+        </div>
+
         <div class="panel panel-default">
           <div class="panel-heading">
-            商品信息
+            详细参数
+          </div>
+          <div class="panel-body goods-params" id="params">
+            <!-- 详细参数start -->
+            <!-- 详细参数end -->
+          </div>
+        </div>
+        <div id="floor_3" class="panel panel-default">
+          <div class="panel-heading">
+            其他信息
           </div>
           <div class="panel-body">
-            <div class="form-group">
-              <label for="" class="col-sm-2 control-label"><span class="txt-required">*</span> 标准售价：</label>
-              <div class="col-sm-3">
-                <input type="text" name="item[price]" value="<{$item.price}>" required data-validate-numeric="true" min="0" maxlength="13" class="form-control">
-              </div>
-              <span>元</span>
-              <span class="label label-info">多规格时，标准价要介于SKU最低和价最高价之间；无规格时就是真实售价<span>
-            </div>
-            <div class="form-group">
-              <label for="" class="col-sm-2 control-label"><span class="txt-required">*</span> 商品库存：</label>
-              <div class="col-sm-3">
-                <input type="number" name="item[store]" value="<{$item.store|default:'0'}>" required min="0" max="999999" class="form-control">
-              </div>
-              <span>件</span> &nbsp;&nbsp;
-              <{if $item.freez && $item.freez>0}>冻 <em class="text-orange"><{$item.freez}></em><{/if}>
-              <span class="label label-info">多规格时，库存为各SKU之和<span>
-            </div>
             <div class="form-group">
               <label for="" class="col-sm-2 control-label">库存计数：</label>
               <div class="radio">
@@ -178,95 +135,97 @@
               </div>
             </div>
             <div class="form-group">
-              <label for="" class="col-sm-2 control-label"><span class="txt-required">*</span>原价：</label>
-              <div class="col-sm-3">
-                <input type="text" name="item[mkt_price]" value="<{$item.mkt_price}>" maxlength="13" min="0" required data-validate-numeric="true" class="form-control">
-              </div>
-              <span>元</span>
-              <input type="checkbox" name="item[show_mkt_price]" value="1" <{if $item.show_mkt_price}> checked <{/if}> />
-              <span>在商品页展示原价</span>
-            </div>
-            <div class="form-group">
-              <label for="" class="col-sm-2 control-label">成本价：</label>
-              <div class="col-sm-3">
-                <input type="text" name="item[cost_price]" value="<{$item.cost_price}>" maxlength="13" min="0" data-validate-numeric="true" class="form-control">
-              </div>
-              <span>元</span>
-            </div>
-            <div class="form-group">
-              <label for="" class="col-sm-2 control-label"><span class="txt-required">*</span> 重量：</label>
-              <div class="col-sm-3">
-                <input type="text" name="item[weight]" value="<{$item.weight}>" required data-validate-numeric="true" maxlength="13" class="form-control">
-              </div>
-              <span>千克(kg)</span>
-            </div>
-            <div class="form-group">
               <label for="" class="col-sm-2 control-label"><span class="txt-required">*</span> 计价单位：</label>
-              <div class="col-sm-3">
+              <div class="form-inline has-feedback col-sm-2 right45">
                 <input type="text" name="item[unit]" value="<{$item.unit}>" required class="form-control" maxlength="3">
               </div>
             </div>
-            <!--
             <div class="form-group">
-              <label for="" class="col-sm-2 control-label">排序：</label>
-              <div class="col-sm-3">
-                <input type="number" name="item[order_sort]" value="<{$item.order_sort}>" maxlength="10" min="0" class="form-control">
-              </div>
-            </div>
-            -->
-            <!--div class="form-group form-inline">
-            <label for="" class="col-sm-2 control-label">是否包邮：</label>
-            <div class="col-sm-3">
-              <div class="checkbox">
-                <label class="checkbox-inline">
-                  <input type="checkbox">否&nbsp;&nbsp;&nbsp;
+              <label for="" class="col-sm-2 control-label"><span class="txt-required">*</span> 单品/多规格：</label>
+              <div class="radio">
+                <label  class="form-inline">
+                  <{if $item.item_id}>
+                  <input type="radio" <{if $item.nospec}>checked<{/if}> disabled="true">
+                  <{else}>
+                  <input type="radio" name="item[nospec]" value='1' <{if $item.nospec ||!$item.nospec}>checked<{/if}>>
+                  <{/if}>
+                  单品
                 </label>
-                <label class="checkbox-inline">
-                  <input type="checkbox">是
+                <label  class="form-inline">
+                  <{if $item.item_id}>
+                  <input type="radio" <{if !$item.nospec}>checked<{/if}> disabled="true">
+                  <{else}>
+                  <input type="radio" name="item[nospec]" value='0' <{if !$item.nospec}>checked<{/if}> >
+                  <{/if}>
+                  多规格
                 </label>
+                <{if $item.item_id}>
+                  <input type="hidden" name="item[nospec]" <{if $item.nospec}> value='1'  <{else}> value='0' <{/if}> >
+                <{/if}>
+                <span class="label label-info">选择多规格，则可以添加颜色等销售属性生成多SKU，否则生成单品</span>
               </div>
             </div>
-            </div-->
-          </div>
-        </div>
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            商品物流信息
-          </div>
-          <div class="panel-body">
-            <div class="form-group">
-              <label for="" class="col-sm-2 control-label"><span class="txt-required">*</span> 运费模板：</label>
-              <div class="col-sm-3">
-                <select name="item[dlytmpl_id]" required id="act-selectshopcat" class="form-control">
-                  <option value="" ><{t}>请选择运费模版<{/t}></option>
-                  <{foreach from=$dlytmpls.data item=dly}>
-                  <option value="<{$dly.template_id}>" <{if $dly.template_id==$item.dlytmpl_id}> selected <{/if}>><{$dly.name}></option>
-                  <{/foreach}>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            自然属性
-          </div>
-          <div class="panel-body" id="nature_props">
-            <!-- 自然属性start -->
-            <!-- 自然属性end -->
-          </div>
-        </div>
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            详细参数
-          </div>
-          <div class="panel-body" id="params">
-            <!-- 详细参数start -->
-            <!-- 详细参数end -->
           </div>
         </div>
 
-        <div class="panel panel-default">
+        <div id="floor_4" class="panel panel-default panel-default-table">
+          <div class="panel-heading">
+            商品标准信息<span class="label label-info" style="margin-top:1em;margin-left:1em;margin-bottom:1em;">选择多品时，库存为sku库存之和，不可编辑</span>
+          </div>
+          <div class="td">
+            <div class="spec-tree">
+              <table cellspacing="0" cellpadding="0" border="0" class="table table-bordered" id="goods-table">
+                <thead>
+                  <tr>
+                    <th>重量(千克[kg])</th>
+                    <th style="width:12%;">标准售价(元)<span class="text-danger">*</span><label  data-toggle="tooltip" data-placement="top" title="多规格时，标准价要介于SKU最低和价最高价之间；无规格时就是真实售价"><i class="fa fa-question-circle text-aqua"></i></label></th>
+                    <th style="width:12%;">原价(元)</th>
+                    <th style="width:12%;">成本价(元)</th>
+                    <th style="width:12%;">库存(件)<span class="text-danger">*</span></th>
+                    <th style="width:20%;">商品货号</th>
+                    <th style="width:20%;">商家条形码</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="form-group">
+                        <input type="number" name="item[weight]" value="<{$item.weight}>" class="form-control price" data-validate-numeric="true" required maxlength="13">
+                      </div>
+                    </td>
+                    <td>
+                      <div class="form-group">
+                        <input type="number" name="item[price]" value="<{$item.price}>" class="form-control price" data-validate-numeric="true" required>
+                      </div>
+                    </td>
+                    <td>
+                      <input type="number" name="item[mkt_price]" value="<{$item.mkt_price}>" class="form-control mkt_price" maxlength="13" min="0" required data-validate-numeric="true">
+                      <input type="checkbox" name="item[show_mkt_price]" value="1" <{if $item.show_mkt_price}> checked <{/if}> />
+                      <span>在商品页展示原价</span>
+                    </td>
+                    <td>
+                      <input type="number" name="item[cost_price]" value="<{$item.cost_price}>" class="form-control cost_price" maxlength="13" min="0" data-validate-numeric="true">
+                    </td>
+                    <td nowrap>
+                      <div class="form-group">
+                        <input type="number" value="<{$item.store|default:'0'}>" class="form-control store" name="item[store]" required min="0" data-max="999999">
+                        冻结： <em class="text-orange"><{$item.freez|default:'0'}></em>
+                      </div>
+                    </td>
+                    <td>
+                      <input type="text" name="item[bn]" value="<{$item.bn}>" class="form-control bn" maxlength="30">
+                    </td>
+                    <td>
+                      <input type="text" name="item[barcode]" value="<{$item.barcode}>" maxlength="30" class="form-control barcode">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="floor_5" class="panel panel-default spec-props">
           <div class="panel-heading">
             销售属性
           </div>
@@ -278,9 +237,9 @@
           </div>
         </div>
 
-        <div class="panel panel-default panel-default-table">
+        <div id="floor_6" class="panel panel-default panel-default-table goods-spec">
           <div class="panel-heading">
-            商品规格(sku)
+            商品规格(sku) <span>&nbsp;&nbsp;&nbsp;&nbsp;共<b class="product-number"><{$countProducts}></b>种货品</span>
           </div>
 
           <{if $goods_spec_images && count($goods_spec_images)>0}>
@@ -320,7 +279,9 @@
           </textarea>
 
           <div class="td">
-            <div style="margin-top:1em;margin-left:1em;">共<b class="product-number"><{$countProducts}></b>种货品</div>
+            <div class="spec-title" style="margin-top:1em;margin-left:1em;">
+              <span>批量填充<label  data-toggle="tooltip" data-placement="top" title="如果sku有多页，批量填充只能填充本页">&nbsp;<i class="fa fa-question-circle text-aqua"></i>&nbsp;</label>：</span><input type="number" name="spec_price" class="form-control" placeholder="销售价"><input type="number" name="spec_mkt_price" class="form-control" placeholder="原价"><input type="number" name="spec_cost_price" class="form-control" placeholder="成本价"><input type="number" name="spec_store" class="form-control" placeholder="库存"><input type="text" name="spec_bn" class="form-control" placeholder="商品货号"><input type="text" name="spec_barcode" class="form-control" placeholder="条形码">&nbsp;&nbsp;<button type="button" class="btn btn-primary fill-action">确定</button>
+            </div>
             <div class="spec-tree">
               <table cellspacing="0" cellpadding="0" border="0" class="table table-bordered" id="goods-table">
                 <thead>
@@ -351,14 +312,14 @@
           </div>
         </div>
 
-        <div class="panel panel-default">
+        <div id="floor_7" class="panel panel-default">
           <div class="panel-heading">
             商品描述
           </div>
           <div class="bs-example bs-example-tabs">
             <ul id="myTab" class="nav nav-tabs" role="tablist">
               <li role="presentation" class="active"><a href="#home" id="home-tab" role="tab" data-toggle="tab" aria-controls="home" aria-expanded="true">电脑端</a></li>
-              <li role="presentation" class=""><a href="#profile" role="tab" id="profile-tab" data-toggle="tab" aria-controls="profile" aria-expanded="false">wap端</a></li>
+              <li role="presentation" class=""><a href="#profile" role="tab" id="profile-tab" data-toggle="tab" aria-controls="profile" aria-expanded="false">移动端</a></li>
             </ul>
             <div id="myTabContent" class="tab-content">
               <div role="tabpanel" class="tab-pane fade active in" id="home" aria-labelledby="home-tab">
@@ -371,6 +332,66 @@
           </div>
         </div>
 
+        <div id="floor_8" class="panel panel-default">
+          <div class="panel-heading">
+            店铺自定义分类
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label for="" class="col-sm-2 control-label">店铺中分类：</label>
+              <div class="col-sm-3">
+                <select name="item[shop_cids][]" multiple id="act-selectshopcat" class="form-control">
+                  <{foreach from=$shopCatList item=shop_cat}>
+                  <{if $shop_cat.children}>
+                  <optgroup label='<{$shop_cat.cat_name}>'>
+                    <{else}>
+                    <option value='<{$shop_cat.cat_id}>'
+                    <{if $shop_cat.selected}>
+                    selected=selected
+                    <{/if}>
+                    ><{$shop_cat.cat_name}></option>
+                    <{/if}>
+
+                    <{if $shop_cat.children}>
+                    <{foreach from=$shop_cat.children item=shop_cat_children}>
+                    <option value='<{$shop_cat_children.cat_id}>'
+                    <{if $shop_cat_children.selected}>
+                    selected
+                    <{/if}>
+                    ><{$shop_cat_children.cat_name}></option>
+                    <{/foreach}>
+                    <{/if}>
+
+                    <{if $shop_cat.children}>
+                  </optgroup>
+                  <{/if}>
+                  <{/foreach}>
+                </select>
+              </div>
+              <span class="label label-info">还没有店铺分类？点击</span> <a href="<{url action=topshop_ctl_item_cat@index}>" target="_blank"> 添加店铺分类</a>
+            </div>
+          </div>
+        </div>
+
+        <div id="floor_9" class="panel panel-default">
+          <div class="panel-heading">
+            商品物流信息
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <label for="" class="col-sm-2 control-label"><span class="txt-required">*</span> 运费模板：</label>
+              <div class="col-sm-3">
+                <select name="item[dlytmpl_id]" required id="act-selectshopcat" class="form-control">
+                  <option value="" ><{t}>请选择运费模版<{/t}></option>
+                  <{foreach from=$dlytmpls.data item=dly}>
+                  <option value="<{$dly.template_id}>" <{if $dly.template_id==$item.dlytmpl_id}> selected <{/if}>><{$dly.name}></option>
+                  <{/foreach}>
+                </select>
+              </div>
+              <span class="label label-info">还没有运费模板？点击</span> <a href="<{url action=topshop_ctl_shop_dlytmpl@index}>" target="_blank"> 添加运费模板</a>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -391,7 +412,27 @@
   </div>
   <{/if}>
 </form>
-
+<div class="panel panel-default goods-info-floor">
+  <div class="panel-heading">快捷导航<i class="glyphicon glyphicon-remove" title="关闭"></i></div>
+  <div class="panel-body">
+    <ul>
+      <li><a href="javascript:void(0);" data-id="floor_1">基本内容</a></li>
+      <!-- <li><a href="javascript:void(0);" data-id="floor_2">自然属性</a></li> -->
+      <li><a href="javascript:void(0);" data-id="floor_3">其他信息</a></li>
+      <li><a href="javascript:void(0);" data-id="floor_4">商品标准信息</a></li>
+      <!-- <li><a href="javascript:void(0);" data-id="floor_5">销售属性</a></li> -->
+      <!-- <li><a href="javascript:void(0);" data-id="floor_6">商品规格（sku）</a></li> -->
+      <li><a href="javascript:void(0);" data-id="floor_7">商品描述</a></li>
+      <li><a href="javascript:void(0);" data-id="floor_8">店铺自定义分类</a></li>
+      <li><a href="javascript:void(0);" data-id="floor_9">商品物流信息</a></li>
+    </ul>
+  </div>
+  <div class="floor-icon-box">
+    <div class="icon-show">
+      <icon class="glyphicon glyphicon-chevron-left"></icon>
+    </div>
+  </div>
+</div>
 <{script src="md5.js" app="desktop"}>
 <{script app="toputil" src="jquery-catselect.js"}>
 <script>
@@ -412,6 +453,7 @@ var goods_info;// = <{if $goods_info}><{$goods_info}><{else}>{}<{/if}>;
 var Products;// = <{if $products}><{$products}><{else}>{}<{/if}>;
 var Spec;// = <{if $selection_spec_json}><{$selection_spec_json}><{else}>{}<{/if}>;
 var activeProducts;// = <{if $activeProducts}><{$activeProducts}><{else}>{}<{/if}>;
+var isnospec = $('input[name="item[nospec]"]:checked').val() == '1' ? true : false; //记录是否为单商品规格
 $("#specification").on('keydown',function(){
 	  if(event.keyCode==13)
 	  {
@@ -421,7 +463,6 @@ $("#specification").on('keydown',function(){
 function ajaxSubmit (e) {
 
   var form = e.target;
-
   e.preventDefault();
   $.post(form.action, $(form).serialize(), function(rs) {
       // rs = JSON.parse(rs);
@@ -540,6 +581,7 @@ $('.act-listtime').on('focus',function(){
     $(this).parents('.radio').find('input[type=radio]')[0].checked=true;
 });
 
+var preTotalStore = 0;
 // 商品规格编辑
 //table翻页组件
 var Pager = new Class({
@@ -566,6 +608,7 @@ var Pager = new Class({
     render: function(n) {
         this.goPage(n);
         this.updatePager();
+
     },
     attach: function() {
       var self = this;
@@ -577,12 +620,15 @@ var Pager = new Class({
         }
         if(target.hasClass('prev') || target.parent('.prev').size()) {
           n = self.current - 1;
+          preTotalStore = getPreTotalStore();
         }
         else if(target.hasClass('next') || target.parent('.next').size()) {
           n = self.current + 1;
+          preTotalStore = getPreTotalStore();
         }
         else if(target.hasClass('flip')) {
           n = parseInt(target.text());
+          preTotalStore = getPreTotalStore();
         }
         else {
           return;
@@ -666,7 +712,8 @@ var goodsSpecTree = new Class({
       specMap: '#dataNode',
       switchTrigger: '.typelist',
       switchContent: '.spec-wrap',
-      number: '.product-number'
+      number: '.product-number',
+      specFillBtn: '.fill-action'
     },
     count: 0,
     init: function(container, options){
@@ -677,6 +724,7 @@ var goodsSpecTree = new Class({
       if(!this.specLength) return;
       this.specIMG = this.container.find(this.options.specIMG);
       this.specMap = $(this.options.specMap);
+      this.specFillBtn = $(this.options.specFillBtn);
       this.switchTriggers = this.container.find(this.options.switchTrigger).children();
       this.switchPanels = this.container.find(this.options.switchContent).children();
       // this.selectAll = this.container.find('.selectAll input[type=checkbox]');
@@ -768,7 +816,59 @@ var goodsSpecTree = new Class({
           var prop = str.match(/\[([^\]]*)\]/)[1];
           self.storeData(this, uid, prop);
       });
+      //批量填充规格
+      this.specFillBtn.on('click', function(){
+        var specPrice = $.trim($('input[name="spec_price"]').val());
+        var specMktPrice = $.trim($('input[name="spec_mkt_price"]').val());
+        var specCostPrice = $.trim($('input[name="spec_cost_price"]').val());
+        var specStore = $.trim($('input[name="spec_store"]').val());
+        var specBn = $.trim($('input[name="spec_bn"]').val());
+        var specBarcode = $.trim($('input[name="spec_barcode"]').val());
 
+        if(specPrice != ''){
+          $('.goods-spec').find('input[name$="[price]"]').each(function(){
+            $(this).val(specPrice);
+            $(this).trigger('change');
+          });
+          $('input[name="spec_price"]').val('');
+        }
+        if(specMktPrice != ''){
+          $('.goods-spec').find('input[name$="[mkt_price]"]').each(function(){
+            $(this).val(specMktPrice);
+            $(this).trigger('change');
+          });
+          $('input[name="spec_mkt_price"]').val('');
+        }
+        if(specCostPrice != ''){
+          $('.goods-spec').find('input[name$="[cost_price]"]').each(function(){
+            $(this).val(specCostPrice);
+            $(this).trigger('change');
+          });
+          $('input[name="spec_cost_price"]').val('');
+        }
+        if(specStore != ''){
+          $('.goods-spec').find('input[name$="[store]"]').each(function(){
+            $(this).val(specStore);
+            $(this).trigger('change');
+          });
+          $('input[name="spec_store"]').val('');
+        }
+        if(specBn != ''){
+          $('.goods-spec').find('input[name$="[bn]"]').each(function(){
+            $(this).val(specBn);
+            $(this).trigger('change');
+          });
+          $('input[name="spec_bn"]').val('');
+        }
+        if(specBarcode != ''){
+          $('.goods-spec').find('input[name$="[barcode]"]').each(function(){
+            $(this).val(specBarcode);
+            $(this).trigger('change');
+          });
+          $('input[name="spec_barcode"]').val('');
+        }
+        setTotalStore();
+      });
       $(document.body).on('click', '.save-action', function(e) {
         var keys = [], i = 0, j = self.products.length, k, l = self.props.length, p, attr, flag;
         for(; i < j; i++) {
@@ -855,16 +955,28 @@ var goodsSpecTree = new Class({
           }
         });
         self.saveNewProduct(keys);
-        if(keys.length > 0 && (writecount <= 0)) {
-          $('#messagebox').message('至少填写一种商品规格');
-          return false;
+        if(!isnospec) {
+          if(keys.length > 0 && (writecount <= 0)) {
+            $('#messagebox').message('至少填写一种商品规格');
+            return false;
+          }
+          if(!isprice || p_pricecount > 0 || new_pricecount > 0) {
+            $('#messagebox').message('请填写商品规格对应的销售价格');
+            return false;
+          }
+          if(!isstore || p_storecount > 0 || new_storecount > 0) {
+            $('#messagebox').message('请填写商品规格对应的库存');
+            return false;
+          }
         }
-        if(!isprice || p_pricecount > 0 || new_pricecount > 0) {
-          $('#messagebox').message('请填写商品规格对应的销售价格');
-          return false;
-        }
-        if(!isstore || p_storecount > 0 || new_storecount > 0) {
-          $('#messagebox').message('请填写商品规格对应的库存');
+        var max = $('input[name="item[store]"]').attr('data-max');
+        var msg = '商品库存数量之和要小于等于' + max;
+        if(Number($('input[name="item[store]"]').val()) > Number(max)) {
+          if(isnospec) {
+            msg = '库存数量要小于等于' + max;
+            $('input[name="item[store]"]').focus();
+          } 
+          $('#messagebox').message(msg);
           return false;
         }
       });
@@ -882,7 +994,6 @@ var goodsSpecTree = new Class({
       trigger && trigger.find('i').text(parent.find('input[type=checkbox]:checked').length);
       this.createSpecGrid(parent, i, id);
       // this.createAllGoods();
-      // console.log(new Date() - d + 'ms');
     },
     toggleEdit: function(element) {
         var parent = $(element).parent();
@@ -914,7 +1025,7 @@ var goodsSpecTree = new Class({
         }
         if(!Spec[id].option[sid]) {
           Spec[id].option[sid] = {
-            private_spec_value_id: el.name,
+            // private_spec_value_id: el.name,
             spec_value: el.title,
             spec_value_id: sid
           };
@@ -1060,7 +1171,7 @@ var goodsSpecTree = new Class({
       if(!Products[uid]) {
         this.newProduct[uid] = $.extend(true, {}, arr);
         this.newProduct[uid].spec_desc = {};
-        this.newProduct[uid].spec_desc.spec_private_value_id = $.extend(true, {}, specpvid);
+        // this.newProduct[uid].spec_desc.spec_private_value_id = $.extend(true, {}, specpvid);
         this.newProduct[uid].spec_desc.spec_value = $.extend(true, {}, specvalue);
         this.newProduct[uid].spec_desc.spec_value_id = $.extend(true, {}, specid);
       }
@@ -1134,6 +1245,9 @@ var goodsSpecTree = new Class({
 });
 
 $(document).on('click', '.save-action', function () {
+    //保存的时候将 单品或者多规格radio框的状态的disabled去掉，以便可以提交数据
+    $('input[name="item[nospec]"]').attr("disabled", false);
+    displaySpec($('input[name="item[nospec]"]:checked').val());
     // 保存sku信息
     Products && $('input[name="item[sku]"]').val(JSON.stringify(Products));
     Spec && $('input[name="item[spec]"]').val(JSON.stringify(Spec));
@@ -1157,7 +1271,77 @@ $('.brand-modal-dialog').on('click', '.btn-primary', function() {
   $('#brandDialog').modal('hide');
   $('input[name="item[brand_id]"]').val(brandId);
 });
+//文本编辑器去重
+var editableSpan = $('.note-editable').find('span');
+editableSpan.each(function(){
+  if($.trim($(this).text()) == "") {
+      $(this).remove();
+  }
+});
 
+//规格切换
+$('input[name="item[nospec]"]').on('change', function(){
+  var itemSpec = $(this).val();
+  displaySpec(itemSpec);
+  var itemId = $('input[name="item[item_id]"]').val();
+  if(itemId == "") {
+    setTotalStore();
+  }
+}).trigger('change');
+// displaySpec($('input[name="item[nospec]"]:checked').val());
+function displaySpec(itemspec) {
+  if(itemspec == '1') { // 单品
+    isnospec = true;
+    $('.spec-props').hide();
+    $('.goods-spec').hide();
+    $('.spec-props').find('input').prop('disabled', true);
+    $('.goods-spec').find('input').prop('disabled', true);
+    // $('.goods-spec').find('input').removeAttr('required');
+    $('input[name="item[store]"]').prop('readonly', false);
+  } else if(itemspec == '0') { // 多规格
+    isnospec = false;
+    $('.spec-props').show();
+    $('.goods-spec').show();
+    $('.spec-props').find('input').prop('disabled', false);
+    $('.goods-spec').find('input').prop('disabled', false);
+    // $('.goods-spec').find('input').attr('required', 'required');
+    $('input[name="item[store]"]').prop('readonly', true);
+  }
+}
+
+$('.goods-spec').on('change', 'input[name$="[store]"]', function(){
+  setTotalStore();
+});
+
+function setTotalStore() {
+  $('input[name="item[store]"]').val(preTotalStore + getPreTotalStore());
+}
+function getPreTotalStore() {
+  var totalStore = 0;
+  var specStores = $('.goods-spec').find('input[name$="[store]"]');
+  specStores.each(function(){
+    totalStore += Number($.trim($(this).val()) == '' ? 0 : $.trim($(this).val()));
+  });
+  return totalStore;
+}
+
+//商品信息楼层
+$('.goods-info-floor').on('click', 'li > a', function(){
+  var parent = $(this).parent();
+  var id = "#" + $(this).attr('data-id');
+  parent.addClass('active').siblings('li').removeClass('active');
+  $('html,body').animate({scrollTop: $(id).offset().top}, 500);
+});
+$('.goods-info-floor').on('click', '.glyphicon-remove', function(){
+  $('.goods-info-floor').animate({right: -150}, 500);
+  setTimeout(function(){
+    $('.goods-info-floor').find('.floor-icon-box').show();
+  }, 500);
+});
+$('.goods-info-floor').on('click', '.icon-show', function(){
+  $('.goods-info-floor').animate({right: 10}, 500);
+  $('.goods-info-floor').find('.floor-icon-box').hide();
+});
 //拖拽商品图片
 dragDom('.multiple-item');
 </script>

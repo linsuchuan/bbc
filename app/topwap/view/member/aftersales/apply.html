@@ -12,7 +12,9 @@
 
         <{if $orderInfo.gift_data}>
         <div class="content-horizontal-padded gift-content" style="display:none;">
+          <{if $giftReturnFlag}>
           <span class="font-red fonts return-goods">*请将赠品一同退回</span>
+          <{/if}>
           <span class="font-red fonts exchange-goods">*若要更换赠品，请联系客服</span>
         </div>
         <{/if}>
@@ -33,19 +35,21 @@
           <{if $orderInfo.gift_data}>
           <{assign var=giftdata value=$orderInfo.gift_data}>
           <{foreach from=$giftdata item=gift}>
-          <li class="return-goods">
-            <div class="thumbnail">
-              <div class="thumb-img"><a href="#"><img src="<{$gift.image_default_id|default:$defaultImageId.T.default_image|storager:t}>" alt=""></a></div>
-              <div class="caption">
-                <div class="order-goods-info">
-                  <div class="order-goods-title"><span class="font-red">[赠品]</span><{$gift.title}></div>
-                  <div class="order-goods-sku"><{$gift.spec_info}></div>
-                  <div class="order-goods-price"><mark><{$gift.price|cur}></mark></div>
+            <{if !$gift.withoutReturn}>
+              <li class="return-goods">
+                <div class="thumbnail">
+                  <div class="thumb-img"><a href="#"><img src="<{$gift.image_default_id|default:$defaultImageId.T.default_image|storager:t}>" alt=""></a></div>
+                  <div class="caption">
+                    <div class="order-goods-info">
+                      <div class="order-goods-title"><span class="font-red">[赠品]</span><{$gift.title}></div>
+                      <div class="order-goods-sku"><{$gift.spec_info}></div>
+                      <div class="order-goods-price"><mark><{$gift.price|cur}></mark></div>
+                    </div>
+                    <div class="order-goods-num content-right">x <{$gift.gift_num}></div>
+                  </div>
                 </div>
-                <div class="order-goods-num content-right">x <{$gift.gift_num}></div>
-              </div>
-            </div>
-          </li>
+              </li>
+            <{/if}>
           <{/foreach}>
           <{/if}>
         </ul>

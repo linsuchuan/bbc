@@ -5,20 +5,20 @@ class syspromotion_api_activity_itemList{
     public function getParams()
     {
         $data['params'] = array(
-            'id' => ['type'=>'string', 'valid'=>'', 'default'=>'', 'example'=>'', 'description'=>'主键id'],
-            'activity_id' => ['type'=>'string', 'valid'=>'', 'default'=>'', 'example'=>'', 'description'=>'活动id,多个用“,”隔开'],
-            'cat_id' => ['type'=>'string', 'valid'=>'', 'default'=>'', 'example'=>'', 'description'=>'类目id,多个用“,”隔开'],
-            'item_id' => ['type'=>'string', 'valid'=>'', 'default'=>'', 'example'=>'', 'description'=>'商品id，多个用“,”隔开'],
-            'status' => ['type'=>'string', 'valid'=>'', 'default'=>'', 'example'=>'', 'description'=>'活动状态'],
-            'start_time' => ['type'=>'string', 'valid'=>'', 'default'=>'', 'example'=>'sthan', 'description'=>'与开始时间相比，大于或小于指定时间,值为(sthan、bthan)'],
-            'end_time' => ['type'=>'string', 'valid'=>'', 'default'=>'', 'example'=>'bthan', 'description'=>'与开结束相比，大于或小于指定时间,值为(sthan、bthan)'],
-            'time' => ['type'=>'string', 'valid'=>'date', 'default'=>'', 'example'=>'2015-14-04 20:30', 'description'=>'指定时间(2015-14-04)'],
-            'shop_id' => ['type'=>'int', 'valid'=>'int', 'default'=>'', 'example'=>'', 'description'=>'店铺id'],
+            'id'          => ['type'=>'string', 'valid'=>'', 'description'=>'主键id'],
+            'activity_id' => ['type'=>'string', 'valid'=>'', 'description'=>'活动id,多个用“,”隔开'],
+            'cat_id'      => ['type'=>'string', 'valid'=>'', 'description'=>'类目id,多个用“,”隔开'],
+            'item_id'     => ['type'=>'string', 'valid'=>'', 'description'=>'商品id，多个用“,”隔开'],
+            'status'      => ['type'=>'string', 'valid'=>'', 'description'=>'活动状态'],
+            'start_time'  => ['type'=>'string', 'valid'=>'in:sthan,bthan', 'description'=>'与开始时间相比，大于或小于指定时间,值为(sthan、bthan)'],
+            'end_time'    => ['type'=>'string', 'valid'=>'in:sthan,bthan', 'description'=>'与开结束相比，大于或小于指定时间,值为(sthan、bthan)'],
+            'time'        => ['type'=>'string', 'valid'=>'date', 'description'=>'指定时间如(2015-14-04)'],
+            'shop_id'     => ['type'=>'int',    'valid'=>'int',  'description'=>'店铺id'],
 
-            'page_no' => ['type'=>'int','valid'=>'int','description'=>'分页当前页码,1<=no<=499','example'=>'','default'=>'1'],
-            'page_size' =>['type'=>'int','valid'=>'int','description'=>'分页每页条数(1<=size<=200)','example'=>'','default'=>'40'],
-            'order_by' => ['type'=>'int','valid'=>'string','description'=>'排序方式','example'=>'','default'=>'item_id desc'],
-            'fields' => ['type'=>'field_list', 'valid'=>'string', 'default'=>'activity_name', 'example'=>'', 'description'=>'查询字段'],
+            'page_no'   => ['type'=>'int',        'valid'=>'int',    'description'=>'分页当前页码,1<=no<=499'],
+            'page_size' => ['type'=>'int',        'valid'=>'int',    'description'=>'分页每页条数(1<=size<=200)'],
+            'order_by'  => ['type'=>'int',        'valid'=>'string', 'description'=>'排序方式,默认 item_id desc'],
+            'fields'    => ['type'=>'field_list', 'valid'=>'string', 'description'=>'查询字段，默认*'],
         );
         return $data;
     }

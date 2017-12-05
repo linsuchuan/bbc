@@ -2,6 +2,12 @@
     <service id="desktop_finder.ectools_mdl_payment_cfgs" optname="支付方式后台列表">
         <class>ectools_finder_payment_cfgs</class>
     </service>
+    <service id="desktop_finder.ectools_mdl_payments" optname="支付单列表">
+        <class>ectools_finder_payments</class>
+    </service>
+    <service id="desktop_finder.ectools_mdl_refunds" optname="支付单列表">
+        <class>ectools_finder_refunds</class>
+    </service>
     <service id="desktop_finder.ectools_mdl_trade_paybill" optname="支付单列表">
         <class>ectools_finder_tradebill</class>
     </service>
@@ -10,16 +16,17 @@
         <!--
         <class>ectools_payment_plugin_teegonwxpay</class>
         <class>ectools_payment_plugin_teegonali</class>
+        <class>ectools_payment_plugin_teegonchinapay</class>
+        <class>ectools_payment_plugin_teegonchinapayb2c</class>
         -->
         <class>ectools_payment_plugin_alipay</class>
         <class>ectools_payment_plugin_alipayApp</class>
-        <class>ectools_payment_plugin_deposit</class>
         <class>ectools_payment_plugin_99bill</class>
         <class>ectools_payment_plugin_doubletenpay</class>
-        <!-- <class>ectools_payment_plugin_unionpay</class> -->
         <class>ectools_payment_plugin_upacp</class>
         <class>ectools_payment_plugin_malipay</class>
         <class>ectools_payment_plugin_wxpayjsapi</class>
+        <class>ectools_payment_plugin_wxpayApp</class>
         <class>ectools_payment_plugin_wxqrpay</class>
         <class>ectools_payment_plugin_ibankinginner</class>
         <!--

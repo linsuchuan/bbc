@@ -71,28 +71,33 @@ class ectools_payment_api
             }
         }
 
+        if( get_parent_class($class_name ) != 'ectools_payment_app')
+            throw new LogicException('Plugin Error!');
         logger::info("支付返回信息记录：".var_export($arrQueryStrs,1));
         $payments = new $class_name($objShopApp);
         $ret = $payments->$method($arrQueryStrs);
-        logger::info("支付返回信息转换之后记录：".var_export($ret,1));
+        logger::info("支付、退款返回信息转换之后记录：".var_export($ret,1));
         // 支付结束，回调服务.
         if (!isset($ret['status']) || $ret['status'] == '') $ret['status'] = 'failed';
 
-        $objPayments = app::get('ectools')->model('payments');
-        $sdf = $objPayments->getRow('*',array('payment_id'=>$ret['payment_id']));
-        if ($sdf)
+        if($ret['payment_id'])
         {
-            $sdf['account'] = $ret['account'];
-            $sdf['bank'] = $ret['bank'];
-            $sdf['pay_account'] = $ret['pay_account'];
-            $sdf['currency'] = $ret['currency'];
-            $sdf['trade_no'] = $ret['trade_no'];
-            $sdf['payed_time'] = $ret['t_payed'];
-            $sdf['pay_app_id'] = $ret['pay_app_id'];
-            $ret['pay_type'] = $sdf['pay_type'];
-            $sdf['memo'] = $ret['memo'];
-            $sdf['money'] = $ret['money'];
-            $sdf['cur_money'] = $ret['cur_money'] ? $ret['cur_money'] : $sdf['cur_money'];
+            $objPayments = app::get('ectools')->model('payments');
+            $sdf = $objPayments->getRow('*',array('payment_id'=>$ret['payment_id']));
+            if ($sdf)
+            {
+                $sdf['account'] = $ret['account'];
+                $sdf['bank'] = $ret['bank'];
+                $sdf['pay_account'] = $ret['pay_account'];
+                $sdf['currency'] = $ret['currency'];
+                $sdf['trade_no'] = $ret['trade_no'];
+                $sdf['payed_time'] = $ret['t_payed'];
+                $sdf['pay_app_id'] = $ret['pay_app_id'];
+                $ret['pay_type'] = $sdf['pay_type'];
+                $sdf['memo'] = $ret['memo'];
+                $sdf['money'] = $ret['money'];
+                $sdf['cur_money'] = $ret['cur_money'] ? $ret['cur_money'] : $sdf['cur_money'];
+            }
         }
 
         switch ($ret['status'])
@@ -117,23 +122,12 @@ class ectools_payment_api
 
                         try
                         {
-                            if($sdf['pay_type'] == 'recharge')
+                            logger::info("支付过程中，被处理的订单数据： \n".var_export($paymentBill,1));
+                            if($paymentBill['status'] == "succ" || $paymentBill['status'] == "progress")
                             {
-                                logger::info("支付过程中，被处理的预存款充值数据： \n".var_export($sdf,1));
-                                if($ret['status'] == "succ" || $ret['status'] == "progress")
+                                foreach($paymentBill['trade'] as $value)
                                 {
-                                    app::get('ectools')->rpcCall('user.deposit.recharge', ['user_id'=>$sdf['user_id'], 'fee'=>$sdf['cur_money'], 'memo'=>"预存款充值，用户名：{$sdf['user_name']}；支付单号：{$sdf['payment_id']}"]);
-                                }
-                            }
-                            else
-                            {
-                                logger::info("支付过程中，被处理的订单数据： \n".var_export($paymentBill,1));
-                                if($paymentBill['status'] == "succ" || $paymentBill['status'] == "progress")
-                                {
-                                    foreach($paymentBill['trade'] as $value)
-                                    {
-                                        app::get('ectools')->rpcCall('trade.pay.finish',array('tid'=>$value['tid'],'payment'=>$value['payment']));
-                                    }
+                                    app::get('ectools')->rpcCall('trade.pay.finish',array('tid'=>$value['tid'],'payment'=>$value['payment']));
                                 }
                             }
                         }
@@ -156,17 +150,20 @@ class ectools_payment_api
                 break;
             case 'REFUND_SUCCESS':
                 // 退款成功操作
-                if ($sdf)
+                if ($ret)
                 {
-                    unset($sdf['payment_id']);
-                    $obj_refund = app::get('ectools')->model('refund');
-                    $sdf['refund_id'] = $obj_refund->gen_id();
-                    $ret['status'] = 'succ';
-                    if ($obj_refund->insert($sdf))
+                    // 如果已经更新过，对应的api会做判断，防止多次执行
+                    //更新退款单状态
+                    $apiParams = ['refund_id'=>$ret['refund_id'], 'status'=>'succ'];
+                    $result = app::get('ectools')->rpcCall('refund.update', $apiParams);
+                    //更改退款申请单
+                    $refunds = app::get('ectools')->model('refunds')->getList('return_fee,refunds_id', ['refund_id'=>$ret['refund_id']]);
+                    $apiParams = ['return_fee'=>$refunds[0]['return_fee'], 'refunds_id'=>$refunds[0]['refunds_id']];
+                    app::get('sysaftersales')->rpcCall('aftersales.refunds.restore', $apiParams);
+                    //退款成功给支付网关显示支付信息
+                    if(method_exists($payments, 'refund_result'))
                     {
-                        //处理单据的支付状态
-                        $obj_refund_finish = kernel::service("order.refund_finish");
-                        $obj_refund_finish->order_refund_finish($sdf, $ret['status'], 'font',$msg);
+                        $payments->ret_result($ret['refund_id']);
                     }
                 }
                 break;

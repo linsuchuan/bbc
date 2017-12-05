@@ -49,7 +49,7 @@ class desktop_task{
         //todo: 封装成更简单的函数
         $use_pass_data['login_name'] = $options['admin_uname'];
         $use_pass_data['createtime'] = time();
-        $password = pam_encrypt::make($options['admin_password']);
+        $password = hash::make($options['admin_password']);
         $account = array(
             'pam_account'=>array(
                 'login_name'=>$options['admin_uname'],

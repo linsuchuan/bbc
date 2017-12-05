@@ -31,7 +31,6 @@ class topapi_api_v1_member_index implements topapi_interface_api{
      * @return int wait_confirm_goods_num 待确认收货订单数量
      * @return int canceled_num 已取消订单数量
      * @return int notrate_num 待评价订单数量
-     * @return float deposit 预存款金额
      * @return int coupon_num 优惠券数量
      * @return int point 积分
      *
@@ -52,10 +51,6 @@ class topapi_api_v1_member_index implements topapi_interface_api{
         $result['canceled_num'] = $cancelData['total'];
         $result['notrate_num'] = app::get('topapi')->rpcCall('trade.notrate.count',array('user_id'=>$userId));
 
-        //预存款金额
-        $deposit = app::get('topapi')->rpcCall('user.deposit.getInfo',['user_id'=>$userId]);
-        $result['deposit'] = $deposit['deposit'] ?: 0;
-
         //优惠劵数量
         $coupon = app::get('topapi')->rpcCall('user.coupon.count', ['user_id'=>$userId, 'is_valid'=>'1']);
         $result['coupon_num'] = $coupon['count'] ?: 0;
@@ -68,6 +63,7 @@ class topapi_api_v1_member_index implements topapi_interface_api{
 
         $userInfo = app::get('topapi')->rpcCall('user.get.info', ['user_id'=>$userId]);
         $result['username'] = $userInfo['username'] ? :( $userInfo['login_account'] ? : ( $userInfo['mobile'] ? : ( $userInfo['email'] ) ) );
+        $result['hongbaoCount'] = app::get('topwap')->rpcCall('user.hongbao.count',['user_id'=>$userId]);
 
         return $result;
     }
@@ -78,7 +74,7 @@ class topapi_api_v1_member_index implements topapi_interface_api{
      */
     public function returnJson()
     {
-        return '{"errorcode":0,"msg":"","data":{"gradeInfo":{"grade_id":5,"experience":15095,"grade_name":"白金会员","grade_logo":"http://images.bbc.shopex123.com/images/6f/ca/48/3449cbc3e2b21c505aac507e96500749f4431fc7.png"},"wait_pay_num":0,"wait_send_goods_num":7,"wait_confirm_goods_num":0,"canceled_num":18,"notrate_num":2,"deposit":"10191.100","coupon_num":4,"point":15095,"cur_symbol":{"sign":"￥","decimals":"3"}}}';
+        return '{"errorcode":0,"msg":"","data":{"gradeInfo":{"grade_id":5,"experience":15095,"grade_name":"白金会员","grade_logo":"http://images.bbc.shopex123.com/images/6f/ca/48/3449cbc3e2b21c505aac507e96500749f4431fc7.png"},"wait_pay_num":0,"wait_send_goods_num":7,"wait_confirm_goods_num":0,"canceled_num":18,"notrate_num":2,"coupon_num":4,"point":15095,"cur_symbol":{"sign":"￥","decimals":"3"}}}';
     }
 
 }

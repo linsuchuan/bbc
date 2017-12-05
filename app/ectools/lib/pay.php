@@ -21,7 +21,7 @@ class ectools_pay extends ectools_operation
      */
     final public function __clone()
     {
-        trigger_error(app::get('ectools')->_("此类对象不能被克隆！"), E_USER_ERROR);
+        throw new \Exception(app::get('ectools')->_('此类对象不能被克隆！'));
     }
 
     /**
@@ -31,12 +31,16 @@ class ectools_pay extends ectools_operation
      * @params string - 支付单生成的记录
      * @return boolean - 创建成功与否
      */
-    public function generate(&$sdf, &$controller=null, &$msg='')
+    public function generate(&$sdf)
     {
         // 异常处理
         if (!isset($sdf) || !$sdf || !is_array($sdf))
         {
-            trigger_error(app::get('ectools')->_("支付单信息不能为空！"), E_USER_ERROR);exit;
+            throw new \Exception(app::get('ectools')->_('支付单信息不能为空！'));
+        }
+        if (!$sdf['type'])
+        {
+            throw new \Exception(app::get('ectools')->_('支付类型是付款还是退款不能为空'));
         }
 
         // 支付方式的处理
@@ -55,25 +59,39 @@ class ectools_pay extends ectools_operation
                     $str_app = $app_class_name;
                 }
             }
-			else
-			{
-				if ($app_class_name == $pay_app_id)
-				{
-					$pay_app_ins = $obj_app;
-					$str_app = $app_class_name;
-				}
-			}
+            else
+            {
+                if ($app_class_name == $pay_app_id)
+                {
+                    $pay_app_ins = $obj_app;
+                    $str_app = $app_class_name;
+                }
+            }
         }
 
-        $pay_app_ins = new $str_app($controller->app);
+        $pay_app_ins = new $str_app();
 
         $is_payed = true;
+
         switch($sdf['pay_type'])
         {
             case "recharge":
+
             case "online":
-                logger::info("支付请求信息：".var_export($sdf,1));
-                $is_payed = $pay_app_ins->dopay($sdf);
+                if($sdf['type']=='refund')
+                {
+                    if(!method_exists( $pay_app_ins, 'dorefund' ) )
+                    {
+                        throw new \Exception(app::get('ectools')->_('原支付方式不支持原路返回！请换线下退款方式！'));
+                    }
+                    logger::info("第三方退款请求信息：".var_export($sdf,1));
+                    $is_payed = $pay_app_ins->dorefund($sdf);
+                }
+                else
+                {
+                    logger::info("支付请求信息：".var_export($sdf,1));
+                    $is_payed = $pay_app_ins->dopay($sdf);
+                }
                 break;
             default:
                 $is_payed = false;

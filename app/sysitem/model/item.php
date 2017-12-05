@@ -11,130 +11,6 @@ class sysitem_mdl_item extends dbeav_model{
 
     public $defaultOrder = array('modified_time','DESC');
 
-    public $has_many = array(
-        'sku' => 'sku:contrast',
-        'props' => 'item_nature_props:replace:item_id^item_id',
-    );
-
-    public $has_one = array(
-        'desc' => 'item_desc@sysitem:contrast:item_id^item_id',
-        'item_count' => 'item_count@sysitem:contrast:item_id^item_id',
-        'item_store' => 'item_store@sysitem:contrast:item_id^item_id',
-        'list_status' => 'item_status@sysitem:contrast:item_id^item_id',
-    );
-
-    public function save(&$item,$mustUpdate = null, $mustInsert = false){
-        if( !trim($item['bn'] )) $item['bn'] = strtoupper(uniqid('g'));
-        if( array_key_exists( 'spec',$item ) )
-        {
-            if( $item['spec'] )
-            {
-                foreach( $item['spec'] as $gSpecId => $gSpecOption )
-                {
-                    $item['spec_desc'][$gSpecId] = $gSpecOption['option'];
-                }
-            }
-            else
-            {
-                $item['spec_desc'] = null;
-            }
-        }
-        $itemStatus = false;
-        $store = 0;
-        is_array($item['sku']) or $item['sku'] = array();
-        $bnList = array();
-        foreach( $item['sku'] as $pk => $pv )
-        {
-            if( !$pv['bn'] && !$item['nospec'])
-            {
-                $item['sku'][$pk]['bn'] = strtoupper(uniqid('s'));
-            }
-            if($item['nospec'])
-            {
-                $item['sku'][$pk]['bn'] = $item['bn'];
-                $item['sku'][$pk]['barcode'] = $item['barcode'];
-            }
-
-            if( array_key_exists( $item['sku'][$pk]['bn'], $bnList ) )
-            {
-                return null;
-            }
-            $bnList[$item['sku'][$pk]['bn']] = 1;
-            if( $pv['store'] === null || $pv['store'] === '' )
-            {
-                $store = 0;
-            }
-            else
-            {
-                if ($store !== null)
-                {
-                    $store += $pv['store'];
-                }
-            }
-        }
-        if($item['sku'])
-        {
-            $item['store'] = $store;
-        }
-        else
-        {
-            unset($item['sku']);
-            $sku_mdl = app::get('sysitem')->model('sku');
-            $sku = $sku_mdl->getList('sku_id', array('item_id'=>$item['item_id']));
-            foreach($sku as $k=>$v)
-            {
-                // $item['sku'][$k]['name'] = $item['name'];
-                $item['sku'][$k]['sku_id'] = $v['sku_id'];
-            }
-        }
-        unset($item['spec']);
-
-        // 为了生成数量统计表的数据
-        if(!isset($item['item_count']))
-        {
-            $item['item_count'] = array('item_id'=>$item['item_id']);
-        }
-        // 为了生成商品主表的库存，预占库存的数据
-        if(!isset($item['item_store']))
-        {
-            $item['item_store'] = array('item_id'=>$item['item_id'], 'store'=>$item['store']);
-            unset($item['store']);
-        }
-        $item['modified_time'] = time();
-
-        $rs = parent::save($item, $mustUpdate);
-
-        if($item['sku'])
-        {
-            $this->createSpecIndex($item);
-        }
-        return $rs;
-    }
-
-    public function createSpecIndex($item)
-    {
-        $objMdlSpecIndex = app::get('sysitem')->model('spec_index');
-        $objMdlSpecIndex->delete( array('item_id'=>$item['item_id']) );
-        foreach( $item['sku'] as $pro )
-        {
-            if( $pro['spec_desc'] )
-            {
-                foreach( $pro['spec_desc']['spec_value_id'] as $specId => $specValueId )
-                {
-                    $data = array(
-                        'cat_id' => $item['cat_id'],
-                        'prop_id' => $specId,
-                        'prop_value_id' => $specValueId,
-                        'item_id' => $item['item_id'],
-                        'sku_id' => $pro['sku_id'],
-                    );
-                    $objMdlSpecIndex->save($data);
-                }
-            }
-        }
-    }
-
-
     function dump($filter,$field = '*',$subSdf = null){
         $dumpData = parent::dump($filter,$field,$subSdf);
 
@@ -223,8 +99,13 @@ class sysitem_mdl_item extends dbeav_model{
      */
     public function doDelete($params)
     {
-        //团购判断
+        if(!$params['item_id'])
+        {
+            $msg = app::get('sysitem')->_('没有商品ID！');
+            throw new \LogicException($msg);
+        }
         $params['item_id'] = $params['item_id'];
+        //团购判断
         $activityStatus = app::get('sysitem')->rpcCall('promotion.activity.item.info', ['item_id'=>$params['item_id'], 'valid'=>1]);
         if($activityStatus['status'])
         {
@@ -246,13 +127,33 @@ class sysitem_mdl_item extends dbeav_model{
             throw new \LogicException($msg);
         }
 
-        $ojbMdlItem = app::get('sysitem')->model('item');
-        $result = $ojbMdlItem->delete($params);
-        if(!$result)
-        {
+        $filter = ['item_id'=>$params['item_id']];
+        $skuIds = app::get('sysitem')->model('sku_store')->getList('sku_id', $filter);
+        $skuIds = array_column($skuIds, 'sku_id');
+
+        $db = app::get('sysitem')->database();
+        $db->beginTransaction();
+        try{
+            $rs = app::get('sysitem')->model('item')->delete($filter);
+            $rs = app::get('sysitem')->model('item_count')->delete($filter);
+            $rs = app::get('sysitem')->model('item_desc')->delete($filter);
+            $rs = app::get('sysitem')->model('item_nature_props')->delete($filter);
+            $rs = app::get('sysitem')->model('item_status')->delete($filter);
+            $rs = app::get('sysitem')->model('item_store')->delete($filter);
+            $rs = app::get('sysitem')->model('sku')->delete($filter);
+            $rs = app::get('sysitem')->model('sku_store')->delete($filter);
+            $rs = app::get('sysitem')->model('spec_index')->delete($filter);
+
+            kernel::single('sysitem_item_redisStore')->deleteItemStore($params['item_id']);
+            kernel::single('sysitem_item_redisStore')->deleteSkuStore($skuIds);
+
+            $db->commit();
+        }catch(Exception $e){
+            $db->rollback();
             $msg = app::get('sysitem')->_('商品删除失败');
             throw new \logicException($msg);
         }
+
         return true;
     }
 }

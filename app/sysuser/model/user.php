@@ -76,7 +76,6 @@ class sysuser_mdl_user extends dbeav_model
         $objMdlUser = app::get('sysuser')->model('user');
         $objMdlPamUser = app::get('sysuser')->model('account');
         $objMdlTrustInfo = app::get('sysuser')->model('trustinfo');
-        $objMdlDeposit = app::get('sysuser')->model('user_deposit');
         try
         {
             $result = $objCheck->checkDelete($userIds);
@@ -102,19 +101,6 @@ class sysuser_mdl_user extends dbeav_model
                     throw new \LogicException($msg);
                 }
             }
-
-            //删除预存款信息
-            $deposit = $objMdlDeposit->getList('user_id',array('user_id'=>$userIds));
-            if($deposit)
-            {
-                $result = $objMdlDeposit->delete(array('user_id'=>$userIds));
-                if(!$result)
-                {
-                    $msg = "删除会员登录信息失败";
-                    throw new \LogicException($msg);
-                }
-            }
-
         }
         catch(Exception $e)
         {

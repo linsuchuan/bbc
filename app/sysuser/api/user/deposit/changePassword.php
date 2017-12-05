@@ -1,13 +1,13 @@
 <?php
 class sysuser_api_user_deposit_changePassword{
-    public $apiDescription = "修改预存款密码的接口（需要旧密码）";
+    public $apiDescription = "修改支付密码的接口（需要旧密码）";
 
     public function getParams()
     {
         $return['params'] = array(
             'user_id' => ['type'=>'string','valid'=>'required', 'description'=>'会员id','default'=>'','example'=>''],
-            'old_password' => ['type'=>'string','valid'=>'required', 'description'=>'原有的会员预存款支付密码','default'=>'','example'=>''],
-            'new_password' => ['type'=>'string','valid'=>'required', 'description'=>'新的会员预存款支付密码','default'=>'','example'=>''],
+            'old_password' => ['type'=>'string','valid'=>'required', 'description'=>'原有的会员支付密码','default'=>'','example'=>''],
+            'new_password' => ['type'=>'string','valid'=>'required', 'description'=>'新的会员支付密码','default'=>'','example'=>''],
         );
         return $return;
     }

@@ -15,6 +15,7 @@ class systrade_data_cart {
     {
         if (!$userId) throw new \InvalidArgumentException('user id cannot null.');
         $this->userId = $userId;
+        $this->gradeInfo = app::get('systrade')->rpcCall('user.grade.basicinfo', ['user_id'=>$userId]);
         $this->objMdlCart = app::get('systrade')->model('cart');
         $this->objLibItemInfo = kernel::single('sysitem_item_info');
         $this->__instance();
@@ -157,6 +158,11 @@ class systrade_data_cart {
 
         if( $params['mode'] == 'fastbuy' )
         {
+            $activityBuyInfo = $this->activityBuyInfo($data['item_id'],$data['user_id']);
+            if($activityBuyInfo && $activityBuyInfo['ifactivity'] && $activityBuyInfo['restActivityNum'] <=0){
+                throw new Exception("已达活动限购数量，无法购买!", 1);
+            }
+
             return $this->fastBuyStore($data);
         }
         $db = app::get('systrade')->database();
@@ -174,6 +180,31 @@ class systrade_data_cart {
         }
 
         return $result ? $data : false;
+    }
+
+    // 活动剩余购买数量,购物车结构改造，临时存放这里，此方法目前和systrade_data_cart里面的方法一致
+    public function activityBuyInfo($itemId, $userId)
+    {
+        // 活动，剩余购买数量
+        $promotionDetail = app::get('systrade')->rpcCall('promotion.activity.item.info',array('item_id'=>$itemId, 'valid'=>1), 'buyer');
+        if($promotionDetail['item_id'])
+        {
+            $objMdlPromDetail = app::get('systrade')->model('promotion_detail');
+            $filter = array('promotion_id'=>$promotionDetail['activity_id'], 'promotion_type'=>'activity', 'user_id'=>$userId, 'item_id'=>$itemId);
+            $oids = $objMdlPromDetail->getList('oid,item_id', $filter);
+            $objMdlOrder = app::get('systrade')->model('order');
+            $activityNum = 0;
+            foreach($oids as $v)
+            {
+                $orderInfo = $objMdlOrder->getRow('status,num',array('oid'=>$v['oid']));
+                if( !in_array( $orderInfo['status'], array('TRADE_CLOSED_BY_SYSTEM', 'TRADE_CLOSED') ) )
+                {
+                    $activityNum += $orderInfo['num'];
+                }
+            }
+            $restActivityNum = $promotionDetail['activity_info']['buy_limit']-$activityNum;
+            return array('ifactivity'=>$promotionDetail['item_id']?true:false,'restActivityNum'=>$restActivityNum, 'activityInfo'=>$promotionDetail);
+        }
     }
 
     public function countCart()
@@ -316,7 +347,6 @@ class systrade_data_cart {
         if( empty($cartData) ) return array();
 
         $result = $this->__preCartInfo($cartData, $needInvalid, $platform);
-
         $aCart['resultCartData'] = $result['resultCartData'];
         $aCart['totalCart'] = $result['totalCart'];
         if( empty($aCart['resultCartData']) ) $aCart = array();
@@ -344,7 +374,7 @@ class systrade_data_cart {
             $newCartData[$row['shop_id']][] = $row;
         }
 
-        $shopIds = implode(',', $shopIds);
+        $shopIds = implode(',', array_unique($shopIds));
         $shopNameArr = app::get('systrade')->rpcCall('shop.get.list',array('shop_id'=>$shopIds,'fields'=>'shop_id,shop_type,shop_name'));
         $shopNameArr = array_bind_key($shopNameArr,'shop_id');
 
@@ -452,12 +482,6 @@ class systrade_data_cart {
                 $xydiscount_dicount_price ? $usedCartPromotion[] = $kPomotionId : null;
                 $xydiscount_dicount_price ? $vInfo['discount_price'] = $xydiscount_dicount_price : 0;
             }
-            // 应用免邮
-            if($basicPromotionListInfo[$kPomotionId]['promotion_type'] == 'freepostage')
-            {
-                $forPromotionTotalWeight = $this->applyFreepostage($shopObjectData, $vInfo['cart_ids'], $basicPromotionListInfo[$kPomotionId]);
-                $shop_promotion_totalWeight += $forPromotionTotalWeight;
-            }
         }
 
         // 应用优惠券(结算页，购物车页不应用)
@@ -525,13 +549,14 @@ class systrade_data_cart {
      */
     private function __preShopCartInfo($shopCartData, $needInvalid, $platform)
     {
-        $itemIds = $skuIds = [];
+        $itemIds = $skuIds = $itemsku = [];
         foreach( $shopCartData as $row)
         {
             if($row['obj_type']=='item')
             {
                 $itemIds[] = $row['item_id'];
                 $skuIds[]  = $row['sku_id'];
+                $itemsku[] = ['item_id'=>$row['item_id'], 'sku_id'=>$row['sku_id']];
             }
         }
         if($itemIds && $skuIds)
@@ -539,25 +564,35 @@ class systrade_data_cart {
             $itemRows = 'item_id,cat_id,title,weight,image_default_id,sub_stock,violation,disabled,dlytmpl_id';
             $skuRows = 'sku_id,bn,item_id,spec_info,price,weight,status';
             $itemFields['status'] = 'approve_status';
-            $itemFields['promotion'] = 'promotion';
+            // $itemFields['promotion'] = 'promotion';
 
             $itemsData = $this->objLibItemInfo->getItemList($itemIds, $itemRows, $itemFields);
             $skusData = $this->objLibItemInfo->getSkusList($skuIds,$skuRows);
+
+            // 批量获取操作，减少SQL查询
+            $skuPromotionList = $this->getItemPromotionList($itemsku, $platform);
+            $itemActivityList = $this->getItemActivityList($itemsku);
+            $itemGiftList = $this->getItemGiftList($itemsku);
         }
+
         //现在只有普通商品购买流程，因此临时将商品结构写到此
         //如果有其他商品购买类型，则到各类型中进行商品获取
         foreach( $shopCartData as $row )
         {
             $k = $row['cart_id'];
-            $shopObjectData[$k] = $this->objects[$row['obj_type']]->processCartObject($row,$itemsData,$skusData);
+            $row['grade_id'] = $this->gradeInfo['grade_id']; //会员等级id
+            $shopObjectData[$k] = $this->objects[$row['obj_type']]->processCartObject($row,$itemsData,$skusData,$itemActivityList);
 
             $itemId = $row['item_id'];
 
             // 获取商品关联的促销信息
             if($row['obj_type']=='item')
             {
-                $item_id=$row['item_id'];
-                $shopObjectData[$k]['promotions'] = $this->getItemPromotionInfo($itemId, $platform);
+                // 原写法
+                // $shopObjectData[$k]['promotions'] = $this->getItemPromotionInfo($itemId, $row['sku_id'], $platform);
+                // 新写法，减少SQL数量
+                $shopObjectData[$k]['promotions'] = $skuPromotionList[$row['sku_id']];
+
                 // 根据促销的创建时间进行倒序排序，则最新的默认选为商品的促销规则
                 if($shopObjectData[$k]['promotions'])
                 {
@@ -571,8 +606,10 @@ class systrade_data_cart {
                 }
 
                 //或商品享受的赠品信息
-                $quantity = $row['quantity'];
-                $shopObjectData[$k]['gift'] = $this->getItemGiftInfo($itemId,$quantity);
+                if($itemGiftList[$row['item_id']])
+                {
+                    $shopObjectData[$k]['gift'] = $this->getItemGiftInfo($itemGiftList[$row['item_id']], $row['sku_id'], $shopObjectData[$k]['quantity']);
+                }
             }
             if( !$needInvalid && (!$shopObjectData[$k]['valid'] || !$row['is_checked']) )
             {
@@ -588,9 +625,124 @@ class systrade_data_cart {
      * @param  int $itemId 商品id
      * @return array         促销信息数组
      */
-    public function getItemPromotionInfo($itemId, $platform='pc')
+    public function getItemPromotionList($itemsku, $platform='pc')
     {
-        $itemPromotionTagInfo = app::get('systrade')->rpcCall('item.promotion.get', array('item_id'=>$itemId),'buyer');
+        $itemIds = array_column($itemsku, 'item_id');
+        $itemPromotionIdList = app::get('systrade')->rpcCall('item.promotion.list', ['item_ids'=>implode(',', $itemIds)]);
+        if(!$itemPromotionIdList) return [];
+
+        $promotionsIds = array_column($itemPromotionIdList, 'promotion_id');
+        $promotions = app::get('systrade')->rpcCall('promotion.promotion.list.tag', ['promotion_id'=>implode(',', $promotionsIds), 'platform'=>$platform]);
+
+        $tmp = [];
+        foreach ($itemPromotionIdList as $v1)
+        {
+            $tmp[$v1['item_id']][] = $v1;
+        }
+        $skuRefPro = [];
+        foreach ($itemsku as $v2)
+        {
+            if( !$tmp[$v2['item_id']] ) continue;
+
+            foreach ($tmp[$v2['item_id']] as $v3)
+            {
+                if($v3['sku_id'])
+                {
+                    $skuids = explode(',', $v3['sku_id']);
+                    if( !in_array($v3['sku_id'], $skuids) )
+                    {
+                        continue;
+                    }
+                }
+                if($promotions[$v3['promotion_id']])
+                {
+                    $promotions[$v3['promotion_id']]['valid'] = 1;
+                    $skuRefPro[$v2['sku_id']][$v3['promotion_id']] = $promotions[$v3['promotion_id']];
+                }
+            }
+        }
+
+        return $skuRefPro;
+    }
+
+    /**
+     * 组织商品关联的活动信息，批量，减少SQL查询
+     * @param  array $itemsku item_id和sku_id组成的数组
+     * @return array  返回组织好的活动和促销关联相关信息，用于活动的价格的修改和限购的数量的修改
+     */
+    private function getItemActivityList($itemsku)
+    {
+        $params = array(
+            'item_id'       => implode(',', array_column($itemsku, 'item_id')),
+            'status'        => 'agree',
+            'end_time'      => 'bthan',
+            'start_time'    => 'sthan',
+            'verify_status' => 'agree',
+            'page_no'       => 1,
+            'page_size'     => 100,
+            'order_by'      => 'id Desc',
+            // 'fields'        => 'activity_id,item_id,activity_price,activity_tag',
+            'fields'        => '*',
+        );
+        // 获取商品的正在进行的活动,一对一的
+        $activityItemList = app::get('systrade')->rpcCall('promotion.activity.item.list', $params);
+        if(!$activityItemList['list']) return [];
+
+        $activityIds = array_column($activityItemList['list'], 'activity_id');
+        $params = array(
+            'activity_id' => implode(',', $activityIds),
+            'order_by' => 'mainpush desc',
+            'fields' => '*',
+        );
+        // 根据活动id获取活动详情的列表
+        $activityList = app::get('systrade')->rpcCall('promotion.activity.list', $params);
+        if(!$activityList['data']) return [];
+
+        $activityList = array_bind_key($activityList['data'], 'activity_id');
+
+        $objMdlPromDetail = app::get('systrade')->model('promotion_detail');
+        $objMdlOrder = app::get('systrade')->model('order');
+        $tmp = [];
+        foreach($activityItemList['list'] as $v)
+        {
+            $tmp[$v['item_id']]['activityInfo'] = $v;
+            $tmp[$v['item_id']]['activityInfo']['status'] = 1;
+            $tmp[$v['item_id']]['activityInfo']['activity_info'] = $activityList[$v['activity_id']];
+
+            $filter = array(
+                'promotion_id'   => $v['activity_id'],
+                'promotion_type' => 'activity',
+                'user_id'        => $this->user_id,
+                'item_id'        => $v['item_id']
+            );
+
+            $oids = $objMdlPromDetail->getList('oid,item_id', $filter);
+            if(!$oids) continue;
+
+            $oids = array_column($oids, 'oid');
+            $dbquery = app::get('systrade')->database()->createQueryBuilder();
+            $dbquery->select('sum(num) AS buyed_num')
+               ->from('systrade_order')
+               ->andwhere('status <> "TRADE_CLOSED_BY_SYSTEM"')
+               ->andwhere('status <> "TRADE_CLOSED"')
+               ->where('oid IN('.implode(',', $oids).')');
+            $buyednum = $dbquery->execute()->fetch();
+            $tmp[$v['item_id']]['restActivityNum'] = $tmp[$v['item_id']]['activityInfo']['activity_info']['buy_limit'] - $buyednum['buyed_num'];
+
+            // $orderInfo = $objMdlOrder->getRow('sum(num) as buyed_num',array('oid'=>$oids, 'status|notin'=>array('TRADE_CLOSED_BY_SYSTEM', 'TRADE_CLOSED') ));
+            // $tmp[$v['item_id']]['restActivityNum'] = $tmp[$v['item_id']]['activityInfo']['activity_info']['buy_limit'] - $orderInfo['buyed_num'];
+        }
+        return $tmp;
+    }
+
+    /**
+     * 根据商品返回其相关的促销信息(废弃)
+     * @param  int $itemId 商品id
+     * @return array         促销信息数组
+     */
+    public function getItemPromotionInfo($itemId, $skuId, $platform='pc')
+    {
+        $itemPromotionTagInfo = app::get('systrade')->rpcCall('item.promotion.get', array('item_id'=>$itemId,'sku_id'=>$skuId));
         if(!$itemPromotionTagInfo)
         {
             return false;
@@ -616,7 +768,7 @@ class systrade_data_cart {
      */
     public function getItemActivityInfo($itemId, $platform='pc')
     {
-        $promotionDetail = app::get('topc')->rpcCall('promotion.activity.item.info',array('item_id'=>$itemId, 'platform'=>$platform, 'valid'=>1), 'buyer');
+        $promotionDetail = app::get('systrade')->rpcCall('promotion.activity.item.info',array('item_id'=>$itemId, 'platform'=>$platform, 'valid'=>1), 'buyer');
         if(!$promotionDetail)
         {
             return false;
@@ -644,6 +796,7 @@ class systrade_data_cart {
 
         $applyData = array(
             'user_id' => $this->userId,
+            'grade_id' => $this->gradeInfo['grade_id'],
             'promotion_id' => $promotionDetail['promotion_id'],
             'fullminus_id' => $promotionDetail['rel_promotion_id'],
             'forPromotionTotalPrice' => $forPromotionTotalPrice,
@@ -687,6 +840,7 @@ class systrade_data_cart {
 
         $applyData = array(
             'user_id' => $this->userId,
+            'grade_id' => $this->gradeInfo['grade_id'],
             'promotion_id' => $promotionDetail['promotion_id'],
             'fulldiscount_id' => $promotionDetail['rel_promotion_id'],
             'forPromotionTotalPrice' => $forPromotionTotalPrice,
@@ -733,6 +887,7 @@ class systrade_data_cart {
 
         $applyData = array(
             'user_id' => $this->userId,
+            'grade_id' => $this->gradeInfo['grade_id'],
             'promotion_id' => $promotionDetail['promotion_id'],
             'xydiscount_id' => $promotionDetail['rel_promotion_id'],
             'forPromotionTotalPrice' => $forPromotionTotalPrice,
@@ -756,44 +911,6 @@ class systrade_data_cart {
             }
         }
         return $discount_price;
-    }
-
-    /**
-     * 应用免邮促销
-     * @param  array &$shopObjectData 购物车商品数据
-     * @param  array $vCartIds        本促销对应购物车id
-     * @param  array $promotionDetail 本促销的详情
-     * @return float                  返回应用免邮的商品的重量的和
-     */
-    private function applyFreepostage(&$shopObjectData, $vCartIds, $promotionDetail)
-    {
-        $forPromotionTotalPrice = 0; // 对应促销商品的总价
-        $forPromotionTotalQuantity = 0; // 对应促销商品的总数量
-        $forPromotionTotalWeight = 0; // 对应促销商品的总重量
-        foreach ($vCartIds as $cartId)
-        {
-            if($shopObjectData[$cartId]['valid'] && $shopObjectData[$cartId]['is_checked']=='1')
-            {
-                $forPromotionTotalPrice = ecmath::number_plus( array($forPromotionTotalPrice, $shopObjectData[$cartId]['price']['total_price']) );
-                $forPromotionTotalQuantity = ecmath::number_plus( array($forPromotionTotalQuantity, $shopObjectData[$cartId]['quantity']) );
-                $forPromotionTotalWeight = ecmath::number_plus( array($forPromotionTotalWeight, $shopObjectData[$cartId]['weight']) );
-            }
-        }
-
-        $applyData = array(
-            'user_id' => $this->userId,
-            'promotion_id' => $promotionDetail['promotion_id'],
-            'freepostage_id' => $promotionDetail['rel_promotion_id'],
-            'forPromotionTotalPrice' => $forPromotionTotalPrice,
-            'forPromotionTotalQuantity' => $forPromotionTotalQuantity,
-
-        );
-        $freePostageFlag = app::get('systrade')->rpcCall('promotion.freepostage.apply', $applyData, 'buyer');
-        if($freePostageFlag)
-        {
-            return $forPromotionTotalWeight;
-        }
-        return 0;
     }
 
     /**
@@ -926,9 +1043,18 @@ class systrade_data_cart {
 
     }
 
-    public function getItemGiftInfo($itemId,$quantity)
+    // 处理商品的赠品的条件等
+    private function getItemGiftInfo($giftItemInfo, $skuId, $quantity)
     {
-        $giftItemInfo = app::get('topc')->rpcCall('promotion.gift.item.info',array('item_id'=>$itemId,'valid'=>1),'buyer');
+        if(!$giftItemInfo) return [];
+        if( $giftItemInfo['sku_ids'] )
+        {
+            $giftItemInfoSkuIds = explode(',', $giftItemInfo['sku_ids']);
+            if( !in_array($skuId, $giftItemInfoSkuIds) )
+            {
+                return array();
+            }
+        }
 
         if($giftItemInfo && $quantity >= $giftItemInfo['limit_quantity'])
         {
@@ -943,13 +1069,20 @@ class systrade_data_cart {
                     unset($giftItemInfo['gift_item'][$key]);
                     continue;
                 }
+
+                //当赠品库存量少于赠与量时，最后赠予量为最大库存
                 $value['gift_num'] = $value['gift_num']*$quotient;
+                if($value['gift_num'] > $skusData[$value['sku_id']]['realStore'])
+                {
+                    $value['gift_num'] = $skusData[$value['sku_id']]['realStore'];
+                }
+
                 $value['realStore'] = $skusData[$value['sku_id']]['realStore'];
             }
 
             $valid_grade = explode(',', $giftItemInfo['valid_grade']);
-            $gradeInfo = app::get('syspromotion')->rpcCall('user.grade.basicinfo');
-            if( !in_array($gradeInfo['grade_id'], $valid_grade) )
+            // $gradeInfo = app::get('syspromotion')->rpcCall('user.grade.basicinfo');
+            if( !in_array($this->gradeInfo['grade_id'], $valid_grade) )
             {
                 return array();
             }
@@ -957,6 +1090,22 @@ class systrade_data_cart {
             return $giftItemInfo;
         }
         return array();
+    }
+
+    // 批量获取商品关联的赠品信息
+    private function getItemGiftList($itemsku)
+    {
+        $itemIds = implode(',', array_column($itemsku, 'item_id'));
+        $giftItemList = app::get('systrade')->rpcCall('promotion.gift.item.info',array('item_id'=>$itemIds, 'valid'=>1));
+        $giftItemList = array_bind_key($giftItemList, 'item_id');
+        $itemWithGiftList = [];
+        foreach ($itemsku as $v)
+        {
+            if(!$giftItemList[$v['item_id']]) continue;
+            $itemWithGiftList[$v['item_id']] = $giftItemList[$v['item_id']];
+        }
+
+        return $itemWithGiftList;
     }
 
 }

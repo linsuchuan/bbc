@@ -18,10 +18,8 @@ interface ectools_interface_operation
 {    
     /**
      * 统一处理方法入口
-     * @params array - 订单数据
-     * @params object - 控制器对象
-     * @params string - 支付单生成的记录
+     * @params array - 支付数据
      * @return boolean - 创建成功与否
      */
-    public function generate(&$sdf, &$controller=null, &$msg='');
+    public function generate(&$sdf);
 }

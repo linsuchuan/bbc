@@ -43,7 +43,7 @@ class desktop_passport {
 
         $rows = app::get('desktop')->model('account')->getRow('*',array('login_name'=>trim($loginName),'disabled' => 0) );
 
-        if($rows && pam_encrypt::check($password, $rows['login_password']))
+        if($rows && hash::check($password, $rows['login_password']))
         {
             pamAccount::setLoginErrorCount(true);
         }

@@ -1,4 +1,4 @@
-<?php 
+<?php
 /**
  * ShopEx licence
  *
@@ -8,7 +8,7 @@
  */
 class sysuser_data_clean
 {
-    
+
     /*
      * 清除初始化数据
      */
@@ -21,7 +21,6 @@ class sysuser_data_clean
         app::get('sysuser')->model('user_addrs')->delete( array('*') );
         app::get('sysuser')->model('user_coupon')->delete( array('*') );
         app::get('sysuser')->model('user_deposit')->delete( array('*') );
-        app::get('sysuser')->model('user_deposit_log')->delete( array('*') );
         app::get('sysuser')->model('user_experience')->delete( array('*') );
         app::get('sysuser')->model('user_fav')->delete( array('*') );
         app::get('sysuser')->model('user_item_notify')->delete( array('*') );

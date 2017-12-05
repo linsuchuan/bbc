@@ -50,8 +50,6 @@ class topc_ctl_member extends topc_controller {
         $pagedata['nupay'] = app::get('topc')->rpcCall('trade.count',array('user_id'=>$userId,'status'=>'WAIT_BUYER_PAY'));
         $pagedata['nudelivery'] = app::get('topc')->rpcCall('trade.count',array('user_id'=>$userId,'status'=>'WAIT_SELLER_SEND_GOODS'));
         $pagedata['nuconfirm'] = app::get('topc')->rpcCall('trade.count',array('user_id'=>$userId,'status'=>'WAIT_BUYER_CONFIRM_GOODS'));
-        $depositConf = app::get('topc')->rpcCall('payment.get.conf',['app_id'=>'deposit']);
-        $pagedata['noDeposit'] = $depositConf['status'] == 'true' ? false : true;
 
         //获取最新订单5条
         $tradeParams['page_no'] = 1;
@@ -65,6 +63,13 @@ class topc_ctl_member extends topc_controller {
         {
             // 获取店铺子域名
             $v['subdomain'] = app::get('topc')->rpcCall('shop.subdomain.get',array('shop_id'=>$v['shop_id']))['subdomain'];
+        }
+        // 批量获取店铺名称，减少SQL查询
+        $shopIds = array_column($pagedata['trades'], 'shop_id');
+        if( $shopIds )
+        {
+            $shopIds = implode(',', $shopIds);
+            $pagedata['shopName'] = app::get('systrade')->rpcCall('shop.get.shopname',array('shop_id'=>$shopIds));
         }
         //会员收藏
         $collectParams['page_no'] = 1;
@@ -83,8 +88,6 @@ class topc_ctl_member extends topc_controller {
         $collectParams['fields'] = "snotify_id,shop_id,user_id,shop_name,shop_logo";
         $collectParams['user_id'] = $userId ;
 
-        //预存款金额
-        $pagedata['deposit'] = app::get('topc')->rpcCall('user.deposit.getInfo',['user_id'=>$userId]);
         $pagedata['hongbao_total'] = app::get('topc')->rpcCall('user.hongbao.count',['user_id'=>$userId])['hongbao_total'];
 
         //会员优惠券

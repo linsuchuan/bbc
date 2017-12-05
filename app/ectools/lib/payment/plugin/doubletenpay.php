@@ -46,7 +46,7 @@ final class ectools_payment_plugin_doubletenpay extends ectools_payment_app impl
 	/**
 	 * @var array 扩展参数
 	 */
-	public $supportCurrency = array("CNY"=>"1");
+    public $supportCurrency = array("CNY"=>"1");
     /**
      * @var string 当前支付方式所支持的平台
      */
@@ -94,6 +94,7 @@ final class ectools_payment_plugin_doubletenpay extends ectools_payment_app impl
         $this->submit_url = 'https://gw.tenpay.com/gateway/pay.htm';
         $this->submit_method = 'POST';
         $this->submit_charset = 'utf-8';
+        $this->refund_submit_url = 'https://mch.tenpay.com/refundapi/gateway/refund.xml';
     }
 
     /**
@@ -193,6 +194,7 @@ final class ectools_payment_plugin_doubletenpay extends ectools_payment_app impl
         $sdf = array(
             'account'=>$in['partner'],
             'payment_id'=>$in['out_trade_no'],
+            'trade_no' =>$in['transaction_id'],
             'bank'=>app::get('ectools')->_('腾讯财付通'),
             'pay_account'=>app::get('ectools')->_('付款帐号'),
             'currency'=>'CNY',
@@ -279,6 +281,20 @@ final class ectools_payment_plugin_doubletenpay extends ectools_payment_app impl
                     'type'=>'string',
                     'validate_type' => 'required',
                       ),
+                // 'CA'=>array(
+                //     'title'=>app::get('ectools')->_('CA'),
+                //     'type'=>'file',
+                //     'label'=>app::get('ectools')->_('文件后缀名为.pem'),
+                // ),
+                // 'cert'=>array(
+                //     'title'=>app::get('ectools')->_('商户证书'),
+                //     'type'=>'file',
+                //     'label'=>app::get('ectools')->_('文件后缀名为.pem'),
+                // ),
+                // 'certPassword'=>array(
+                //     'title'=>app::get('ectools')->_('证书密码'),
+                //     'type'=>'string',
+                // ),
                 'order_by' =>array(
                     'title'=>app::get('ectools')->_('排序'),
                     'type'=>'string',
@@ -387,5 +403,74 @@ final class ectools_payment_plugin_doubletenpay extends ectools_payment_app impl
    function is_fields_valiad(){
         return true;
     }
+
+  /* 以下为退款代码 (待完成)↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ */
+
+  // public function dorefund($payment){
+  //   $merId = trim($this->getConf('mer_id', __CLASS__));
+  //   $ikey = trim($this->getConf('PrivateKey', __CLASS__));
+  //   $cert_dir = DATA_DIR . '/cert/payment_plugin_doubletenpay/';
+  //   $cert = $cert_dir.trim($this->getConf('cert', __CLASS__));
+  //   $caDir = $cert_dir.trim($this->getConf('CA', __CLASS__));
+
+  //   $certPassword = trim($this->getConf('certPassword', __CLASS__));
+
+  //   if(!$merId || !$ikey){
+  //     throw new Exception(app::get('ectools')->_('请检查财付通支付后台配置项！'));
+  //   }
+  //   $payment['currency'] = "1";
+
+  //   $subject = $payment['refund_id'];
+  //   $return['service_version']= '1.1';    //版本号
+  //   $return['partner'] = $merId;          //商户号
+  //   $return['out_trade_no'] = $payment['payment_id']; //商家订单号
+  //   $return['transaction_id'] = $payment['trade_no']; //财付通订单号
+  //   $return['out_refund_no'] = $payment['refund_id']; //商户退款单号
+  //   $return['total_fee'] = bcmul($payment['total_fee'], 100, 0); //总金额
+  //   $return['refund_fee'] = bcmul($payment['refund_fee'], 100, 0); //退款金额
+  //   $return['op_user_id'] = intval($merId); //操作员
+
+  //   foreach($return as $key=>$val)
+  //   {
+  //     $this->add_field($key,$val);
+  //   }
+  //   $this->add_field('sign', $this->_get_mac($ikey));
+  //   $response = client::post($this->refund_submit_url,['verify'=>$caDir,'ssl_key'=>[$cert, $certPassword], 'connect_timeout'=>5,'body'=> $this->fields])->getBody();
+  //   $result = $this->xmlToArray($response);
+  //   logger::info('财付通退款返回信息：'.var_export($result,1));
+
+  //   $ret['refund_id'] = $payment['refund_id'];
+  //   $ret['trade_no'] = $payment['trade_no'];
+  //   $ret['refund_fee'] = $payment['refund_fee'];
+  //   if($result['refund_status'] ==4 || $result['refund_status'] ==10){
+  //     $reset['status'] = 'succ';
+  //   }elseif ($result['refund_status'] ==3 || $result['refund_status'] ==5 || $result['refund_status'] ==6){
+  //     $reset['status'] = 'failed';
+  //   }
+  //   elseif ($result['refund_status'] ==8 || $result['refund_status'] ==9 || $result['refund_status'] ==11){
+  //     $reset['status'] = 'progress';
+  //   }else{
+  //     $msg = $result['retmsg'];
+  //     throw new \Exception($msg);
+  //   }
+
+  //   return $ret;
+  // }
+
+  /**
+   *  作用：将xml转为array
+   */
+  public function xmlToArray($xml)
+  {
+      //将XML转为array
+      $array_data = json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
+      return $array_data;
+  }
+
+  /**
+   *证书
+   */
+
+  /* 以上为退款代码 ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ */
 }
 ?>

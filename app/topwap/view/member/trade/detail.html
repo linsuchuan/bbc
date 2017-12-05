@@ -66,7 +66,15 @@
 			<li class="shopex-table-view-cell">
 				<div class="shopex-table">
 					<div class="shopex-table-cell shopex-col-xs-6 font-gray-20">支付方式：</div>
-					<div class="shopex-table-cell shopex-col-xs-6 content-right">在线支付</div>
+          <{if $trade.hongbao_fee && $trade.payment == $trade.hongbao_fee }>
+            <div class="shopex-table-cell shopex-col-xs-6 content-right">红包抵扣</div>
+          <{else}>
+            <{if $trade.hongbao_fee > 0 && ($trade.payment > $trade.hongbao_fee) }>
+            <div class="shopex-table-cell shopex-col-xs-6 content-right">在线支付／红包抵扣</div>
+            <{else}>
+            <div class="shopex-table-cell shopex-col-xs-6 content-right">在线支付</div>
+            <{/if}>
+          <{/if}>
 				</div>
 			</li>
 			<{else}>
@@ -77,18 +85,24 @@
 				</div>
 			</li>
 			<{/if}>
-
 			<li class="shopex-table-view-cell">
 				<div class="shopex-table">
 					<div class="shopex-table-cell shopex-col-xs-6 font-gray-20">配送方式：</div>
 					<div class="shopex-table-cell shopex-col-xs-6 content-right">
 						<p><{$trade.shipping_type_name}></p>
-						<{if $trade.status == "WAIT_BUYER_CONFIRM_GOODS" || $trade.status == "TRADE_FINISHED"}>
-						<p><{$logi.logi_name}></p>
-						<{/if}>
 					</div>
 				</div>
 			</li>
+      <{if $trade.ziti_addr}>
+      <li class="shopex-table-view-cell">
+        <div class="shopex-table">
+          <div class="shopex-table-cell shopex-col-xs-6 font-gray-20">提货地址：</div>
+          <div class="shopex-table-cell shopex-col-xs-6 content-right">
+            <p><{$trade.ziti_addr}></p>
+          </div>
+        </div>
+      </li>
+      <{/if}>
       <{if !$trade.need_invoice}>
 			<li class="shopex-table-view-cell">
 				<div class="shopex-table">

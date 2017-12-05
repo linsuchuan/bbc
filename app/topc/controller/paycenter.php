@@ -199,13 +199,6 @@ class topc_ctl_paycenter extends topc_controller{
             $params['fields'] = 'payment_id,status,pay_app_id,pay_name,money,cur_money,return_url';
             $result = app::get('topc')->rpcCall('payment.bill.get',$params);
 
-            // 支付结果处理，主要是处理预存款充值
-            if(strpos($result['return_url'], 'topc_ctl_member_deposit@rechargeResult'))
-            {
-                $returnParams = unserialize($result['return_url']);
-                return redirect::action('topc_ctl_member_deposit@rechargeResult', ['payment_id'=>$returnParams[1]['payment_id']]);
-            }
-
             $apiParams['user_id'] = userAuth::id();;
             $apiParams['tid'] = implode(",",array_column($result['trade'], 'tid'));
             $apiParams['fields'] = "tid,payment,payed_fee,hongbao_fee,status,pay_type";
@@ -301,10 +294,6 @@ class topc_ctl_paycenter extends topc_controller{
             $pagedata['cur_money'] = $paymentBill['cur_money'];
             $pagedata['orders'] = $orders;
             $pagedata['payment_id'] = $paymentId;
-            if($code && strpos($code, userAuth::id()) !== false)
-            {
-                $pagedata['depositNotEnough'] = true;
-            }
 
             return $this->page('topc/payment/error.html', $pagedata);
         }else

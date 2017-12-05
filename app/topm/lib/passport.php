@@ -74,7 +74,7 @@ class topm_passport{
         case 'signup': //手机注册
             $content = url::action("topm_ctl_passport@findPwdThree",array('uname'=>$account,'type'=>$sendType));
             break;
-        case 'depost_forgot'://预存款忘记密码
+        case 'depost_forgot'://支付密码 忘记密码
             $content = url::action("topm_ctl_member_deposit@forgetPasswordSetPassword",array('uname'=>$account,'type'=>$sendType));
             break;
         }

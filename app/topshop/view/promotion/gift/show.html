@@ -31,6 +31,11 @@
             </div>
           </td>
           <td>
+            <{if $itemslist.sku_ids}>
+            <a href="#" data-remote="<{url action=topshop_ctl_selector_item@showSkuByitemId itemId=$itemslist.item_id sku_id=$itemslist.sku_ids}>" data-toggle="modal" data-target="#show_sku_madal" class="show-sku">查看SKU</a>
+            <{/if}>
+          </td>
+          <td>
             销售价:<{$itemslist.price|cur}>
           </td>
         </tr>
@@ -61,9 +66,9 @@
               <a href="<{url action=topc_ctl_item@index item_id=$giftitem.item_id}>" title=""><{$giftitem.title}></a>
               <span class="text-gray"><{if $giftitem.spec_info}>[<{$giftitem.spec_info}>]<{/if}></span>
               <div class="info-bottom">
-                <span class="price fl"><{$giftitem.price|cur}></span>
                 <span class="txt-right fr">
-                  <{$giftitem.sku_num}>
+                  <{$giftitem.sku_num}>&nbsp;
+                  <label><input type="checkbox" name="sku[<{$giftitem.item_id}>]" disabled> 退货无需退回赠品</label>
                 </span>
               </div>
             </div>
@@ -101,3 +106,21 @@
 
   </div>
 </div>
+<div class="modal fade" id="show_sku_madal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-skuids="">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+    </div>
+  </div>
+</div>
+<script>
+  $('.show-sku').click(function(event) {
+    var url =  $(this).data('remote');
+    $('#show_sku_madal .modal-content').load(url);
+  });
+
+  $('#show_sku_madal').on('show.bs.modal',function(event){
+    _this = event.relatedTarget;
+    var thisSku = $($($(_this).parents('tr')).find('input[name="item_sku[]"]')).val();
+    $('#show_sku_madal').data('skuids',thisSku);
+  });
+</script>

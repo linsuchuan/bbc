@@ -43,11 +43,11 @@ return array(
         ),
     ),
     array(
-        'label' => '我的优惠',
+        'label' => '我的资产',
         'items' => array(
             array('label' => '我的红包','action'=>'topc_ctl_member_hongbao@index'),
             array('label' => '我的优惠券','action'=>'topc_ctl_member_coupon@couponList'),
-            array('label' => '我的预存款','action'=>'topc_ctl_member_deposit@view'),
+            array('label' => '我的奖品','action'=>'topc_ctl_member_lottery@prizeList'),
         ),
     ),
 );

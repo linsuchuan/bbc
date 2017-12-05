@@ -84,6 +84,7 @@ class topwap_item_search {
             && empty($params['search_keywords'])
             && empty($params['item_id'])
             && empty($params['shop_id'])
+            && !isset($params['virtual_cat_id'])
         )
         {
             $this->_itemsList['list'] = [];

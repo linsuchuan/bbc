@@ -4,10 +4,27 @@
  */
 class syslogistics_data_area {
 
+    public function __construct()
+    {
+        $this->redis = redis::scene('syslogistics');
+
+        if( !$this->redis->get('cacheAreaData') )
+        {
+            $this->__preKeyValue();
+
+            foreach( $this->areaIdPath as $pid=>$row )
+            {
+                $this->redis->hset('areaIdPath', $pid, json_encode($row));
+            }
+
+            $this->redis->set('cacheAreaData', true);
+        }
+    }
+
     /**
      * 返回地区ID和地区名
      */
-    private function __preKeyValue($contents, $areaKvdata = array())
+    private function __preKeyValue($contents)
     {
         if( !$contents ) $contents = $this->__getAreaFileContents();
         foreach( $contents as $key=>$value )
@@ -17,15 +34,20 @@ class syslogistics_data_area {
                 $this->areaIdPath[$value['parentId']][] = $value['id'];
             }
 
-            $areaKvdata[$value['id']]['value'] = $value['value'];
-            $areaKvdata[$value['id']]['parentId'] = $value['parentId'];
-            $areaKvdata[$value['id']]['disabled'] = $value['disabled'];
+            $redisSaveData = [
+                'value'    => $value['value'],
+                'parentId' => $value['parentId'],
+                'disabled' => $value['disabled'],
+            ];
+
+            $this->redis->hset('areaKvdata', $value['id'], json_encode($redisSaveData));
+
             if( !empty($value['children']) )
             {
-                $areaKvdata = $this->__preKeyValue($value['children'], $areaKvdata);
+                $this->__preKeyValue($value['children']);
             }
         }
-        return $areaKvdata;
+        return true;
     }
 
     private function __getAreaFileContents()
@@ -60,79 +82,8 @@ class syslogistics_data_area {
 
     private function __setKvArea()
     {
-        redis::scene('syslogistics')->set('areaFileContents', json_encode($this->areaFileContents));
-        cache::store('misc')->forever('areaKvdata', array());
-        cache::store('misc')->forever('areaIdPath', array());
-        cache::store('misc')->forever('countAreaData', array());
-        return true;
-    }
-
-    public function __construct()
-    {
-        if( !$this->__getCacheAreaData() )
-        {
-            $this->areaKvdata = $this->__preKeyValue();
-            $this->__cacheAreaData();
-        }
-    }
-
-    /**
-     * 获取缓存中结构格式化后的数据
-     */
-    private function __getCacheAreaData()
-    {
-        $count = cache::store('misc')->get('countAreaData');
-        if( $count )
-        {
-            $areaData = array();
-            for( $i=0; $i < $count; $i++ )
-            {
-                $chunk = cache::store('misc')->get('areaKvdata'.$i);
-                $areaData += $chunk;
-            }
-
-            $this->areaKvdata = $areaData;
-        }
-        else
-        {
-            $this->areaKvdata = cache::store('misc')->get('areaKvdata');
-        }
-
-        $this->areaIdPath = cache::store('misc')->get('areaIdPath');
-
-        return  ($this->areaIdPath && $this->areaKvdata) ? true : false;
-    }
-
-    /**
-     * 缓存结构格式化后的数据
-     */
-    private function __cacheAreaData()
-    {
-        if(config::get('cache.enabled', true))
-        {
-            //分块存储 默认一个缓存存储4500个地址
-            $bulk = 4500;
-            $total = count($this->areaKvdata);
-            if( $total > $bulk )
-            {
-                $newAreaData = array_chunk($this->areaKvdata, $bulk, true);
-                $i = 0;
-                foreach( $newAreaData as $k=>$val )
-                {
-                    cache::store('misc')->forever('areaKvdata'.$i, $val);
-                    $i++;
-                }
-                cache::store('misc')->forever('countAreaData', $i);
-            }
-            else
-            {
-                cache::store('misc')->forever('areaKvdata',$this->areaKvdata);
-                cache::store('misc')->forever('countAreaData', 0);
-            }
-
-            cache::store('misc')->forever('areaIdPath',$this->areaIdPath);
-        }
-
+        $this->redis->set('areaFileContents', json_encode($this->areaFileContents));
+        $this->redis->set('cacheAreaData', false);
         return true;
     }
 
@@ -293,10 +244,17 @@ class syslogistics_data_area {
     {
         if( $areaId )
         {
-            return $this->areaIdPath[$areaId] ? $this->areaIdPath[$areaId] : false;
+            $areaIds = $this->redis->hget('areaIdPath', $areaId);
+            return  $areaIds ? json_decode($areaIds, true) : false;
         }
 
-        return $this->areaIdPath;
+        $areaIdPath = $this->redis->hgetAll('areaIdPath');
+        foreach( $areaIdPath as $id=>$row )
+        {
+            $areaIdPath[$id] = json_decode($row, true);
+        }
+
+        return $areaIdPath;
     }
 
     /**
@@ -322,10 +280,17 @@ class syslogistics_data_area {
     {
         if( $areaId )
         {
-            return $this->areaKvdata[$areaId] ? $this->areaKvdata[$areaId] : false;
+            $areaData = $this->redis->hget('areaKvdata', $areaId);
+            return $areaData ? json_decode($areaData, true) : false;
         }
 
-        return $this->areaKvdata;
+        $areaData = $this->redis->hgetAll('areaKvdata');
+        foreach( $areaData as $areaId=>$row )
+        {
+            $areaData[$areaId] = json_decode($row, true);
+        }
+
+        return $areaData;
     }
 
     public function getAreaDataLv1()
@@ -346,7 +311,8 @@ class syslogistics_data_area {
      */
     public function getAreaNameById($areaId)
     {
-        return $this->areaKvdata[$areaId]['value'];
+        $data = $this->redis->hget('areaKvdata', $areaId);
+        return $data ? json_decode($data, true)['value'] : null;
     }
 
     /**
@@ -381,19 +347,22 @@ class syslogistics_data_area {
     public function checkArea($areaIds)
     {
         $ids = explode(',',$areaIds);
+
+        if( $this->redis->hget('areaIdPath', end($ids)) ) return false;
+
         foreach( $ids as $id )
         {
-            if( $this->areaKvdata[$id]['disabled'] ) return false;
+            if( $this->areaKvdata($id)['disabled'] ) return false;
 
+            $areaIds = [];
             if( $parentId )
             {
-                if( !in_array($id,$this->areaIdPath[$parentId]) ) return false;
+                $areaIds = $this->redis->hget('areaIdPath', $parentId);
+                if( !in_array($id, json_decode($areaIds, true)) ) return false;
             }
 
             $parentId = $id;
         }
-
-        if( $this->areaIdPath[end($ids)] ) return false;
 
         return true;
     }

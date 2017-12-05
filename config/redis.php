@@ -84,6 +84,17 @@ return [
         'topdev' => [
             'connection' => 'default',
         ],
+        //流量统计
+        'traffic' => [
+            'connection' => 'default',
+        ],
+        //商品相关数据 目前主要存储商品库存
+        'sysitem' => [
+            'connection' => 'default',
+        ],
+        'tradeOrderId' => [
+            'connection' => 'default',
+        ],
     ],
 
     /*

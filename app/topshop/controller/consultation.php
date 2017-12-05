@@ -26,7 +26,8 @@ class topshop_ctl_consultation extends topshop_controller{
             $params['type'] = input::get('type');
         }
 
-        if( !isset($filter['is_reply']) )
+        //咨询筛选时 全部标签下根据条件筛选不到信息
+        if( !isset($filter['is_reply']) || $filter['is_reply'] == 'all' )
         {
             $filter['is_reply'] = 'all';
         }

@@ -48,7 +48,7 @@ class sysuser_data_deposit_password
 
         $passwordLocker->checkLock($userId);
 
-        if(!pam_encrypt::check($password, $deposit['password']))
+        if(!hash::check($password, $deposit['password']))
         {
             $passwordLocker->tryVerify($userId);
 
@@ -71,7 +71,7 @@ class sysuser_data_deposit_password
      */
     public function setPassword($userId, $password)
     {
-        $password = pam_encrypt::make($password);
+        $password = hash::make($password);
 
         $userDeposit = [
             'user_id' => $userId,
@@ -82,7 +82,7 @@ class sysuser_data_deposit_password
         $flag = app::get('sysuser')->model('user_deposit')->save($userDeposit);
         if(!$flag)
         {
-            throw new RuntimeException(app::get('预存款密码保存失败!'));
+            throw new RuntimeException(app::get('支付密码保存失败!'));
         }
         return true;
     }
@@ -124,7 +124,7 @@ class sysuser_data_deposit_password
         $flag = app::get('sysuser')->model('user_deposit')->save($userDeposit);
         if(!$flag)
         {
-            throw new RuntimeException(app::get('预存款密码保存失败!'));
+            throw new RuntimeException(app::get('支付密码保存失败!'));
         }
         return true;
     }
@@ -139,7 +139,7 @@ class sysuser_data_deposit_password
     {
         // 验证支付密码和登录密码是否一致
         $result = app::get('sysuser')->model('user_deposit')->getRow('password',array('user_id'=>$userId));
-        if(pam_encrypt::check($accoutPassword, $result['password']))
+        if(hash::check($accoutPassword, $result['password']))
         {
             throw new \LogicException(app::get('sysuser')->_('登录密码不能与支付密码一致！'));
         }

@@ -68,7 +68,9 @@
         </div>
         <div class="orderdtl-box">
           <{if $tradeInfo.orders.0.gift_data}>
+          <{if $giftReturnFlag}>
           <span class="text-danger pad-l-20 return-goods">*请将赠品一同退回</span>
+          <{/if}>
           <span class="text-danger pad-l-20 exchange-goods" style="display:none;">*若要更换赠品，请联系客服</span>
           <{/if}>
           <div class="orderdtl-bd">
@@ -107,20 +109,22 @@
                   <{if $tradeInfo.orders.0.gift_data}>
                   <{assign var=giftdata value=$tradeInfo.orders.0.gift_data}>
                   <{foreach from=$giftdata item=gift}>
-                  <tr class="gift-goods">
-                    <td>
-                      <div class="table-goods-pic">
-                        <{if $gift.image_default_id }>
-                        <img width="64" height="64" src="<{$gift.image_default_id|storager:t}>"></div>
-                        <{else}>
-                        <img width="64" height="64" src="<{$defaultImageId.T.default_image}>">
-                        <{/if}>
-                    </td>
-                    <td><span class="item-describe-tag">赠品</span><{$gift.title}></td>
-                    <td><{$gift.price|cur}></td>
-                    <td><{$gift.gift_num}></td>
-                    <td ><input type="hidden" name='num' value="<{$gift.gift_num}>"> <{$gift.gift_num}> </td>
-                  </tr>
+                    <{if !$gift.withoutReturn}>
+                      <tr class="gift-goods">
+                        <td>
+                          <div class="table-goods-pic">
+                            <{if $gift.image_default_id }>
+                            <img width="64" height="64" src="<{$gift.image_default_id|storager:t}>"></div>
+                            <{else}>
+                            <img width="64" height="64" src="<{$defaultImageId.T.default_image}>">
+                            <{/if}>
+                        </td>
+                        <td><span class="item-describe-tag">赠品</span><{$gift.title}></td>
+                        <td><{$gift.price|cur}></td>
+                        <td><{$gift.gift_num}></td>
+                        <td ><input type="hidden" name='num' value="<{$gift.gift_num}>"> <{$gift.gift_num}> </td>
+                      </tr>
+                    <{/if}>
                   <{/foreach}>
                   <{/if}>
                 </tbody>

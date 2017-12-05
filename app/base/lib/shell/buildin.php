@@ -180,7 +180,7 @@ EOF;
             parse_str($options['options'],$this->shell->input);
         }
 
-        
+
 
         foreach((array)$install_queue as $app_id=>$app_info){
             if(!$app_info){
@@ -233,7 +233,7 @@ EOF;
         }
 
         $applist = kernel::single('base_application_manage')->install_queue($applist);
-        
+
 		$this->install_app_by_install_queue($applist, $options);
 
 		$this->command_install_demodata('demodata');
@@ -275,6 +275,9 @@ EOF;
 			logger::info('Import demo data');
 			kernel::single('base_demo')->init();
 		}
+
+        kernel::single('sysitem_command_store')->command_syncToRedis();
+
 		logger::info('Application demodata installed... ok.');
 	}
 
@@ -328,7 +331,7 @@ EOF;
             catch (Exception $e) {
                 $tmp_res = [];
             }
-            
+
 			if ($tmp_res['res'] == 'succ'){
 				$arr_enterprise = array(
 					'ent_id'=>$tmp_res['msg']['entid'],

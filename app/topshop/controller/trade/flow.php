@@ -1,5 +1,35 @@
 <?php
 class topshop_ctl_trade_flow extends topshop_controller{
+    /**
+     * 变更物流信息
+     * @params null
+     * @return null
+     */
+    public function updateLogistic()
+    {
+      //$requestData = input::get();
+      //$requestData['dlytmpl_id'] = input::get('dlytmpl_id');
+        $requestData['logi_no'] = input::get('logi_no');
+        $requestData['corp_code'] = input::get('corp_code');
+        $requestData['delivery_id'] = input::get('delivery_id');
+        $requestData['shop_id'] = $this->shopId;
+        $tid = input::get('tid');
+        try{
+
+            $params['tid'] = $tid;
+            $params['fields'] = "tid,status";
+            $tradeInfo = app::get('topshop')->rpcCall('trade.get',$params,'seller');
+            if(!$tradeInfo['status']= 'WAIT_BUYER_CONFIRM_GOODS')
+                throw new Exception(app::get('topshop')->_('只能修改已发货待收货订单的物流信息'));
+
+            app::get('topshop')->rpcCall('delivery.updateLogistic', $requestData);
+        }catch(Exception $e){
+            return $this->splash('error',null, $e->getMessage(), true);
+        }
+
+        $url = url::action('topshop_ctl_trade_detail@index', ['tid'=>$tid]);
+        return $this->splash('success',$url, '更新物流信息成功', true);
+    }
 
     /**
      * 发货订单处理
@@ -54,7 +84,7 @@ class topshop_ctl_trade_flow extends topshop_controller{
             return $this->splash('error',null, $e->getMessage(), true);
         }
         $this->sellerlog('订单发货。订单号是:'.$sdf['tid']);
-        $url = url::action('topshop_ctl_trade_list@index');
+        $url = url::action('topshop_ctl_trade_list@index', ['useSessionFilter'=>true]);
         return $this->splash('success',$url, '发货成功', true);
     }
 

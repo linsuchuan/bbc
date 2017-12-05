@@ -220,8 +220,8 @@ th {
 
 @font-face {
   font-family: 'Glyphicons Halflings';
-  src: url(../fonts/glyphicons-halflings-regular.eot?1472543050);
-  src: url(../fonts/glyphicons-halflings-regular.eot?&1472543050#iefix) format("embedded-opentype"), url(../fonts/glyphicons-halflings-regular.woff?1472543050) format("woff"), url(../fonts/glyphicons-halflings-regular.ttf?1472543050) format("truetype"), url(../fonts/glyphicons-halflings-regular.svg?1472543050#glyphicons) format("svg");
+  src: url(../fonts/glyphicons-halflings-regular.eot?1484019264);
+  src: url(../fonts/glyphicons-halflings-regular.eot?&1484019264#iefix) format("embedded-opentype"), url(../fonts/glyphicons-halflings-regular.woff?1484019264) format("woff"), url(../fonts/glyphicons-halflings-regular.ttf?1484019264) format("truetype"), url(../fonts/glyphicons-halflings-regular.svg?1484019264#glyphicons) format("svg");
 }
 .glyphicon {
   position: relative;
@@ -7340,7 +7340,7 @@ Gradient Background colors
   border: 2px solid red;
 }
 .speclist .checkbox-inline {
-  width: 300px;
+  width: 260px;
   margin-left: 0;
   margin-bottom: 5px;
 }
@@ -8925,8 +8925,8 @@ li {
   visibility: hidden;
   clear: both;
 }
-.sku-list .sku-info input {
-  width: 30%;
+.sku-list .sku-info input[type=number] {
+  width: 20%;
 }
 
 /* 404页面 */
@@ -9189,6 +9189,80 @@ li {
     -webkit-transform: scale(1);
   }
 }
+.goods-info-floor {
+  position: fixed;
+  top: 32%;
+  right: 10px;
+  width: 150px;
+  border-color: #00639e;
+}
+.goods-info-floor .panel-heading {
+  background: #00639e;
+  border-color: #00639e;
+  color: #fff;
+}
+.goods-info-floor .panel-heading .glyphicon-remove {
+  left: 55px;
+  cursor: pointer;
+}
+.goods-info-floor li {
+  height: 25px;
+  line-height: 25px;
+}
+.goods-info-floor a {
+  color: #333;
+}
+.goods-info-floor li.active a, .goods-info-floor a:hover {
+  color: #00639e;
+}
+.goods-info-floor .floor-icon-box {
+  display: none;
+  position: absolute;
+  left: -34px;
+  top: 50%;
+  width: 18px;
+  height: 26px;
+  overflow: hidden;
+}
+.goods-info-floor .icon-show {
+  width: 26px;
+  height: 26px;
+  line-height: 26px;
+  border-radius: 50%;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  z-index: 100;
+}
+.goods-info-floor .icon-show .glyphicon {
+  position: relative;
+  left: 2px;
+  font-size: 14px;
+  color: #fff;
+}
+.goods-info-floor .icon-show:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.goods-params .params-item, .nature-item {
+  display: inline-block;
+  width: 280px;
+  margin-bottom: 10px;
+}
+.goods-params .params-item label, .nature-item label {
+  width: 30%;
+  text-align: right;
+  vertical-align: middle;
+}
+.goods-params .params-item input[type="text"], .goods-params .params-item select, .nature-item input[type="text"], .nature-item select {
+  display: inline-block;
+  width: 65%;
+}
+
+.form-horizontal .has-feedback.right45 .form-control-feedback {
+  right: 45px;
+}
+
 /*
     Components: content header
 -------------------------------------------------
@@ -11207,12 +11281,6 @@ body.modal-open,
   background-color: #f5f5f5;
 }
 
-.panel-heading .btn {
-  margin-top: -5px;
-  margin-bottom: -5px;
-  font-size: 12px;
-}
-
 table {
   font-size: 12px;
 }
@@ -11322,7 +11390,7 @@ table {
   position: relative;
 }
 .gallery .thumbnail.checked {
-  background: #fcf8e3;
+  background: #00639e;
 }
 .gallery .thumbnail .img-show {
   width: 100%;
@@ -11388,6 +11456,9 @@ table {
   top: 0;
   left: 0;
   text-align: center;
+}
+.gallery .thumbnail.checked .caption .image-name {
+  color: #fff;
 }
 
 .gallery-condition {
@@ -11465,7 +11536,10 @@ table {
   cursor: pointer;
 }
 #gallery_modal .thumbnail.checked {
-  background: #fcf8e3;
+  background: #00639e;
+}
+#gallery_modal .thumbnail.checked .image-name {
+  color: #fff;
 }
 #gallery_modal .modal-content {
   box-shadow: none;
@@ -11832,6 +11906,13 @@ table {
 .pages-wrap .btn-operate {
   float: right;
   margin: 20px 0;
+}
+
+.goods-spec .spec-title input {
+  width: 13%;
+  display: inline-block;
+  margin-left: 10px;
+  margin-bottom: 12px;
 }
 
 /*

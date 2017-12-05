@@ -20,11 +20,41 @@
         </div>
       </section>
       <{/if}>
-        <section class="section-white section-container">
+        <div class="section-white section-container">
           <div class="section-init">应付金额</div>
           <div class="section-init pay-num">
             <{$trades.cur_money|cur}>
           </div>
+        </div>
+        <{if !$is_empty_hongbao}>
+        <a href="<{url action=topwap_ctl_paycenter@selectHongbao}>?total=<{$trades.cur_money}>" class="section-white section-container border-none act-redpacket-detail">
+          <div class="section-init">使用红包 <span class="font-gray-40">抵扣：</span><span class="font-orange deduction-money">－<{$select_hongbao_money|cur}></span></div>
+          <div class="section-init content-right">
+            <i class="bbc-icon bbc-icon-forward"></i>
+          </div>
+        </a>
+        <{/if}>
+        <section class="section-white">
+          <{if !$is_empty_hongbao}>
+          <ul class="shopex-table-view choosen-redpacket-list">
+            <{foreach from=$select_hongbao_list item=item}>
+            <li class="shopex-table-view-cell shopex-media">
+              <a href="javascript:;">
+                <input type="hidden" name="user_hongbao_id[<{$item.id}>]" value="<{$item.id}>">
+                <span class="shopex-media-object shopex-pull-right"><{$item.money|cur}></span>
+                <div class="shopex-media-body clearfix">
+                  <div class="redpacket-icon">
+                    <div class="redpacket-box-wrap">
+                      <div class="redpacket-box1"></div>
+                    </div>
+                  </div>
+                  <div class="redpacket-name shopex-ellipsis"><{$item.name}></div>
+                </div>
+              </a>
+            </li>
+            <{/foreach}>
+          </ul>
+          <{/if}>
         </section>
         <section class="section-white pay-style">
           <div class="section-title order-goods-header">
@@ -46,42 +76,52 @@
           <{/if}>
         </section>
         <section class="shopex-content-padded form-op-section">
+          <input type="hidden" id="deposit_password" name="deposit_password" value="">
           <button id="payment_btn" type="button" class="shopex-btn shopex-btn-block shopex-btn-warning bbc-btn-warning">去支付</button>
         </section>
   </form>
 </section>
+
 <script>
-$('input[name="payment[pay_app_id]"]').on('tap',function(){
-	if($(this).val() == "deposit"){
-		if($(this).attr('data-password') != '1') {
-      shopex.confirm('您还未设置预存款支付密码。', '', ['更换支付方式', '去设置'], function(e) {
-        if (e.index == 1) {
-             location.href = '<{url action=topwap_ctl_member_deposit@depositPwd payment_id=$trades.payment_id}>';
-        }
-      });
-    }
-	}
-});
+var ischoosePayType = true;
+var isemptyHongbao = "<{$is_empty_hongbao|default:0}>";
+if(isemptyHongbao == '0' && Number($('input[name="payment[money]"]').val()) <= Number($('.deduction-money').text().substr(2))) {
+  $('.pay-style').hide();
+  ischoosePayType = false;
+}
 
 $('#payment_btn').on('tap',function(){
   var paymentType = $('input[name="payment[pay_app_id]"]:checked').val();
-  if($('input[name="payment[pay_app_id]"]:checked').length>0){
-    if(paymentType == 'deposit') {
-      if($('input[name="payment[pay_app_id]"]').attr('data-password') != '1')
-      {
-        shopex.confirm('您还未设置预存款支付密码。', '', ['更换支付方式', '去设置'], function(e) {
-          if (e.index == 1) {
-            location.href = '<{url action=topwap_ctl_member_deposit@depositPwd payment_id=$trades.payment_id}>';
-          }
-        });
-        return ;
-      }
-      location.href = '<{url action=topwap_ctl_paycenter@depositPay}>?payment_id=' + $('input[name="payment[payment_id]"]').val();
-    } else {
-      $('#dopay_form').submit();
-    }
-  }else{
+  if($('input[name="payment[pay_app_id]"]:checked').length <= 0 && ischoosePayType) {
     shopex.alert('请选择支付方式！');
+    return;
+  }
+  var selectedRedpacket = $('.choosen-redpacket-list').find('li');
+  if( selectedRedpacket.length > 0) {
+    if($('input[name="payment[pay_app_id]"]').attr('data-password') != '1')
+    {
+      shopex.confirm('您还未设置预支付密码。', '', ['更换支付方式', '去设置'], function(e) {
+        if (e.index == 1) {
+          location.href = '<{url action=topwap_ctl_member_deposit@depositPwd payment_id=$trades.payment_id}>';
+        }
+      });
+      return ;
+    }
+
+    var btnArray = ['取消', '确定'];
+    shopex.prompt('请输入支付密码：', '请输入支付密码', '', btnArray, function(e) {
+      if(e.index == 1) {
+        if($.trim(e.value) == '') {
+          shopex.alert('请输入支付密码');
+          return;
+        }
+        $('#deposit_password').val(e.value);
+        $('#dopay_form').submit();
+      }
+    }, 'div');
+    document.querySelector('.shopex-popup-input input').type = 'password';
+  } else {
+    $('#dopay_form').submit();
   }
 });
 </script>

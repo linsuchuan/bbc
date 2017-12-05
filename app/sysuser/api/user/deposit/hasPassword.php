@@ -1,6 +1,6 @@
 <?php
 class sysuser_api_user_deposit_hasPassword{
-    public $apiDescription = "判断会员是否有预存款密码";
+    public $apiDescription = "判断会员是否有支付密码";
 
     public function getParams()
     {

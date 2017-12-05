@@ -243,7 +243,7 @@ class systrade_cart_object_item implements systrade_interface_cart_object{
     }
 
     // 处理一条购物车object信息
-    public function processCartObject($row,$itemsData,$skusData)
+    public function processCartObject($row,$itemsData,$skusData,$itemActivityList)
     {
         $itemId = $row['item_id'];
         $skuId = $row['sku_id'];
@@ -265,7 +265,13 @@ class systrade_cart_object_item implements systrade_interface_cart_object{
         // 初始状态下折扣金额从0开始
         $objectData['price']['discount_price'] = 0;
         // 活动，剩余购买数量,如果剩余
-        $activityBuyInfo = $this->activityBuyInfo($itemId, $userId);
+        // $activityBuyInfo = $this->activityBuyInfo($itemId, $userId);
+        $activityBuyInfo = $itemActivityList[$itemId];
+        // if($row['item_id']=='98')
+        // {
+            
+        // echo "<pre>";print_r($activityBuyInfo);exit;
+        // }
         if( $activityBuyInfo['ifactivity'] )
         {
             if($row['quantity'] >= $activityBuyInfo['restActivityNum'])

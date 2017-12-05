@@ -9,7 +9,7 @@
         <url>http://www.shopex.cn</url>
     </author>
 
-    <version>1.2</version>
+    <version>1.4</version>
     <license>shopex license</license>
     <parent_model_class>dbeav_model</parent_model_class>
 

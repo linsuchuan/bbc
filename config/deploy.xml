@@ -3,8 +3,8 @@
     <licence file="license.txt" />
 
     <product_name>商派ONex 多用户在线商城</product_name>
-    <product_version>3.1.1</product_version>
-    <business_version>b2b2c-common-cluster-source-k3-php5.6</business_version>
+    <product_version>3.1.8</product_version>
+    <business_version>ShopEx-ONex-B2b2c-Source</business_version>
     <publish_version>b2b2c</publish_version>
     <product_key>ecos.b2b2c.stdsrc</product_key>
     <product_desc></product_desc>

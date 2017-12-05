@@ -17,17 +17,67 @@ class topc_ctl_list extends topc_controller {
      */
     public $maxPages = 100;
 
+    /**
+     * 设置进入列表页的初始条件，用于查询渐进式筛选
+     * 临时用于虚拟分类
+     */
+    private function __setInitFilter(&$params)
+    {
+        if( input::get('virtual_cat_id') )
+        {
+            $catinfo = app::get('topc')->rpcCall('category.virtualcat.info',array('virtual_cat_id'=>intval($params['virtual_cat_id'])));
+            $initFilter = unserialize($catinfo['filter']);
+            if( $initFilter['brand_id'] )
+            {
+                $initFilter['init_brand_id'] = implode(',',$initFilter['brand_id']);
+                unset($initFilter['brand_id']);
+            }
+
+            if( $params['cat_id'] && !$initFilter['cat_id'] )
+            {
+                $initFilter['cat_id'] = $params['cat_id'];
+            }
+
+            if( $params['brand_id'] )
+            {
+                $initFilter['brand_id'] = is_array($params['brand_id']) ? implode(',',$params['brand_id']) : $params['brand_id'];
+            }
+
+            $params = array_merge($initFilter, $params);
+        }
+        elseif( $params['search_keywords'] )
+        {
+            $initFilter['search_keywords'] = $params['search_keywords'];
+            $initFilter['cat_id']          = $params['cat_id'];
+            $initFilter['brand_id']        = is_array($params['brand_id']) ? implode(',',$params['brand_id']) : $params['brand_id'];
+        }
+        elseif( $params['cat_id'] )
+        {
+            $initFilter['cat_id'] = $params['cat_id'];
+        }
+
+        return $initFilter;
+    }
+
+    /**
+     * 获取查询商品条件
+     */
+    private function __getDecodeFilter()
+    {
+        $objLibFilter              = kernel::single('topc_item_filter');
+        $postdata                  = input::get();
+        $params                    = $objLibFilter->decode($postdata);
+        $params['use_platform']    = '0,1';
+        $params['search_keywords'] = parseSearchKeyWord(trim($params['search_keywords']));
+        return $params;
+    }
 
     public function index()
     {
         $this->setLayoutFlag('gallery');
         $objLibFilter = kernel::single('topc_item_filter');
-        $postdata = input::get();
 
-
-        $params = $objLibFilter->decode($postdata);
-        //echo '<pre>';print_r($params);exit();
-        $params['use_platform'] = '0,1';
+        $params     = $this->__getDecodeFilter();
         //判断自营  自营是1，非自营是0
         if($params['is_selfshop']=='1')
         {
@@ -37,9 +87,12 @@ class topc_ctl_list extends topc_controller {
         {
             $pagedata['isself'] = '1';
         }
-        //如果不是从分类进入，并且没有关键字搜索则不能进入列表页
-        $params['search_keywords'] = parseSearchKeyWord(trim($params['search_keywords']));
-        if( empty($params['cat_id']) && empty($params['search_keywords']) )
+
+        //已选择的搜索条件
+        $pagedata['activeFilter'] = $params;
+
+        $initFilter = $this->__setInitFilter($params);
+        if( !$initFilter )
         {
             return redirect::back();
         }
@@ -50,6 +103,21 @@ class topc_ctl_list extends topc_controller {
         //搜索或者筛选获取商品
         $searchParams = $this->__preFilter($params);
 
+        //根据条件搜索出最多商品的分类，进行显示渐进式筛选项
+        $filterItems = app::get('topc')->rpcCall('item.search.filterItems',$initFilter);
+        //渐进式筛选的数据
+        $pagedata['screen'] = $filterItems;
+        if( $filterItems && !$filterItems['props'])
+        {
+            unset($pagedata['activeFilter']['prop_index']);
+            unset($searchParams['prop_index']);
+        }
+
+        //已有的搜索条件
+        $tmpFilter = $pagedata['activeFilter'];
+        unset($tmpFilter['pages']);
+        $pagedata['filter'] = $objLibFilter->encode($tmpFilter);
+
         //面包屑数据
         $breadcrumb = array();
         if($searchParams['cat_id'] )
@@ -57,7 +125,7 @@ class topc_ctl_list extends topc_controller {
             $cat = app::get('topc')->rpcCall('category.cat.get.data',array('cat_id'=>intval($searchParams['cat_id'])));
             $breadcrumb = array(
                 ['url'=>url::action('topc_ctl_topics@index',array('cat_id'=>$cat['lv1']['cat_id'])),'title'=>$cat['lv1']['cat_name']],
-                ['url'=>'','title'=>$cat['lv2']['cat_name']],
+                ['url'=>url::action('topc_ctl_topics@index',array('cat_id'=>$cat['lv2']['cat_id'])),'title'=>$cat['lv2']['cat_name']],
                 ['url'=>url::action('topc_ctl_list@index',array('cat_id'=>$cat['lv3']['cat_id'])),'title'=>$cat['lv3']['cat_name']],
             );
             if($searchParams['brand_id'])
@@ -71,6 +139,13 @@ class topc_ctl_list extends topc_controller {
                 $title = rtrim($title,"、");
                 $breadcrumb[] = ['url'=>'','title'=>$title];
             }
+        }elseif($searchParams['virtual_cat_id']){
+            $virtualcat = app::get('topc')->rpcCall('category.virtualcat.getData',array('virtual_cat_id'=>intval($searchParams['virtual_cat_id'])));
+            $breadcrumb = array(
+                ['url'=>url::action('topc_ctl_topics@index',array('virtual_cat_id'=>$virtualcat['lv1']['virtual_cat_id'])),'title'=>$virtualcat['lv1']['virtual_cat_name']],
+                ['url'=>url::action('topc_ctl_topics@index',array('virtual_cat_id'=>$virtualcat['lv2']['virtual_cat_id'])),'title'=>$virtualcat['lv2']['virtual_cat_name']],
+                ['url'=>url::action('topc_ctl_list@index',array('virtual_cat_id'=>$virtualcat['lv3']['virtual_cat_id'])),'title'=>$virtualcat['lv3']['virtual_cat_name']],
+            );
         }
 
         if($searchParams['search_keywords'])
@@ -83,7 +158,6 @@ class topc_ctl_list extends topc_controller {
         $pagedata['breadcrumb'] = $breadcrumb;
 
         $searchParams['fields'] = 'item_id,title,image_default_id,price,promotion';
-        //$itemsList = app::get('topc')->rpcCall('item.search',$searchParams);
         try
         {
             $itemsList = app::get('topc')->rpcCall('item.search',$searchParams);
@@ -114,22 +188,12 @@ class topc_ctl_list extends topc_controller {
             }
         }
 
-        //根据条件搜索出最多商品的分类，进行显示渐进式筛选项
-        $filterItems = app::get('topc')->rpcCall('item.search.filterItems',$params);
-        //渐进式筛选的数据
-        $pagedata['screen'] = $filterItems;
         $pagedata['items'] = $itemsList['list'];//根据条件搜索出的商品
         $pagedata['count'] = $itemsList['total_found']; //根据条件搜索到的总数
 
-        //已有的搜索条件
-        $tmpFilter = $params;
-        unset($tmpFilter['pages']);
-        $pagedata['filter'] = $objLibFilter->encode($tmpFilter);
-
         //分页
         $pagedata['pagers'] = $this->__pages($params['pages'], $pagedata['count'], $pagedata['filter']);
-        //已选择的搜索条件
-        $pagedata['activeFilter'] = $params;
+
         return $this->page('topc/list/index.html', $pagedata);
     }
 

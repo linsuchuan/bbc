@@ -32,7 +32,12 @@ class topshop_ctl_sysstat_sysstat extends topshop_controller
 		//商品排行
 		$sysItemInfo = app::get('topshop')->rpcCall('sysstat.data.get',array('inforType'=>'item','timeType'=>$type,'limit' =>5,'start'=>0),'seller');
 		$pagedata['sysItemInfo'] = $sysItemInfo['sysTrade']?$sysItemInfo['sysTrade']:$sysItemInfo['sysTradeData'];
-
+		//店铺流量数据
+		$pagedata['traffic_disabled'] = config::get('stat.disabled');
+		if(!$pagedata['traffic_disabled']){
+			$all['shop_id'] = shopAuth::getShopId();
+			$pagedata['trafficData'] = app::get('topshop')->rpcCall('sysstat.traffic.data.get',$all);
+		}
 
 		$pagedata['sysstat'] = $data['sysstat'];
 		$pagedata['sendtype'] = $type;

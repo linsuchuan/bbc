@@ -10,169 +10,10 @@
 class topwap_ctl_member_deposit extends topwap_ctl_member {
 
     const CHANGE_TYPE = 'change';
-    public $limit = 10;
-    protected $payment_icon = array(
-            'wapupacp' => 'bbc-icon-unipay pay-style-unipay',
-            'deposit' => 'bbc-icon-qianbao pay-style-qianbao',
-            'malipay' => 'bbc-icon-zhifubao pay-style-zhifubao',
-            'wxpayjsapi' => 'bbc-icon-weixin pay-style-weixin'
-    );
+
     protected $cachePaymentIdKey = 'wap:pay.wait.payid';
 
-    public function index()
-    {
-        $userId = userAuth::id();
-        $deposit = app::get('topwap')->rpcCall('user.deposit.getInfo', ['user_id'=>$userId, 'with_log'=>false]);
-        $pagedata['deposit'] = $deposit;
-        $pagedata['title'] = app::get('topwap')->_('我的预存款');
-
-        return $this->page('topwap/member/deposit/index.html', $pagedata);
-    }
-
-    public function view()
-    {
-        $deposit = $this->__getdepositLog();
-
-        $pagedata['pagers'] = array(
-                'link'=>'',
-                'current'=>$deposit['page'],
-                'total'=>ceil($deposit['count'] / $this->limit),
-        );
-        $pagedata['deposit'] = $deposit;
-        $pagedata['title'] = app::get('topwap')->_('预存款明细');
-
-        return $this->page('topwap/member/deposit/detail.html',$pagedata);
-    }
-
-    public function ajaxDepositLog()
-    {
-        try {
-            $pagedata['deposit'] = $this->__getdepositLog();
-            $data['html'] = view::make('topwap/member/deposit/list.html',$pagedata)->render();
-            $data['success'] = true;
-            $data['pages'] = $pagedata['deposit']['pages'];
-        } catch (Exception $e) {
-            return $this->splash('error', null, $e->getMessage(), true);
-        }
-
-        return response::json($data);
-    }
-
-    public function rechargeSubmit()
-    {
-        $pagedata['title'] = app::get('topwap')->_('预存款充值');
-
-        return $this->page('topwap/member/deposit/recharge_form.html',$pagedata);
-    }
-
-    public function rechargePay()
-    {
-        $amount = input::get('amount');
-
-        try{
-            $this->checkoutAmount($amount);
-        }
-        catch(Exception $e)
-        {
-            return $this->splash('error',null,$e->getMessage());
-        }
-
-        $payType['platform'] = 'iswap';
-        $payments = app::get('topwap')->rpcCall('payment.get.list',$payType,'buyer');
-        foreach($payments as $key=>$payment)
-        {
-            if($payment['app_id'] == 'deposit')
-            {
-                unset($payments[$key]);
-                continue;
-            }
-
-            // 微信支付
-            if(in_array($payment['app_id'], ['wxpayjsapi']))
-            {
-                if(!kernel::single('topwap_wechat_wechat')->from_weixin())
-                {
-                    unset($payments[$key]);
-                    continue;
-                }
-
-                $payInfo = app::get('topwap')->rpcCall('payment.get.conf', ['app_id' => 'wxpayjsapi']);
-                $wxAppId = $payInfo['setting']['appId'];
-                $wxAppsecret = $payInfo['setting']['Appsecret'];
-                if(!input::get('code'))
-                {
-                    $url = url::action('topwap_ctl_member_deposit@rechargePay',input::get());
-                    kernel::single('topwap_wechat_wechat')->get_code($wxAppId, $url);
-                }
-                else
-                {
-                    $code = input::get('code');
-                    $openid = kernel::single('topwap_wechat_wechat')->get_openid_by_code($wxAppId, $wxAppsecret, $code);
-                    if($openid == null)
-                        $this->splash('failed', 'back',  app::get('topwap')->_('获取openid失败'));
-                    $pagedata['openid'] = $openid;
-                }
-            }
-        }
-
-        $pagedata['amount']   = $amount;
-        $pagedata['payments'] = $payments;
-        $pagedata['paymentIcon'] = $this->payment_icon;
-        $pagedata['title'] = app::get('topwap')->_('选择支付方式');
-
-        $this->action_view = "deposit/recharge_pay.html";
-        return $this->page('topwap/member/deposit/recharge_pay.html',$pagedata);
-    }
-
-    public function doRecharge()
-    {
-        $payment['user_id'] = userAuth::id();
-        $payment['user_name'] = userAuth::getLoginName();
-
-        $payment['money'] = input::get('amount');
-        try{
-
-            $this->checkoutAmount($payment['money']);
-            $payment['pay_app_id'] = input::get('pay_app_id');
-            $payment['platform'] = 'wap';
-
-            if($payment['pay_app_id'] == '')
-                throw new LogicException('请选择支付方式');
-            if($payment['pay_app_id'] == 'deposit')
-                throw new LogicException('充值方式不可使用预存款!');
-
-            $result = app::get('topwap')->rpcCall('payment.deposit.recharge', $payment);
-            $paymentId = $result['paymentId'];
-
-        }
-        catch(Exception $e)
-        {
-            return $this->splash('error',null,$e->getMessage());
-        }
-
-        return redirect::action('topwap_ctl_member_deposit@rechargeResult', ['payment_id'=>$paymentId]);
-    }
-
-    // 支付结果
-    public function rechargeResult()
-    {
-        $paymentId = input::get('payment_id');
-
-        $payment = app::get('topwap')->rpcCall('payment.bill.get', ['payment_id'=>$paymentId, 'fields'=>'status,cur_money']);
-        $pagedata = $payment;
-        if($payment['status'] == 'succ')
-        {
-            $pagedata['title'] = app::get('topwap')->_('充值成功');
-            return $this->page('topwap/member/deposit/recharge_success.html',$pagedata);
-        }
-        else
-        {
-            $pagedata['title'] = app::get('topwap')->_('充值失败');
-            return $this->page('topwap/member/deposit/recharge_failed.html',$pagedata);
-        }
-    }
-
-    // 安全中心预存款密码
+    // 安全中心支付密码
     public function depositPwd()
     {
         // 获取从支付页面过来的支付单号
@@ -183,7 +24,7 @@ class topwap_ctl_member_deposit extends topwap_ctl_member {
             cache::store('session')->put($this->cachePaymentIdKey.'-'.$userId, $input['payment_id'], 30);
         }
 
-        $pagedata['title'] = app::get('topwap')->_('预存款支付密码');
+        $pagedata['title'] = app::get('topwap')->_('支付密码');
         $pagedata['hasDepositPassword'] = app::get('topwap')->rpcCall('user.deposit.password.has', ['user_id'=>userAuth::id()]);
 
         return $this->page('topwap/member/deposit/payment_password.html', $pagedata);
@@ -279,7 +120,7 @@ class topwap_ctl_member_deposit extends topwap_ctl_member {
             // 查看是否已设置过密码
             $depositPasswordFlag = app::get('topwap')->rpcCall('user.deposit.password.has', ['user_id'=>$userId]);
             $depositPasswordFlag = $depositPasswordFlag['result'];
-            
+
             $request = input::get();
             $newPassword = input::get('new_password');
             $confirm_password = input::get('confirm_password');
@@ -422,8 +263,6 @@ class topwap_ctl_member_deposit extends topwap_ctl_member {
         }
 
         return $this->splash('success',null,"验证码发送成功");
-
-
     }
 
 
@@ -456,34 +295,6 @@ class topwap_ctl_member_deposit extends topwap_ctl_member {
         $key = $key.$userId;
         $value = cache::store('session')->get($key, $default);
         return $value;
-    }
-
-    private function __getdepositLog()
-    {
-        $userId = userAuth::id();
-        $page = input::get('pages') ? input::get('pages') : 1;
-        $deposit = app::get('topwap')->rpcCall('user.deposit.getInfo', ['user_id'=>$userId, 'with_log'=>'true', 'page'=>$page, 'row_num'=>$this->limit]);
-        $deposit['pages'] = $page;
-        $total=ceil($deposit['count'] / $this->limit);
-        if($total<$page) return array();
-        return $deposit;
-    }
-
-    private function checkoutAmount($amount)
-    {
-
-        if( !is_numeric($amount) )
-            throw new LogicException('充值金额必须为数字');
-
-        if( $amount <= 0 )
-            throw new LogicException('充值金额必须大于0');
-
-        if( $amount >= 10000000)
-            throw new LogicException('请勿充值过大的金额');
-
-        if(  ( (int)($amount*100) ) != ($amount * 100)  )
-            throw new LogicException('充值金额的最小单位不得小于分');
-
     }
 }
 

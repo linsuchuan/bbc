@@ -168,23 +168,25 @@
                   </td>
                 </tr>
 
-                <{if $info.gift_data}>
+            <{if $info.gift_data}>
             <{foreach from=$info.gift_data item=giftdata}>
-            <tr>
-            <td>
-              <div class="table-goods-pic">
-                <{if $giftdata.image_default_id }>
-                <img width="64" height="64" src="<{$giftdata.image_default_id|storager:t}>">
-                <{else}>
-                <img width="64" height="64" src="<{$defaultImageId.T.default_image}>">
-                <{/if}>
-              </div>
-            </td>
-            <td><a href="<{url action=topc_ctl_item@index item_id=$giftdata.item_id}>"><sapn class="item-describe-tag">赠品</sapn><{$giftdata.title}></a><{$giftdata.spec_info}></td>
-            <td><{0|cur}></td>
-            <td class="nowrap"><{$giftdata.gift_num}></td>
-            <td><{0|cur}></td>
-            </tr>
+              <{if !$giftdata.withoutReturn}>
+                <tr>
+                <td>
+                  <div class="table-goods-pic">
+                    <{if $giftdata.image_default_id }>
+                    <img width="64" height="64" src="<{$giftdata.image_default_id|storager:t}>">
+                    <{else}>
+                    <img width="64" height="64" src="<{$defaultImageId.T.default_image}>">
+                    <{/if}>
+                  </div>
+                </td>
+                <td><a href="<{url action=topc_ctl_item@index item_id=$giftdata.item_id}>"><sapn class="item-describe-tag">赠品</sapn><{$giftdata.title}></a><{$giftdata.spec_info}></td>
+                <td><{0|cur}></td>
+                <td class="nowrap"><{$giftdata.gift_num}></td>
+                <td><{0|cur}></td>
+                </tr>
+              <{/if}>
             <{/foreach}>
             <{/if}>
               </tbody>

@@ -24,4 +24,18 @@ class sysuser_finder_grade{
             $colList[$k] = $button;
         }
     }
+
+    public $column_grade_logo = "等级LOGO";
+    public $column_grade_logo_order = 2;
+    public function column_grade_logo(&$colList, $list)
+    {
+        foreach($list as $k=>$row)
+        {
+            if($row['grade_logo']){
+                $src = base_storager::modifier($row['grade_logo']);
+                $colList[$k] = "<a href='$src' class='img-tip pointer' target='_blank' onmouseover='bindFinderColTip(event);'><span>&nbsp;pic</span></a>";
+            }
+        }
+    }
+
 }

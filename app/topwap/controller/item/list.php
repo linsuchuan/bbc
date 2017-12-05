@@ -13,6 +13,17 @@ class topwap_ctl_item_list extends topwap_controller {
     public function index()
     {
         $filter = input::get();
+        if($filter['virtual_cat_id']){
+            $catInfo = app::get('topwap')->rpcCall('category.virtualcat.info',array('virtual_cat_id'=>intval($filter['virtual_cat_id'])));
+            $initFilter = unserialize($catInfo['filter']);
+            if($initFilter['brand_id']){
+                $initFilter['brand_id'] = implode(',', $initFilter['brand_id']);
+            }
+        }
+        if($initFilter && is_array($initFilter)){
+            $filter = array_merge($initFilter,$filter);
+        }
+        
         $itemsList = $this->objLibSearch->search($filter)
                           ->setItemsActivetyTag()
                           ->setItemsPromotionTag()

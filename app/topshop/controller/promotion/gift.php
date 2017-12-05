@@ -132,8 +132,11 @@ class topshop_ctl_promotion_gift extends topshop_controller{
         }
         $shopId = shopAuth::getShopId();
         $pagedata['shopCatList'] = app::get('topshop')->rpcCall('shop.authorize.cat',array('shop_id'=>$shopId));
+        foreach( $pagedata['itemsList'] as $itemRow )
+        {
+            $pagedata['item_sku'][$itemRow['item_id']] = $itemRow['sku_ids'];
+        }
         return $this->page('topshop/promotion/gift/edit.html', $pagedata);
-
     }
 
     //提交审核
@@ -161,68 +164,37 @@ class topshop_ctl_promotion_gift extends topshop_controller{
     public function save_gift()
     {
         $params = input::get();
-        try
-        {
-            $validator = validator::make(
-                [
-                    'gift_name'=>$params['gift_name'],
-                    'limit_quantity'=>$params['condition_type'],
-                    'item_id'=>array_filter($params['item_id']),
-                    'sku_id'=>array_filter($params['sku_id']),
-                    'sku_num'=>array_filter($params['sku_num']),
-                    'grade'=>$params['grade'],
-                    'gift_desc'=>$params['gift_desc']
-                ],
-                [
-                    'gift_name'=>'required',
-                    'limit_quantity'=>'required',
-                    'item_id'=>'required',
-                    'sku_id'=>'required',
-                    'sku_num'=>'required',
-                    'grade'=>'required',
-                    'gift_desc'=>'required',
-                ],
-                [
-                    'gift_name'=>'赠品促销名称必填',
-                    'limit_quantity'=>'促销条件满多少件必填',
-                    'item_id'=>'最少添加1个商品参加此促销!',
-                    'sku_id'=>'最少添加1个赠品!',
-                    'sku_num'=>'赠品数量必填',
-                    'grade'=>'参加促销的会员等级至少选一个',
-                    'gift_desc'=>'赠品促销描述必填',
-                ]
-            );
-            $validator->newFails();
-        }
-        catch( \LogicException $e )
-        {
-            return $this->splash('error', $url, $e->getMessage(), true);
-        }
-
-        if(count($params['item_id'])>=1000)
-        {
-            return $this->splash('error','','最多添加1000个商品!',true);
-        }
 
         $apiData['gift_name'] = $params['gift_name'];
         $apiData['gift_desc'] = $params['gift_desc'];
-        $apiData['condition_type'] = $params['condition_type'];
         $apiData['limit_quantity'] = $params['limit_quantity'];
         $apiData['shop_id'] = $this->shopId;
-        $apiData['gift_item'] = implode(',',$params['sku_id']);
-        $apiData['gift_item_info'] = json_encode($params['sku_num']);
+
+        $giftItem = null;
+        foreach( (array)$params['sku_num'] as $skuId=>$skuNum )
+        {
+            $giftItem['sku_id'] = $skuId;
+            $giftItem['quantity'] = $skuNum;
+            $giftItem['withoutReturn'] = in_array($skuId, (array)$params['withoutReturn']) ? true : false;
+            $apiData['gift_item'][] = $giftItem;
+        }
+        $apiData['gift_item'] = $apiData['gift_item'] ? json_encode($apiData['gift_item']) : null;
 
         // 可使用的有效期
         $canuseTimeArray = explode('-', $params['valid_time']);
         $apiData['start_time']  = strtotime($canuseTimeArray[0]);
         $apiData['end_time'] = strtotime($canuseTimeArray[1]);
-        if($apiData['start_time'] >= $apiData['end_time'])
-        {
-            return $this->splash('error','','活动结束时间必须大于开始时间!',true);
-        }
         // 可以使用的会员等级
         $apiData['valid_grade'] = implode(',', $params['grade']);
-        $apiData['gift_rel_itemids'] = implode(',',$params['item_id']); // 赠品促销关联的商品id,格式 商品id  '23,99,103',以逗号分割
+        $giftRelItem = null;
+        foreach( (array)$params['item_id'] as $key=>$itemId )
+        {
+            $itemData['item_id'] = $itemId;
+            $itemData['sku_id'] = $params['item_sku'][$key];
+            $giftRelItem[] = $itemData;
+        }
+        $apiData['gift_rel_item'] = $giftRelItem ? json_encode($giftRelItem) : null;
+
         try
         {
             if($params['gift_id'])

@@ -17,11 +17,13 @@
     <span class="text-gray"><{if $sku.spec_info}>[<{$sku.spec_info}>]<{/if}></span>
     <div class="info-bottom">
       <span class="price fl"><{$sku.price|cur}></span>
-      <{if $_input.view}>
+      </label>
       <span class="txt-right fr">
-        <{include file=$_input.view}>
-      </span>
+      <{if $_input.view}>
+        <{include file=$_input.view}>&nbsp;
+        <label><input type="checkbox" name="withoutReturn[]" value='<{$sku.sku_id}>' <{if $sku.datavalue.withoutReturn}>checked='checked'<{/if}>> 退货无需退回赠品</label>
       <{/if}>
+      </span>
     </div>
   </div>
 </div>

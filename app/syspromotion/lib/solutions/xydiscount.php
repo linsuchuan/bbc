@@ -35,8 +35,8 @@ class syspromotion_solutions_xydiscount implements syspromotion_interface_promot
             // throw new \LogicException('可参与的X件Y折次数已经用完!');
         }
         $valid_grade = explode(',', $xydiscountInfo['valid_grade']);
-        $gradeInfo = app::get('syspromotion')->rpcCall('user.grade.basicinfo',['user_id'=>$params['user_id']]);
-        if( !in_array($gradeInfo['grade_id'], $valid_grade) )
+        // $gradeInfo = app::get('syspromotion')->rpcCall('user.grade.basicinfo',['user_id'=>$params['user_id']]);
+        if( !in_array($params['grade_id'], $valid_grade) )
         {
             return 0;
             // throw new \LogicException('您的当前会员等级不可参加此促销!');

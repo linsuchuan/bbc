@@ -32,6 +32,10 @@ class topshop_ctl_trade_detail extends topshop_controller{
         $pagedata['logi'] = app::get('topshop')->rpcCall('delivery.get',array('tid'=>$params['tid']));
         $pagedata['tracking'] = app::get('syslogistics')->getConf('syslogistics.order.tracking');
         $this->contentHeaderTitle = app::get('topshop')->_('订单详情');
+
+        $dlycorp = app::get('topshop')->rpcCall('shop.dlycorp.getlist',['shop_id'=>$this->shopId]);
+        $pagedata['dlycorp'] = $dlycorp['list'];
+
         return $this->page('topshop/trade/detail.html', $pagedata);
     }
 

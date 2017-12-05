@@ -46,7 +46,7 @@ class desktop_ctl_debug extends desktop_controller{
         $arr = app::get('desktop')->model('account')->getRow('account_id,login_password',$user_data);
         if (!$arr)  return false;
 
-        $checkPwd = pam_encrypt::check($filter['password'], $arr['login_password']);
+        $checkPwd = hash::check($filter['password'], $arr['login_password']);
         if(!$checkPwd) return false;
 
         return $arr;

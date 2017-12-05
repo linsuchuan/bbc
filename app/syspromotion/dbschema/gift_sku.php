@@ -27,6 +27,13 @@ return array(
             'required' => true,
             'comment' => app::get('syspromotion')->_('赠品数量'),
         ),
+        'withoutReturn' => array(
+            'type' => 'bool',
+            'default' => '0',
+            'required' => true,
+            'label' => app::get('syspromotion')->_('退货无需退回赠品'),
+            'comment' => app::get('syspromotion')->_('退货无需退回赠品'),
+        ),
         'start_time' => array(
             'type' => 'time',
             'default'=> 0,

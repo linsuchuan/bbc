@@ -31,6 +31,43 @@ class topwap_ctl_paycenter extends topwap_controller {
         }
     }
 
+    public function selectHongbao()
+    {
+        $total = input::get('total');
+        $apiParams = [
+            'user_id' => userAuth::id(),
+            'is_valid'=> 'active',
+            'fields'=>'hongbao_id,name,money,id,end_time',
+            'page_size'=>'100',
+            'used_platform' => "wap",
+        ];
+        $hongbaoData = app::get('topwap')->rpcCall('user.hongbao.list.get', $apiParams);
+        $pagedata['hongbao_list'] = $hongbaoData['list'];
+
+        // 获取当前平台设置的货币符号和精度
+        $cur_symbol = app::get('topapi')->rpcCall('currency.get.symbol',array());
+        $pagedata['cur_symbol'] = $cur_symbol;
+        $pagedata['total'] = $total;
+        $pagedata['rediret'] = request::server('HTTP_REFERER');
+        $pagedata['active_hongbao_id'] = $_SESSION['pay_user_hongbao_id'];
+
+        return $this->page('topwap/payment/redpacketlist.html', $pagedata);
+    }
+
+    public function saveHongbao()
+    {
+        if( input::get('hongbao_id') )
+        {
+            $_SESSION['pay_user_hongbao_id'] = explode(',',input::get('hongbao_id'));
+        }
+        else
+        {
+            unset($_SESSION['pay_user_hongbao_id']);
+        }
+
+        return $this->splash('success', null, null, true);
+    }
+
     public function index($filter=null)
     {
         $this->setLayoutFlag('order_detail');
@@ -146,6 +183,45 @@ class topwap_ctl_paycenter extends topwap_controller {
             }
         }
 
+        $apiParams = [
+            'user_id' => userAuth::id(),
+                'is_valid'=> 'active',
+                'fields'=>'hongbao_id,name,money,id,end_time',
+                'page_size'=>'100',
+                'used_platform' => "wap",
+            ];
+        $hongbaoData = app::get('topwap')->rpcCall('user.hongbao.list.get', $apiParams);
+        if( !$hongbaoData )
+        {
+            $pagedata['is_empty_hongbao'] = true;
+        }
+        else
+        {
+            if( $_SESSION['pay_user_hongbao_id'] )
+            {
+                $userHongbaoIds = $_SESSION['pay_user_hongbao_id'];
+                $selectHongbaoMoney = 0;
+                foreach($hongbaoData['list'] as $row)
+                {
+                    if(in_array($row['id'], $userHongbaoIds))
+                    {
+                        $selectHongbao[] = $row;
+                        $selectHongbaoMoney = ecmath::number_plus(array($selectHongbaoMoney, $row['money']));
+                    }
+                }
+
+                if( $selectHongbaoMoney > $newMoney )
+                {
+                    unset($_SESSION['pay_user_hongbao_id']);
+                }
+                else
+                {
+                    $pagedata['select_hongbao_list'] = $selectHongbao;
+                    $pagedata['select_hongbao_money'] = $selectHongbaoMoney;
+                }
+            }
+        }
+
         $pagedata['tids'] = $tids['tid'];
         $pagedata['trades'] = $paymentBill;
         $pagedata['payments'] = $payments;
@@ -156,55 +232,6 @@ class topwap_ctl_paycenter extends topwap_controller {
         return $this->page('topwap/payment/index.html', $pagedata);
     }
 
-    // 预存款支付
-    public function depositPay()
-    {
-        $filter = input::get();
-        $filter['fields'] = "*";
-        $paymentBill = app::get('topwap')->rpcCall('payment.bill.get',$filter,'buyer');
-        //检测订单中的金额是否和支付金额一致 及更新支付金额
-        $trade = $paymentBill['trade'];
-        $tids['tid'] = implode(',',array_keys($trade));
-        $ordersMoney = app::get('topwap')->rpcCall('trade.money.get',$tids,'buyer');
-
-        if($ordersMoney)
-        {
-            $newMoney = 0;
-            foreach($ordersMoney as $key=>$val)
-            {
-                $newOrders[$val['tid']] = $val['payment'];
-                $newMoney = ecmath::number_plus(array($newMoney, ecmath::number_minus(array($val['payment'], $val['hongbao_fee']))));
-            }
-
-            $result = array(
-                    'trade_own_money' => json_encode($newOrders),
-                    'money' => $newMoney,
-                    'cur_money' => $newMoney,
-                    'payment_id' => $filter['payment_id'],
-            );
-
-            if($newMoney != $paymentBill['cur_money'])
-            {
-                try{
-                    app::get('topwap')->rpcCall('payment.money.update',$result);
-                }
-                catch(Exception $e)
-                {
-                    $msg = $e->getMessage();
-                    $url = url::action('topwap_ctl_member_trade@tradeList');
-                    return $this->splash('error',$url,$msg,true);
-                }
-                $paymentBill['money'] = $newMoney;
-                $paymentBill['cur_money'] = $newMoney;
-            }
-        }
-
-        $pagedata['payment'] = $filter['payment'];
-        $pagedata['tids'] = $tids['tid'];
-        $pagedata['trades'] = $paymentBill;
-        $pagedata['title'] = app::get('topwap')->_('预存款支付');
-        return $this->page('topwap/payment/depositpay.html',$pagedata);
-    }
     // 创建支付
     public function createPay()
     {
@@ -236,32 +263,18 @@ class topwap_ctl_paycenter extends topwap_controller {
         $postdata = input::get();
         $payment = $postdata['payment'];
         $payment['deposit_password'] = $postdata['deposit_password'];
-
-        if(!$payment['pay_app_id'])
-        {
-            throw new LogicException('请选择支付方式！');
-        }
         $payment['user_id'] = userAuth::id();
         $payment['platform'] = "wap";
-        $msg = '';
+        $payment['hongbao_ids'] = implode(',',$_SESSION['pay_user_hongbao_id']);
+        unset($_SESSION['pay_user_hongbao_id']);
         try
         {
-            if($payment['pay_app_id'] == 'deposit' && $postdata['deposit_password'] == '')
-            {
-                throw new LogicException('请输入预存款支付密码！');
-            }
-
            app::get('topwap')->rpcCall('payment.trade.pay',$payment);
         }
         catch(Exception $e)
         {
             $msg = $e->getMessage();
             $url = url::action('topwap_ctl_paycenter@index',array('payment_id'=>$payment['payment_id']));
-            if($payment['pay_app_id'] == 'deposit')
-            {
-                $url = url::action('topwap_ctl_paycenter@depositPay',array('payment_id'=>$payment['payment_id']));
-                // return $this->splash('error', $url, $msg, true);
-            }
             echo '<meta charset="utf-8"><script>alert("'.$msg.'");location.href="'.$url.'";</script>';
             exit();
         }
@@ -284,11 +297,23 @@ class topwap_ctl_paycenter extends topwap_controller {
         {
             $msg = $e->getMessage();
         }
-        // 支付结果处理，主要是处理预存款充值
-        if(strpos($result['return_url'], 'topwap_ctl_member_deposit@rechargeResult'))
+
+        $apiParams['user_id'] = userAuth::id();;
+        $apiParams['tid'] = implode(",",array_column($result['trade'], 'tid'));
+        $apiParams['fields'] = "tid,payment,payed_fee,hongbao_fee,status,pay_type";
+        $trades = app::get('topc')->rpcCall('trade.get.list',$apiParams);
+
+        $hongbaoMoney = 0;
+        $tradeTotalPayment = 0;
+        foreach( $trades['list'] as $row )
         {
-            $returnParams = unserialize($result['return_url']);
-            return redirect::action('topwap_ctl_member_deposit@rechargeResult', ['payment_id'=>$returnParams[1]['payment_id']]);
+            $hongbaoMoney = ecmath::number_plus(array($hongbaoMoney, $row['hongbao_fee']));
+            $tradeTotalPayment = ecmath::number_plus(array($tradeTotalPayment, $row['payment']));
+        }
+        $pagedata['hongbao_fee'] = $hongbaoMoney;
+        if( $tradeTotalPayment ==  $hongbaoMoney )
+        {
+            $result['status'] = 'succ';
         }
 
         $trades = $result['trade_own_money'];

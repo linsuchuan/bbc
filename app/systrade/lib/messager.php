@@ -59,7 +59,6 @@ class systrade_messager {
             throw new \LogicException($msg);
         }
 
-        $hasher = kernel::single('base_hashing_hasher_bcrypt');
         $vcode = mt_rand('100000',999999);
         $tmpl = 'delivery-ziti';
         $content = [
@@ -84,7 +83,7 @@ class systrade_messager {
         $num = $deliveryCodeRow['num'] ? $deliveryCodeRow['num'] + 1 : 1;
         if( $deliveryCodeRow )
         {
-            return $objMdlDeliveryCode->update(['vcode'=>$hasher->make($vcode),'modified_time'=>time(),'num'=>$num],['id'=>$deliveryCodeRow['id']]);
+            return $objMdlDeliveryCode->update(['vcode'=>hash::make($vcode),'modified_time'=>time(),'num'=>$num],['id'=>$deliveryCodeRow['id']]);
         }
         else
         {
@@ -92,7 +91,7 @@ class systrade_messager {
                 'tid' => $tid,
                 'num' => $num,
                 'shop_id' => $data['shop_id'],
-                'vcode' => $hasher->make($vcode),
+                'vcode' => hash::make($vcode),
                 'status' => 'WITH_CHECK',
                 'modified_time' => time(),
             ];
@@ -125,8 +124,7 @@ class systrade_messager {
             throw new \LogicException($msg);
         }
 
-        $hasher = kernel::single('base_hashing_hasher_bcrypt');
-        if( $hasher->check($vcode, $deliveryCodeRow['vcode']) )
+        if( hash::check($vcode, $deliveryCodeRow['vcode']) )
         {
             return $objMdlDeliveryCode->update(['status'=>'WITH_FINDISH'],['id'=>$deliveryCodeRow['id']]);
         }

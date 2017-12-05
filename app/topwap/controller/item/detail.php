@@ -63,14 +63,31 @@ class topwap_ctl_item_detail extends topwap_controller {
         $promotionInfo = app::get('topwap')->rpcCall('item.promotion.get', array('item_id'=>$itemId));
         if($promotionInfo)
         {
-
             foreach($promotionInfo as $vp)
             {
                 $basicPromotionInfo = app::get('topwap')->rpcCall('promotion.promotion.get', array('promotion_id'=>$vp['promotion_id'], 'platform'=>'wap'));
-
+                $basicPromotionInfo['sku_id'] = explode(',', $vp['sku_id']);
                 if($basicPromotionInfo['valid']===true)
                 {
+                    $basicPromotionInfo['sku_id'] = $vp['sku_id'] ? explode(',',$vp['sku_id']) : null;
                     $pagedata['promotionDetail'][$vp['promotion_id']] = $basicPromotionInfo;
+                    if( !$vp['sku_id'] || (isset($skuId[$basicPromotionInfo['promotion_type']]) && $skuId[$basicPromotionInfo['promotion_type']] === null) )
+                    {
+                        $skuId[$basicPromotionInfo['promotion_type']] = null;
+                    }
+                    else
+                    {
+                        if($skuId[$basicPromotionInfo['promotion_type']])
+                        {
+                            $skuId[$basicPromotionInfo['promotion_type']] = array_merge($skuId[$basicPromotionInfo['promotion_type']],$basicPromotionInfo['sku_id']);
+                        }
+                        else
+                        {
+                            $skuId[$basicPromotionInfo['promotion_type']] = $basicPromotionInfo['sku_id'];
+                        }
+                    }
+
+                    $basicPromotionInfo['sku_id'] = $skuId[$basicPromotionInfo['promotion_type']];
                     $pagedata['promotionTag'][$basicPromotionInfo['promotion_type']] = $basicPromotionInfo;
                 }
             }
@@ -78,9 +95,10 @@ class topwap_ctl_item_detail extends topwap_controller {
         $pagedata['promotion_count'] = count($pagedata['promotionDetail']);
 
         //获取赠品促销信息
-        $giftDetail = app::get('topwap')->rpcCall('promotion.gift.item.info',array('item_id'=>$itemId,'valid'=>1),'buyer');
+        $giftDetail = app::get('topwap')->rpcCall('promotion.gift.item.info',array('item_id'=>$itemId,'valid'=>1),'buyer')['0'];
         if($giftDetail)
         {
+            $giftDetail['sku_ids'] = $giftDetail['sku_ids'] ? explode(',',$giftDetail['sku_ids']) : null;
             $pagedata['giftDetail'] = $giftDetail;
         }
 

@@ -56,14 +56,6 @@ class ectools_payment_plugin_alipay_server extends ectools_payment_app {
 					echo "success";
                     $ret['status'] = 'succ';
                     break;
-                case 'WAIT_SELLER_SEND_GOODS':
-					echo 'success';
-                    $ret['status'] = 'progress';
-                    break;
-                case 'WAIT_BUYER_CONFIRM_GOODS':
-                    echo 'success';
-                    $ret['status'] = 'progress';
-                    break;
            }
 
         }else{

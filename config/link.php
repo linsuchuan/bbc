@@ -103,4 +103,6 @@ return array(
     'sms_debug' => "",  //开启测试地址的设置
     'sms_sandbox_api' => 'https://openapi.shopex.cn/api-sandbox',
 
+    //测试数据图片地址
+    'shopexdemoimage' => 'http://images.bbc.shopex123.com',
 );

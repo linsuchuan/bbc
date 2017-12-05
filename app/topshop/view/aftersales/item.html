@@ -30,19 +30,21 @@
         </div>
         <{if $row.gift_data}>
         <{foreach from=$row.gift_data item=giftdata}>
-        <br>
-        <div class="goods clearfix">
-          <a href="<{url action=topc_ctl_item@index item_id=$giftdata.item_id}>" target="_blank">
-            <{if $giftdata.image_default_id}>
-            <img src="<{$giftdata.image_default_id|storager:t}>" alt="">
-            <{else}>
-            <img src="<{$defaultImageId.T.default_image|storager}>">
-            <{/if}>
-            <span class="txt-required">[赠品]</span><{$giftdata.title}>&nbsp;&nbsp;<{$giftdata.spec_info}>
-            <span class="badge bg-green">×<{$giftdata.gift_num}></span>
-            <span class="badge bg-red"><{0|cur}></span>
-          </a>
-        </div>
+          <{if !$giftdata.withoutReturn}>
+            <br>
+            <div class="goods clearfix">
+              <a href="<{url action=topc_ctl_item@index item_id=$giftdata.item_id}>" target="_blank">
+                <{if $giftdata.image_default_id}>
+                <img src="<{$giftdata.image_default_id|storager:t}>" alt="">
+                <{else}>
+                <img src="<{$defaultImageId.T.default_image|storager}>">
+                <{/if}>
+                <span class="txt-required">[赠品]</span><{$giftdata.title}>&nbsp;&nbsp;<{$giftdata.spec_info}>
+                <span class="badge bg-green">×<{$giftdata.gift_num}></span>
+                <span class="badge bg-red"><{0|cur}></span>
+              </a>
+            </div>
+          <{/if}>
         <{/foreach}>
         <{/if}>
       </td>
@@ -102,7 +104,7 @@
 <script>
   $('.pagination li a').click(function(e){
     e.preventDefault();
-    if( $(this).parent().hasClass('disabled') ){
+    if($(this).parent().hasClass('disabled') || $(this).parent().hasClass('ellipsis')){
       return;
     }
     var urlData = $(this).attr('href');

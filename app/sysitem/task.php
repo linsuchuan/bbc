@@ -11,6 +11,7 @@ class sysitem_task{
     public function post_install($options)
     {
         kernel::single('base_initial', 'sysitem')->init();
+        kernel::single('sysitem_command_store')->command_syncToRedis();
     }
 
     public function post_update($dbver)
@@ -102,7 +103,22 @@ class sysitem_task{
             }
              */
         }
+        if( $dbver['dbver'] < 1.3 ){
+            $db = app::get('sysitem')->database();
+            $rs = $db->executeQuery('SELECT max(sku_id) as maxnum FROM sysitem_sku ')->fetch();
+            $pages = ceil($rs['maxnum']/1000);
 
+            for($i=0;$i<$pages;$i++){
+                $start = $i*1000+1;
+                $params = ['start'=>$start, 'end'=>$start+999];
+                queue::push('sysitem_tasks_updatespeckey','sysitem_tasks_updatespeckey', $params);
+            }
+        }
+
+        //升级到1.4的时候触发
+        if( $dbver['dbver'] < 1.4 ){
+            kernel::single('sysitem_command_store')->command_syncToRedis();
+        }
     }
 
 }

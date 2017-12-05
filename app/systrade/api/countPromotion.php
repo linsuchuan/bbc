@@ -30,17 +30,14 @@ class systrade_api_countPromotion{
         $objMdlPromDetail = app::get('systrade')->model('promotion_detail');
         $filter = array('promotion_id'=>$params['promotion_id'], 'user_id'=>$user_id);
         $tids = $objMdlPromDetail->getList('tid', $filter);
-        $objMdlTrade = app::get('systrade')->model('trade');
-        $tidWithProm = array();
-        foreach($tids as $v)
+
+        $count = 0;
+        if( $tids )
         {
-            $tradeInfo = $objMdlTrade->getRow('status',array('tid'=>$v['tid']));
-            if($tradeInfo['status'] != 'TRADE_CLOSED_BY_SYSTEM')
-            {
-                $tidWithProm[] = $v['tid'];
-            }
+            $objMdlTrade = app::get('systrade')->model('trade');
+            $tids = array_unique(array_column($tids, 'tid'));
+            $count = $objMdlTrade->count(['tid'=>$tids, 'status|noequal'=>'TRADE_CLOSED_BY_SYSTEM']);
         }
-        $uniqueTid =array_unique($tidWithProm);
-        return count($uniqueTid);
+        return $count;
     }
 }

@@ -7,7 +7,7 @@ class topshop_ctl_item extends topshop_controller {
 
     public $limit = 10;
     public $exportLimit = 100;
-    
+
     public function add()
     {
         $pagedata['shopCatList'] = app::get('topshop')->rpcCall('shop.cat.get',array('shop_id'=>$this->shopId,'fields'=>'cat_id,cat_name,is_leaf,parent_id,level'));
@@ -65,7 +65,7 @@ class topshop_ctl_item extends topshop_controller {
         }
         try
         {
-            app::get('topshop')->rpcCall('item.store.add',$params);
+            app::get('topshop')->rpcCall('item.store.police.add',$params);
         }
         catch( \LogicException $e )
         {
@@ -239,7 +239,7 @@ class topshop_ctl_item extends topshop_controller {
         {
             $pagedata['dlytmpl_id'] = $params['dlytmpl_id'] = $filter['dlytmpl_id'];
         }
-        
+
         $pagedata['use_platform'] = $filter['use_platform'];
         $pagedata['min_price'] = $filter['min_price'];
         $pagedata['max_price'] = $filter['max_price'];
@@ -329,7 +329,7 @@ class topshop_ctl_item extends topshop_controller {
                     'oversku' => app::get('topshop')->_('库存报警'),
                 );
             }
-            
+
             foreach ($status as $k=>$v)
             {
                 $searchParams['status'] = $k;
@@ -344,39 +344,23 @@ class topshop_ctl_item extends topshop_controller {
         $pagedata['setting'] = app::get('sysconf')->getConf('shop.goods.examine');
         $this->contentHeaderTitle = app::get('topshop')->_('商品列表');
         $pagedata['exportLimit'] = $this->exportLimit;
-        
+
         return $this->page('topshop/item/list.html', $pagedata);
 
     }
     public function storeItem()
     {
         $postData = input::get();
-        //特殊符号转义
-        $postData['item']['title'] = htmlspecialchars($postData['item']['title']);
-        $postData['item']['sub_title'] = htmlspecialchars($postData['item']['sub_title']);
-        $postData['item']['shop_id'] = $this->shopId;
-        $postData['item']['cat_id'] = $postData['cat_id'];
-        $postData['item']['approve_status'] = 'instock';
-        if(!implode(',', $postData['item']['shop_cids']))
-        {
-            return $this->splash('error', '', '店铺分类至少选择一项!', true);
-        }
-        $postData['item']['shop_cat_id'] = ','.implode(',', $postData['item']['shop_cids']).',';
-         //判断店铺是不是自营店铺 gongjiapeng
-        $selfShopType = app::get('topshop')->rpcCall('shop.get',array('shop_id'=>$this->shopId));
-        if($selfShopType['shop_type']=='self')
-        {
-            $postData['item']['is_selfshop'] = 1;
-        }
         try
         {
-            $postData = $this->_checkPost($postData);
+            // 检查参数
+            $this->_checkPost($postData);
+            // 格式化参数
+            $postData = $this->_formatItemData($postData);
             $result = app::get('topshop')->rpcCall('item.create',$postData);
-            //echo '<pre>';print_r($result);exit();
-            //$url = $postData['return_to_url'];
             if($result)
             {
-                $this->sellerlog('保存商品。名称是'.$postData['item']['title']);
+                $this->sellerlog('保存商品。名称是'.$postData['title']);
                 $url = url::action('topshop_ctl_item@itemList');
                 $msg = app::get('topshop')->_('保存成功');
                 return $this->splash('success', $url, $msg, true);
@@ -388,32 +372,17 @@ class topshop_ctl_item extends topshop_controller {
         }
     }
 
+    // 初步判断数据合法性
     private function _checkPost($postData)
     {
-        if(!$postData['item']['mkt_price'])
-        {
-            $postData['item']['mkt_price'] = 0;
-        }
-        if(!$postData['item']['show_mkt_price'])
-        {
-            $postData['item']['show_mkt_price'] = 0;
-        }
-        if(!$postData['item']['cost_price'])
-        {
-            $postData['item']['cost_price'] = 0;
-        }
-        if(!$postData['item']['weight'])
-        {
-            $postData['item']['weight'] = 0;
-        }
-        if(!$postData['item']['order_sort'])
-        {
-            $postData['item']['order_sort'] = 1;
-        }
-
         if(mb_strlen($postData['item']['title'],'UTF-8') > 50)
         {
             throw new Exception('商品名称至多50个字符');
+        }
+
+        if(!implode(',', $postData['item']['shop_cids']))
+        {
+            throw new Exception('店铺分类至少选择一项');
         }
 
         if($postData['spec_value'])
@@ -426,9 +395,72 @@ class topshop_ctl_item extends topshop_controller {
                 }
             }
         }
-        return $postData;
     }
 
+    // 格式化添加商品接口需要的数据
+    private function _formatItemData($postData)
+    {
+        $data = [];
+        $data['shop_id'] = $this->shopId;
+        $data['cat_id'] = $postData['cat_id'];
+        $data['brand_id'] = $postData['item']['brand_id'];
+        $data['shop_cat_id'] = implode(',', $postData['item']['shop_cids']);
+        $data['title'] = htmlspecialchars($postData['item']['title']);
+        $data['sub_title'] = htmlspecialchars($postData['item']['sub_title']);
+
+        $data['bn'] = $postData['item']['bn'];
+        $data['price'] = $postData['item']['price'];
+        $data['cost_price'] = $postData['item']['cost_price'] ? : 0;
+        $data['mkt_price'] = $postData['item']['mkt_price'] ? : 0;
+        $data['show_mkt_price'] = $postData['item']['show_mkt_price'] ? 1 : 0;
+
+        $data['weight'] = $postData['item']['weight'] ? : 0;
+        $data['unit'] = $postData['item']['unit'];
+        $data['list_image'] = $postData['listimages'] ? implode(',', $postData['listimages']) : '';
+        $data['images'] = $postData['images']; //颜色属性的关联图片
+        $data['order_sort'] = 0; // 目前未用到
+
+        $data['has_discount'] = 0; // 目前未用到
+        $data['is_virtual'] = 0; // 目前未用到
+        $data['is_timing'] = 0; // 目前未用到
+        $data['nospec'] = $postData['item']['nospec'] ? 1: 0;
+
+        $data['spec'] = $postData['item']['spec'];
+        $data['spec_value'] = $postData['spec_value'];
+        $data['nature_props'] = $postData['item']['nature_props'];
+        $data['params'] = $postData['item']['params'];
+        $data['itemParams'] = $postData['itemParams'];
+        $data['sub_stock'] = $postData['item']['sub_stock'];
+
+        $data['outer_id'] = 0;$postData['item']['outer_id']; //目前未用到
+        $data['is_offline'] = 0; // 目前未用到
+        $data['barcode'] = $postData['item']['barcode'];
+        $data['use_platform'] = $postData['item']['use_platform'];
+        $data['dlytmpl_id'] = $postData['item']['dlytmpl_id'];
+
+        $data['approve_status'] = 'instock'; // 编辑后默认下架
+        $data['list_time'] = $postData['item']['list_time'];
+        $data['item_id'] = $postData['item']['item_id'];
+        $data['sku'] = $postData['item']['sku'];
+
+        //编辑单品时，将商品库存赋值给货品库存
+        $sku = json_decode($data['sku'],1);
+        if( $sku && $data['nospec'])
+        {
+            foreach($sku as $key=>&$val)
+            {
+                $val['store'] = $postData['item']['store'];
+            }
+            $data['sku'] = json_encode($sku);
+        }
+
+        $data['desc'] = $postData['item']['desc'];
+
+        $data['wap_desc'] = $postData['item']['wap_desc'];
+        $data['store'] = $postData['item']['store'];//单品时候需要
+
+        return $data;
+    }
 
     public function setItemStatus(){
 

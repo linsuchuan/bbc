@@ -164,11 +164,6 @@ class topm_ctl_paycenter extends topm_controller{
         $payment['platform'] = "wap";
         try
         {
-            if($payment['pay_app_id'] == 'deposit' && $postdata['deposit_password'] == '')
-            {
-                throw new LogicException('请输入预存款支付密码！');
-            }
-
            app::get('topm')->rpcCall('payment.trade.pay',$payment);
         }
         catch(Exception $e)

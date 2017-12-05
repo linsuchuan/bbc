@@ -24,7 +24,7 @@
             <div class="order-item-intro">
               <span><{$tradeitem.created_time|cdate:"FDATE"}></span>
               <span>订单编号：<{$tradeitem.tid}></span>
-              <a href="<{url subdomain=$tradeitem.subdomain action=topc_ctl_shopcenter@index shop_id=$tradeitem.shop_id}>"><{$tradeitem.shop_id|shopname}></a>
+              <a href="<{url subdomain=$tradeitem.subdomain action=topc_ctl_shopcenter@index shop_id=$tradeitem.shop_id}>"> <{$shopName.{$tradeitem.shop_id}}></a>
               <{im shop_id=$tradeitem.shop_id type=small}>
             </div>
             <div class="order-item-info">

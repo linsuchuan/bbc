@@ -87,7 +87,7 @@ class sysshop_passport {
         return $permissionData;
     }
 
-    public function getShopId($sellerId)
+    public function getShopId($sellerId = null)
     {
         if( !$this->shopId )
         {
@@ -187,7 +187,7 @@ class sysshop_passport {
 
         $filter = array('login_account'=>trim($loginName),'disabled'=>'0');
         $account = app::get('sysshop')->model('account')->getRow('seller_id,login_password',$filter);
-        if(!$account || !pam_encrypt::check($password, $account['login_password']))
+        if(!$account || !hash::check($password, $account['login_password']))
         {
             pamAccount::setLoginErrorCount();
             throw new \LogicException(app::get('sysuser')->_('用户名或密码错误'));
@@ -260,7 +260,7 @@ class sysshop_passport {
         $pamShopData['createtime'] = $data['createtime'] ? $data['createtime'] : time();
         $pamShopData['modified_time'] = $data['modified_time'] ? $data['modified_time'] : time();
 
-        $loginPassword = pam_encrypt::make(trim($data['login_password']));
+        $loginPassword = hash::make(trim($data['login_password']));
         $pamShopData['login_password'] = $loginPassword;
 
         return $pamShopData;
@@ -506,12 +506,12 @@ class sysshop_passport {
         //检查密码合法，是否一致
         $this->checkPassport($data['login_password'],$data['psw_confirm']);
 
-        if(!pam_encrypt::check($data['login_password_old'], $account['login_password']))
+        if(!hash::check($data['login_password_old'], $account['login_password']))
         {
             throw new \LogicException(app::get('sysshop')->_('原密码填写错误，请重新填写!'));
         }
 
-        $pamShopData['login_password'] = pam_encrypt::make($data['login_password']);
+        $pamShopData['login_password'] = hash::make($data['login_password']);
         $pamShopData['seller_id'] = $filter['seller_id'];
         $pamShopData['modified_time'] = time();
         if( !$sellerId = $accountShopModel->save($pamShopData) )
@@ -543,7 +543,7 @@ class sysshop_passport {
         //检查密码合法，是否一致
         $this->checkPassport($data['login_password'],$data['psw_confirm']);
 
-        $pamShopData['login_password'] = pam_encrypt::make(trim($data['login_password']));
+        $pamShopData['login_password'] = hash::make(trim($data['login_password']));
         $pamShopData['seller_id'] = $sellerId;
         $pamShopData['modified_time'] = time();
         if( !$sellerId = $accountShopModel->save($pamShopData) )
@@ -566,7 +566,7 @@ class sysshop_passport {
         $filter = array('seller_id'=>pamAccount::getAccountId());
         $account = $accountShopModel->getRow('seller_id,login_password',$filter);
 
-        if(!pam_encrypt::check($data['login_password'], $account['login_password']))
+        if(!hash::check($data['login_password'], $account['login_password']))
         {
             throw new \LogicException(app::get('sysshop')->_('密码填写错误，请重新填写!'));
         }

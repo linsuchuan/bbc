@@ -410,7 +410,8 @@ EOF;
 
 
     function modifier_cdate($string,$type='FDATE_FTIME'){
-        $time = $string?intval($string):0;
+        if(!$string) return;
+        $time = intval($string);
         switch($type){
         case 'FDATE':
             $dateFormat = 'Y-m-d';

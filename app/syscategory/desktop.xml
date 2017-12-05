@@ -1,6 +1,10 @@
 <desktop>
-
     <permissions>
+        <permission id="virtualcat" display='true' parent="0" workground='syscategory.workground.category'>虚拟分类</permission>
+        <permission id="virtualcat_del" display='true' parent="virtualcat" workground='syscategory.workground.category'>虚拟分类删除</permission>
+        <permission id="virtualcat_edit" display='true' parent="virtualcat" workground='syscategory.workground.category'>虚拟分类编辑</permission>
+        <permission id="virtualcat_setting" display='true' parent="virtualcat" workground='syscategory.workground.category'>虚拟分类配置</permission>
+
         <permission id="cat" display='true' parent="0" workground='syscategory.workground.category'>分类</permission>
         <permission id="cat_del" display='true' parent="cat" workground='syscategory.workground.category'>分类删除</permission>
         <permission id="cat_edit" display='true' parent="cat" workground='syscategory.workground.category'>分类编辑</permission>
@@ -55,6 +59,17 @@
             <menu controller='admin_cat' action='relParam' permission='cat_edit' display='false' order='170'>编辑三级分类关联的参数页面</menu>
             <menu controller='admin_cat' action='saveRelParam' permission='cat_edit' display='false' order='170'>保存三级分类关联的参数</menu>
             <menu controller='admin_cat' action='checkCatName' permission='cat_edit' display='false' order='170'>检查分类名称</menu>
+        </menugroup>
+        <menugroup name="虚拟分类管理">
+            <menu controller='admin_virtualcat' action='index' permission='virtualcat' display='true' order='160'>虚拟分类列表</menu>
+            <menu controller='admin_virtualcat' action='isLeafCat' permission='virtualcat' display='false' order='170'>判断是否是虚拟分类三级节点</menu>
+            <menu controller='admin_virtualcat' action='add' permission='virtualcat_edit' display='false' order='170'>添加虚拟分类节点信息</menu>
+            <menu controller='admin_virtualcat' action='edit' permission='virtualcat_edit' display='false' order='170'>编辑虚拟分类节点信息</menu>
+            <menu controller='admin_virtualcat' action='save' permission='virtualcat_edit' display='false' order='170'>保存虚拟分类节点信息</menu>
+            <menu controller='admin_virtualcat' action='toRemove' permission='virtualcat_edit' display='false' order='170'>删除虚拟分类</menu>
+            <menu controller='admin_virtualcat' action='updateSort' permission='virtualcat_edit' display='false' order='170'>更新虚拟分类菜单排序</menu>
+            <menu controller='admin_virtualcat' action='checkCatName' permission='virtualcat_edit' display='false' order='170'>检查虚拟分类分类名称</menu>
+            <menu controller='admin_virtualcatSetting' action='index' permission='virtualcat_setting' display='true' order='160'>虚拟分类配置</menu>
         </menugroup>
     </workground>
 

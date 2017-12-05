@@ -14,18 +14,7 @@
           <a href="<{url action=topm_ctl_member@userinfoSet}>" class="icon-top"></a>
         </div>
       </div>
-      <!-- 无预存款时添加样式：no-deposit -->
-      <div class="info-data<{if $noDeposit}> no-deposit<{/if}>">
-
-        <!-- 无预存款时该div不加载 -->
-        <{if !$noDeposit}>
-        <div class="col-goods">
-           <a href="<{url action=topm_ctl_member_deposit@view}>">
-            <span class="txt">账户余额(元)：</span>
-            <span class="num"><{$deposit.deposit|cur}></span>
-          </a>
-        </div>
-        <{/if}>
+      <div class="info-data">
 
         <div class="col-goods col-stores">
           <a href="<{url action=topm_ctl_member_coupon@couponList}>">

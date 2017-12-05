@@ -1,5 +1,5 @@
 <?php
-
+// aftersales.refunds.restore
 class sysaftersales_api_refundapply_restore {
 
     /**
@@ -21,7 +21,11 @@ class sysaftersales_api_refundapply_restore {
         $filter['refunds_id'] = $params['refunds_id'];
         $objMdlRefunds = app::get('sysaftersales')->model('refunds');
         $refunds = $objMdlRefunds->getRow('refunds_id,refund_bn,status,aftersales_bn,hongbao_fee,user_hongbao_id,refund_fee,total_price,refunds_type,user_id,shop_id,tid,oid,return_freight',$filter);
-
+        // 如果已经是完成状态，直接返回true，不做其他操作
+        if($refunds['status']=='1')
+        {
+            return true;
+        }
         $db = app::get('sysaftersales')->database();
         $db->beginTransaction();
 

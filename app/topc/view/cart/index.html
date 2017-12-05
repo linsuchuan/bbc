@@ -1,8 +1,8 @@
 <div class="wrap-lg">
-    <div class="crumbs mod-bottom">
+    <!-- <div class="crumbs mod-bottom">
       <em class="color1">您当前位置</em>
       <span>>&nbsp;&nbsp;<a href="#">购物车</a></span>
-    </div>
+    </div> -->
 
     <div class="mod-bottom" id="cart_main">
       <{include file="topc/cart/cart_main.html"}>
@@ -43,6 +43,9 @@
                             //     cartRow.find('.cart-checked-item').prop('checked',true);
                             //     checkCart.updateAll();
                             // }
+                            
+                            goodsCheckedBg();
+                            changeSubClass();
                         }else{
                           $(el).val($(el).attr('value'));
                           Message.error(re.message);
@@ -185,6 +188,7 @@
         checkCart.updateItem();
     }).on('change','.cart-checked-item',function(e){
         $(this).parent().find('.check-item').prop('checked', !this.checked);
+
         // var el = $(this),
         //     items = el.parents('.cart-table').find('.cart-checked-item');
         // var checked = items.filter(function(){
@@ -256,6 +260,31 @@
     });
     $('.get-coupon').click(function(){
         $(this).hide().parent().find('.disabled').show();
-    })
+    });
+    changeSubClass();
+    goodsCheckedBg();
+    function changeSubClass() {
+        var btnSubmit = $('#cart_main').find('.submit-cart');
+        if($('#cart_main').find('input.cart-checked-item:checked').length > 0 && btnSubmit.hasClass('btn-disabled')) {
+           btnSubmit.removeClass('btn-disabled');
+        } else {
+            btnSubmit.addClass('btn-disabled');
+        }
+    }
+    $('#cart_main').find('.cart-checked-item:checked').each(function(){
+        goodsCheckedBg($(this));
+    });
+    function goodsCheckedBg() {
+        var parentTr;
+        $('#cart_main').find('.cart-checked-item:checked').each(function(){
+            parentTr = $(this).parent().parent();
+            if($(this).prop('checked')) {
+                parentTr.addClass('tr-checked');
+            } else {
+                parentTr.removeClass('tr-checked');
+            }
+        });
+        
+    }
 })();
 </script>

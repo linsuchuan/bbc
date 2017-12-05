@@ -1,8 +1,10 @@
+a:9:{s:7:"addr_id";i:1;s:7:"user_id";i:2;s:4:"name";s:7:"buyer01";s:4:"area";s:33:"上海市/徐汇区:310100/310104";s:4:"addr";s:15:"桂林路396号";s:3:"zip";s:1:"0";s:3:"tel";N;s:6:"mobile";s:11:"13600980921";s:8:"def_addr";i:1;}
+a:9:{s:7:"addr_id";i:2;s:7:"user_id";i:2;s:4:"name";s:5:"buyer";s:4:"area";s:33:"北京市/海淀区:110100/110108";s:4:"addr";s:23:"万寿路长宁苑56号";s:3:"zip";s:1:"0";s:3:"tel";N;s:6:"mobile";s:11:"15800893873";s:8:"def_addr";i:0;}
 a:9:{s:7:"addr_id";i:3;s:7:"user_id";i:1;s:4:"name";s:6:"test01";s:4:"area";s:33:"上海市/徐汇区:310100/310104";s:4:"addr";s:9:"桂林路";s:3:"zip";s:6:"200999";s:3:"tel";N;s:6:"mobile";s:11:"13687299999";s:8:"def_addr";i:1;}
 a:9:{s:7:"addr_id";i:4;s:7:"user_id";i:4;s:4:"name";s:11:"18328328322";s:4:"area";s:33:"北京市/东城区:110100/110101";s:4:"addr";s:12:"wertyuiop恩";s:3:"zip";s:6:"213123";s:3:"tel";N;s:6:"mobile";s:11:"13512312311";s:8:"def_addr";i:0;}
 a:9:{s:7:"addr_id";i:5;s:7:"user_id";i:4;s:4:"name";s:8:"jjekskks";s:4:"area";s:33:"北京市/东城区:110100/110101";s:4:"addr";s:6:"hjsjjs";s:3:"zip";s:6:"738838";s:3:"tel";N;s:6:"mobile";s:11:"13827771818";s:8:"def_addr";i:0;}
-a:9:{s:7:"addr_id";i:6;s:7:"user_id";i:0;s:4:"name";N;s:4:"area";N;s:4:"addr";N;s:3:"zip";N;s:3:"tel";N;s:6:"mobile";N;s:8:"def_addr";i:0;}
-a:9:{s:7:"addr_id";i:7;s:7:"user_id";i:0;s:4:"name";N;s:4:"area";N;s:4:"addr";N;s:3:"zip";N;s:3:"tel";N;s:6:"mobile";N;s:8:"def_addr";i:1;}
+a:9:{s:7:"addr_id";i:6;s:7:"user_id";i:0;s:4:"name";s:6:"吴豪";s:4:"area";s:33:"上海市/徐汇区:310100/310104";s:4:"addr";s:15:"梅陇路130号";s:3:"zip";s:6:"130000";s:3:"tel";N;s:6:"mobile";s:11:"13564569194";s:8:"def_addr";i:0;}
+a:9:{s:7:"addr_id";i:7;s:7:"user_id";i:0;s:4:"name";s:5:"Bruce";s:4:"area";s:50:"辽宁省/保定市/满城县:210000/130600/130621";s:4:"addr";s:27:"辽宁省沈阳市三好街";s:3:"zip";s:6:"110500";s:3:"tel";N;s:6:"mobile";s:11:"13812345678";s:8:"def_addr";i:1;}
 a:9:{s:7:"addr_id";i:28;s:7:"user_id";i:21;s:4:"name";s:2:"aa";s:4:"area";s:33:"北京市/东城区:110100/110101";s:4:"addr";s:3:"111";s:3:"zip";N;s:3:"tel";N;s:6:"mobile";s:11:"13761111111";s:8:"def_addr";i:0;}
 a:9:{s:7:"addr_id";i:30;s:7:"user_id";i:21;s:4:"name";s:2:"bb";s:4:"area";s:33:"北京市/东城区:110100/110101";s:4:"addr";s:3:"111";s:3:"zip";N;s:3:"tel";N;s:6:"mobile";s:11:"13946111111";s:8:"def_addr";i:0;}
 a:9:{s:7:"addr_id";i:31;s:7:"user_id";i:21;s:4:"name";s:2:"cc";s:4:"area";s:33:"北京市/东城区:110100/110101";s:4:"addr";s:6:"地方";s:3:"zip";N;s:3:"tel";N;s:6:"mobile";s:11:"13641111111";s:8:"def_addr";i:1;}

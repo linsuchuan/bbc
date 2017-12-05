@@ -1,5 +1,19 @@
 <?php
 class sysitem_finder_item{
+
+    public $column_image_default_id = "缩略图";
+    public $column_image_default_id_order = 1;
+    public function column_image_default_id(&$colList, $list)
+    {
+        foreach($list as $k=>$row)
+        {
+            if($row['image_default_id']){
+                $src = base_storager::modifier($row['image_default_id']);
+                $colList[$k] = "<a href='$src' class='img-tip pointer' target='_blank' onmouseover='bindFinderColTip(event);'><span>&nbsp;pic</span></a>";
+            }
+        }
+    }
+
     public $column_edit = '商品标题';
     public $column_edit_order = 12;
     public $column_edit_width = 100;

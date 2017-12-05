@@ -1,5 +1,4 @@
-<?php
-/**
+<?php /**
  * ShopEx licence
  *
  * @copyright  Copyright (c) 2005-2012 ShopEx Technologies Inc. (http://www.shopex.cn)
@@ -25,6 +24,7 @@ route::group($domain_prefix, function() {
     # 店铺首页
     route::get('', [ 'as'=>'topc.shopcenter', 'uses' => 'topc_ctl_shopcenter@index' ]);
     # 店铺搜索
+    route::post('search.html', [ 'uses' => 'topc_ctl_shopcenter@search' ]);
     route::get('search.html', [ 'uses' => 'topc_ctl_shopcenter@search' ]);
 });
 
@@ -55,7 +55,7 @@ route::get('/kkk/{id}', ['as' => 'iiii', function($id) {
 |--------------------------------------------------------------------------
 */
 
-route::group(array('middleware' => ['topc_middleware_redirectIfFromWap', 'theme_middleware_preview']), function() {
+route::group(array('middleware' => ['theme_middleware_preview']), function() {
     /*
     |--------------------------------------------------------------------------
     | 会员登录注册相关
@@ -151,10 +151,11 @@ route::group(array('middleware' => ['topc_middleware_redirectIfFromWap', 'theme_
                                                     'uses' => 'topc_ctl_collect@ajaxFavshopDel' ]);
         # 商品列表
         route::get('list.html', [ 'uses' => 'topc_ctl_list@index' ]);
+
         # 商品列表页加入购物车
         route::get('mini_spec.html', [ 'uses' => 'topc_ctl_item@miniSpec' ]);
         # 商城一级类目页
-        route::get('topics-{cat_id}.html', [ 'as' => 'topc.topics', 'uses' => 'topc_ctl_topics@index' ]);
+        route::get('topics.html', [ 'as' => 'topc.topics', 'uses' => 'topc_ctl_topics@index' ]);
         # 品牌列表
         route::get('brand.html', [ 'uses' => 'topc_ctl_brand@index' ]);
 
@@ -177,6 +178,10 @@ route::group(array('middleware' => ['topc_middleware_redirectIfFromWap', 'theme_
         route::get('promotion-item.html', [ 'uses' => 'topc_ctl_promotion@getPromotionItem' ]);
         // 促销专题页
         route::get('promotion-page/{page_id}.html', [ 'uses' => 'topc_ctl_promotion@ProjectPage' ]);
+        route::get('lottery.html', ['uses' => 'topc_ctl_lottery@index' ]);
+        route::post('ajax/lottery-prize.html',['middleware' => 'topc_middleware_authenticate', 'uses' => 'topc_ctl_lottery@getPrize' ]);
+        route::post('lottery-exchangenum.html',['middleware' => 'topc_middleware_authenticate', 'uses' => 'topc_ctl_lottery@getExchangeNum' ]);
+        route::post('lottery-infoDialog.html', ['middleware' => 'topc_middleware_authenticate', 'uses' => 'topc_ctl_lottery@lottery_info_dialog']); #收货地址弹框
         # 优惠券关联商品列表页
         route::get('promotion-coupon-item.html', [ 'uses' => 'topc_ctl_promotion@getCouponItem' ]);
         #商品详情页,到货通知
@@ -281,13 +286,17 @@ route::group(array('middleware' => ['topc_middleware_redirectIfFromWap', 'theme_
         # 删除会员中心收货地址
         route::post('member-deladdr.html', [ 'uses' => 'topc_ctl_member@ajaxDelAddr' ]);
         #会员中心收货地址添加
-        route::post('member-address.html', [ 'uses' => 'topc_ctl_member@saveAddress' ]);
+        route::post('member-address.html', [ 'uses' => 'topc_ctl_member@saveAddress','middleware'=>'topc_middleware_formDuplication' ]);
         # 会员中心店铺收藏
         route::get('member-collectshops.html', [ 'uses' => 'topc_ctl_member@shopsCollect' ]);
         # 会员中心商品收藏
         route::get('member-collectitems.html', [ 'uses' => 'topc_ctl_member@itemsCollect' ]);
         # 会员中心优惠券列表
         route::get('member-coupon.html', [ 'uses' => 'topc_ctl_member_coupon@couponList' ]);
+        # 会员中心奖品列表
+        route::get('member-lottery.html', [ 'uses' => 'topc_ctl_member_lottery@prizeList' ]);
+        # 会员中心奖品收货地址添加
+        route::post('ajax/prizeAddr.html', [ 'uses' => 'topc_ctl_member_lottery@saveAddr' ]);
         #会员签到
         route::post('member-checkin.html', [ 'uses' => 'topc_ctl_member@checkin' ]);
 
@@ -346,7 +355,6 @@ route::group(array('middleware' => ['topc_middleware_redirectIfFromWap', 'theme_
         route::match(array('GET', 'POST'), 'confirm-buyer.html', ['uses' => 'topc_ctl_member_trade@confirmReceipt']);
         route::match(array('GET', 'POST'), 'cancel-buyer.html', ['uses' => 'topc_ctl_member_trade@cancelOrderBuyer']);
 
-        route::match(array('GET', 'POST'), 'member-deposit.html', ['uses' => 'topc_ctl_member_deposit@view']);
         route::match(array('GET', 'POST'), 'member-deposit-modifyPassword.html', ['uses' => 'topc_ctl_member_deposit@modifyPassword']);
         route::match(array('GET', 'POST'), 'member-deposit-modifyPasswordCheckLoginPassword.html', ['uses' => 'topc_ctl_member_deposit@modifyPasswordCheckLoginPassword']);
         route::match(array('GET', 'POST'), 'member-deposit-doModifyPassword.html', ['uses' => 'topc_ctl_member_deposit@doModifyPassword']);
@@ -355,17 +363,7 @@ route::group(array('middleware' => ['topc_middleware_redirectIfFromWap', 'theme_
         route::match(array('GET', 'POST'), 'member-deposit-forgetPasswordSetPassword.html', ['uses' => 'topc_ctl_member_deposit@forgetPasswordSetPassword']);
         route::match(array('GET', 'POST'), 'member-deposit-forgetPasswordFinished.html', ['uses' => 'topc_ctl_member_deposit@forgetPasswordFinished']);
         route::match(array('GET', 'POST'), 'member-deposit-forgetPasswordSendVcode.html', ['uses' => 'topc_ctl_member_deposit@forgetPasswordSendVcode']);
-        route::match(array('GET', 'POST'), 'recharge.html', ['uses' => 'topc_ctl_member_deposit@rechargeSubmit']);
-        route::match(array('GET', 'POST'), 'recharge-pay.html', ['uses' => 'topc_ctl_member_deposit@rechargePay']);
-        route::match(array('GET', 'POST'), 'recharge-doPay.html', ['uses' => 'topc_ctl_member_deposit@doRecharge']);
-        route::match(array('GET', 'POST'), 'recharge-result.html', ['uses' => 'topc_ctl_member_deposit@rechargeResult']);
-        route::get('deposit-cashApply.html', ['uses' => 'topc_ctl_member_deposit@cashApplyPage', 'middleware'=>'topc_middleware_depositCashConfig']);
-        route::post('deposit-cashApply.html', ['uses' => 'topc_ctl_member_deposit@cashApply', 'middleware'=>['topc_middleware_depositCashConfig', 'theme_middleware_rsftockens']]);
-        route::post('deposit-cashCheck.html', ['uses' => 'topc_ctl_member_deposit@cashCheckPage', 'middleware'=>'topc_middleware_depositCashConfig']);
-        route::get('deposit-cashList.html', ['uses' => 'topc_ctl_member_deposit@cashList', 'middleware'=>'topc_middleware_depositCashConfig']);
         route::get('canceled-trade-detail.html', [ 'uses' => 'topc_ctl_member_trade@canceledTradeDetail' ]);
-        route::match(array('GET', 'POST'), 'member-deposit-error-page.html', ['uses' => 'topc_ctl_member_deposit@errorPage']);
-        route::match(array('GET', 'POST'), 'member-deposit-succ-page.html', ['uses' => 'topc_ctl_member_deposit@succPage']);
     });
 
     /*
@@ -606,15 +604,6 @@ route::group(array('prefix' => 'oldwap', 'middleware' => 'theme_middleware_previ
         route::get('member-aftersales-list.html', [ 'uses' => 'topm_ctl_member_aftersales@aftersalesList' ]);
         route::get('member-aftersales-listpage.html', [ 'uses' => 'topm_ctl_member_aftersales@ajaxAftersalesList' ]);
 
-        //预存款相关
-        route::get('member-deposit.html',[ 'uses' => 'topm_ctl_member_deposit@view' ]);
-        route::get('member-deposit-ajaxDepositLog.html',[ 'uses' => 'topm_ctl_member_deposit@ajaxDepositLog' ]);
-        //预存款充值相关
-        route::get('member-deposit-rechargeSubmit.html',[ 'uses' => 'topm_ctl_member_deposit@rechargeSubmit' ]);
-        route::match(['POST', 'GET'], 'member-deposit-rechargePay.html',[ 'uses' => 'topm_ctl_member_deposit@rechargePay' ]);
-        route::match(['POST', 'GET'], 'member-deposit-doRecharge.html',[ 'uses' => 'topm_ctl_member_deposit@doRecharge' ]);
-        route::match(['POST', 'GET'], 'member-deposit-rechargeResult.html',[ 'uses' => 'topm_ctl_member_deposit@rechargeResult' ]);
-
         route::match(['POST', 'GET'], 'member-deposit-modifyPasswordCheckLoginPassword.html',[ 'uses' => 'topm_ctl_member_deposit@modifyPasswordCheckLoginPassword' ]);
         route::match(['POST', 'GET'], 'member-deposit-doModifyPasswordCheckLoginPassword.html',[ 'uses' => 'topm_ctl_member_deposit@doModifyPasswordCheckLoginPassword' ]);
         route::match(['POST', 'GET'], 'member-deposit-modifyPassword.html',[ 'uses' => 'topm_ctl_member_deposit@modifyPassword' ]);
@@ -717,7 +706,11 @@ route::group(array('prefix' => 'oldwap', 'middleware' => 'theme_middleware_previ
 
 route::group(array('prefix' => 'wap', 'middleware' => 'theme_middleware_preview'), function() {
 
-    route::get('/', [ 'as' => 'topwap', 'uses' => 'topwap_ctl_default@index' ]);
+    route::get('/', [ 'as' => 'topwap', 'uses' => 'topwap_ctl_default@index']);
+
+    route::get('app.html', [ 'as' => 'topwap.app.index', 'uses' => 'topwap_ctl_app@index']);
+    route::get('wx/app.html', [ 'as' => 'topwap.app.wx.boot', 'uses' => 'topwap_ctl_app@wxDownloadBoot']);
+
     route::get('configContent.html', ['as'=>'topwap.configContent', 'uses'=>'topwap_ctl_util@configContent']);
 
     //店铺模块相关
@@ -791,6 +784,11 @@ route::group(array('prefix' => 'wap', 'middleware' => 'theme_middleware_preview'
         // 会员优惠券
         route::get('member-couponList.html', [ 'uses' => 'topwap_ctl_member_coupon@index' ]);
         route::get('member-ajaxcouponList.html', [ 'uses' => 'topwap_ctl_member_coupon@ajaxCouponList' ]);
+
+        // 会员红包
+        route::get('memeber-hongbaoList.html', [ 'uses' => 'topwap_ctl_member_hongbao@index' ]);
+        route::post('memeber-ajaxhongbaoList.html', [ 'uses' => 'topwap_ctl_member_hongbao@ajaxHongbaoList' ]);
+
         // 会员中心售后申请
         route::get('member-aftersales-list.html', [ 'uses' => 'topwap_ctl_member_aftersales@aftersalesList' ]);
         route::get('ajax-member-aftersales-list.html', [ 'uses' => 'topwap_ctl_member_aftersales@ajaxAftersalesList' ]);
@@ -806,15 +804,6 @@ route::group(array('prefix' => 'wap', 'middleware' => 'theme_middleware_preview'
         // 会员积分成长值
         route::get('mypoint.html', [ 'uses' => 'topwap_ctl_member_point@point' ]);
         route::get('ajax-mypoint.html', [ 'uses' => 'topwap_ctl_member_point@ajaxPonint' ]);
-        // 预存款相关
-        route::get('member-deposit.html',[ 'uses' => 'topwap_ctl_member_deposit@index' ]);
-        route::get('member-deposit-detail.html',[ 'uses' => 'topwap_ctl_member_deposit@view' ]);
-        route::get('member-deposit-ajaxDepositLog.html',[ 'uses' => 'topwap_ctl_member_deposit@ajaxDepositLog' ]);
-        // 预存款充值相关
-        route::get('member-deposit-rechargeSubmit.html',[ 'uses' => 'topwap_ctl_member_deposit@rechargeSubmit' ]);
-        route::match(['POST', 'GET'], 'member-deposit-rechargePay.html',[ 'uses' => 'topwap_ctl_member_deposit@rechargePay' ]);
-        route::match(['POST', 'GET'], 'member-deposit-doRecharge.html',[ 'uses' => 'topwap_ctl_member_deposit@doRecharge' ]);
-        route::match(['POST', 'GET'], 'member-deposit-rechargeResult.html',[ 'uses' => 'topwap_ctl_member_deposit@rechargeResult' ]);
         // 会员中心安全中心
         route::get('member-security.html', [ 'uses' => 'topwap_ctl_member@security' ]);
         route::get('member-modifypwd.html', [ 'uses' => 'topwap_ctl_member_safe@setUserPwd' ]);# 会员中心安全中心密码修改
@@ -910,16 +899,16 @@ route::group(array('prefix' => 'wap', 'middleware' => 'theme_middleware_preview'
     // 会员订单
 
     // 支付中心
+    route::get('select-hongbao.html', [ 'uses' => 'topwap_ctl_paycenter@selectHongbao' ]);
+    route::post('save-hongbao.html', [ 'uses' => 'topwap_ctl_paycenter@saveHongbao' ]);
     route::get('payment.html', [ 'uses' => 'topwap_ctl_paycenter@index' ]);
     route::match(array('GET', 'POST'), 'create.html', ['uses' => 'topwap_ctl_paycenter@createPay']);
     route::post('do-payment.html', [ 'uses' => 'topwap_ctl_paycenter@dopayment' ]);
     route::get('finish.html', [ 'uses' => 'topwap_ctl_paycenter@finish' ]);
-    route::match(array('GET', 'POST'), 'depositpay.html', ['uses' => 'topwap_ctl_paycenter@depositPay']);
 
 
     // 微信的数据做转发
     route::match(array('GET', 'POST', 'PUT', 'DELETE'), 'wxpayjsapi.html', ['uses' => 'topwap_ctl_wechat@wxpayjsapi']);
-    route::match(array('GET', 'POST', 'PUT', 'DELETE'), 'wxpayApp.html', ['uses' => 'topwap_ctl_wechat@wxpayApp']);
 
     //平台类目列表
     route::get('category.html',['uses'=>'topwap_ctl_category@index']);
@@ -965,7 +954,7 @@ route::group(array('prefix' => 'wap', 'middleware' => 'theme_middleware_preview'
         route::get('content-list.html', [ 'uses' => 'topwap_ctl_content@contentList' ]);
         route::get('content-info.html', [ 'uses' => 'topwap_ctl_content@getContentInfo']);
         route::post('ajax-content-list.html', [ 'uses' => 'topwap_ctl_content@ajaxContentList']);
-        route::get('shop-article-{shop_id}-{aid}.html', [ 'uses' => 'topwap_ctl_content@shopArticle' ]);
+        route::get('shop-article.html', [ 'uses' => 'topwap_ctl_content@shopArticle' ]);
 
     });
 
@@ -1055,9 +1044,6 @@ route::group(array('prefix' => 'shop','middleware' => 'topshop_middleware_permis
     route::post('promotion/fulldiscountbrand.html', [ 'as' => 'topshop.promotion.fulldiscount', 'uses' => 'topshop_ctl_promotion_fulldiscount@getBrandList' ]);
     #优惠券
     route::post('promotion/couponbrand.html', [ 'as' => 'topshop.promotion.coupon', 'uses' => 'topshop_ctl_promotion_coupon@getBrandList' ]);
-    #免邮
-    route::post('promotion/freepostageItemSearch.html', [ 'as' => 'topshop.promotion.freepostagelist', 'uses' => 'topshop_ctl_promotion_freepostage@searchItem' ]);
-    route::post('promotion/freepostagebrand.html', [ 'as' => 'topshop.promotion.freepostage', 'uses' => 'topshop_ctl_promotion_freepostage@getBrandList' ]);
     #x件y折
     route::post('promotion/xydiscountbrand.html', [ 'as' => 'topshop.promotion.xydiscount', 'uses' => 'topshop_ctl_promotion_xydiscount@getBrandList' ]);
     # 不可报名活动详情
@@ -1086,10 +1072,13 @@ route::group(array('prefix' => 'shop','middleware' => 'topshop_middleware_permis
     route::post('sysstat/stattrade.html', [ 'as' => 'topshop.sysstat.stattrade', 'uses' => 'topshop_ctl_sysstat_stattrade@ajaxTrade' ]);
     route::post('sysstat/sysbusiness.html', [ 'as' => 'topshop.sysstat.sysbusiness', 'uses' => 'topshop_ctl_sysstat_sysbusiness@ajaxTrade' ]);
     route::post('sysstat/itemtrade.html', [ 'as' => 'topshop.sysstat.itemtrade', 'uses' => 'topshop_ctl_sysstat_itemtrade@ajaxTrade' ]);
+    route::post('sysstat/stataftersales.html', [ 'as' => 'topshop.sysstat.stataftersales', 'uses' => 'topshop_ctl_sysstat_stataftersales@ajaxTrade' ]);
+    route::post('sysstat/stattraffic.html', [ 'as' => 'topshop.sysstat.stattraffic', 'uses' => 'topshop_ctl_sysstat_systraffic@ajaxTrade' ]);
     # 商家发货
     route::group(array('middleware'=>'topshop_middleware_developerMode'), function() {
         //route::get('trade/godelivery.html', [ 'as' => 'topshop.trade.godelivery', 'uses' => 'topshop_ctl_trade_flow@godelivery', 'middleware'=>['topshop_middleware_developerMode']]);
         route::post('trade/dodelivery.html', [ 'as' => 'topshop.trade.dodelivery', 'uses' => 'topshop_ctl_trade_flow@dodelivery', 'middleware'=>['topshop_middleware_developerMode']]);
+        route::post('trade/updateLogistic.html', [ 'as' => 'topshop.trade.updateLogistic', 'uses' => 'topshop_ctl_trade_flow@updateLogistic', 'middleware'=>['topshop_middleware_developerMode']]);
     });
 
     //wap配置
@@ -1109,6 +1098,8 @@ route::group(array('prefix' => 'shop','middleware' => 'topshop_middleware_permis
     route::post('format-selected-goods.html', [ 'as' => 'topshop.goods.selected.format', 'uses' => 'topshop_ctl_selector_item@formatSelectedGoodsRow' ]);
     route::post('select-brandList.html', [ 'as' => 'topshop.goods.brandList', 'uses' => 'topshop_ctl_selector_item@getBrandList' ]);
     route::post('select-getItem.html', [ 'as' => 'topshop.goods.getItem', 'uses' => 'topshop_ctl_selector_item@searchItem' ]);
+    route::get('select-item.getsku.html', [ 'as' => 'topshop.item.goods.getsku', 'uses' => 'topshop_ctl_selector_item@getSkuByItemId' ]);
+    route::get('select-showsku.html', [ 'as' => 'topshop.goods.showsku', 'uses' => 'topshop_ctl_selector_item@showSkuByitemId' ]);
 
     // 商家错误页
     route::get('error_404.html', ['uses' => 'topshop_ctl_error@index' ]);
@@ -1163,7 +1154,12 @@ route::group(array('prefix' => 'utils'), function() {
     route::post('util/upload_images.html', [ 'as' => 'toputil.uploadImages', 'uses' => 'toputil_ctl_image@uploadImages' ]);
     route::get('util/item_pic.html', [ 'as' => 'toputil.getDefaultItemPic', 'uses' => 'toputil_ctl_image@getItemPic' ]);
     route::post('ajax/articleList.html', [ 'as' => 'toputil.getContentNodeArticleList', 'uses' => 'toputil_ctl_themesAjax@getContentNodeArticleList' ]);
+    route::post('ajax/catList.html', [ 'as' => 'toputil.catList', 'uses' => 'toputil_ctl_themesAjax@getChildrenCatList' ]);
+    route::post('ajax/virtualCatList.html', [ 'as' => 'toputil.virtualCatList', 'uses' => 'toputil_ctl_themesAjax@getVirtualCatChildrenList' ]);
+    route::post('trafficstat.html', [ 'as' => 'toputil.trafficStatic', 'uses' => 'toputil_ctl_trafficStatic@stat' ]);
 });
+
+route::match(array('GET', 'POST', 'PUT', 'DELETE'), 'wxpayApp.html', ['uses' => 'topapi_ctl_wechat@wxpayApp']);
 
 /*
 |--------------------------------------------------------------------------

@@ -6,9 +6,6 @@
  * @license  http://ecos.shopex.cn/ ShopEx License
  */
 
-/**
- * @see base_hashing_hasher_bcrypt
- */
 class base_facades_apiUtil extends base_facades_facade
 {
 	/**

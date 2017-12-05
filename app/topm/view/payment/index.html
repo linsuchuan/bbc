@@ -52,7 +52,7 @@
         </ul>
       </div>
       <div class="pay-amount" style='display:none' id='deposit-password-input'>
-        <input type='password' name='deposit_password' placeholder="点我输入预存款密码">
+        <input type='password' name='deposit_password' placeholder="点我输入支付密码">
       </div>
       <{else}>
       <div class="ui-btn-group cur">
@@ -104,13 +104,6 @@
   $('.form-submit').tap(function(e){
     e.preventDefault();
     if($('input[name="payment[pay_app_id]"]:checked').length>0){
-      if($('input[name="payment[pay_app_id]"]:checked').val() == 'deposit'){
-        <{if !$hasDepositPassword.result}>
-        $('#password_dialog').dialog('open');
-        return;
-        <{/if}>
-    	  $('#dopay_form').attr('target','_self');
-      }
       $('#dopay_form').submit();
     }else{
       Message.error('请选择支付方式！')
@@ -121,10 +114,5 @@
   $('.ui-btn-group').tap(function(){
     $(this).toggleClass('cur');
   });
-
-$('.payment_item').click(function(){
-  $(this).children('input').val() == 'deposit' ? $('#deposit-password-input').show() : $('#deposit-password-input').hide();
-});
-$(this).children('input').val() == 'deposit' ? $('#deposit-password-input').show() : $('#deposit-password-input').hide();
 
 </script>

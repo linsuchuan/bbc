@@ -20,12 +20,18 @@ class topwap_ctl_member_aftersales extends topwap_ctl_member {
 
     public function aftersalesApply()
     {
+        $pagedata = [];
         $tid = input::get('tid');
         $oid = input::get('oid');
         // 获取商品信息
         $filter['oid'] = $oid;
         $filter['fields'] = 'item_id,bn,title,price,num,pic_path,spec_nature_info,gift_data';
         $orderInfo = app::get('topwap')->rpcCall('trade.order.get',$filter,'buyer');
+        foreach($orderInfo['gift_data'] as $gift)
+        {
+            if(!$gift['withoutReturn']) $pagedata['giftReturnFlag'] = true;
+            if($pagedata['giftReturnFlag']) break;
+        }
 
         $pagedata['tid'] = $tid;
         $pagedata['oid'] = $oid;

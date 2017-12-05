@@ -7,145 +7,14 @@
  */
 class topc_ctl_member_deposit extends topc_ctl_member{
 
-    //预存款首页
-    public function view() {
-
-        $userId = userAuth::id();
-        $page = input::get('pages') ? input::get('pages') : 1;
-        $rowNum = 10;
-
-        $deposit = app::get('topc')->rpcCall('user.deposit.getInfo', ['user_id'=>$userId, 'with_log'=>'true', 'page'=>intval($page), 'row_num'=>intval($rowNum)]);
-
-        $cashConfig = app::get('topc')->rpcCall('user.deposit.getCashConf', ['user_id'=>$userId]);
-
-
-        $pagedata['cashConfig'] = $cashConfig;
-        $pagedata['deposit'] = $deposit;
-        $pagedata['action'] = 'topc_ctl_member_deposit@view';
-
-        //分页处理
-        $pagedata['pagers'] = array(
-            'link'=>url::action('topc_ctl_member_deposit@view',['pages'=>time()]),
-            'current'=>$page ? $page : 1,
-            'total'=>ceil($deposit['count'] / $rowNum),
-            'token'=>time(),
-        );
-
-        $this->action_view = "deposit/index.html";
-        return $this->output($pagedata);
-    }
-
-    //s输入充值金额的页面
-    public function rechargeSubmit() {
-        $this->action_view = "deposit/recharge_form.html";
-        return $this->page('topc/member/deposit/recharge_form.html',$pagedata);
-    }
-
-    //选择支付方式的页面
-    public function rechargePay() {
-        $amount = input::get('amount');
-
-        try{
-            $this->checkoutAmount($amount);
-        }
-        catch(Exception $e)
-        {
-            return $this->splash('error',null,$e->getMessage());
-        }
-
-        $payType['platform'] = 'ispc';
-        $payments = app::get('topc')->rpcCall('payment.get.list',$payType,'buyer');
-
-        $paymentsCount = 0;
-        $paymentsNoTeegonCount = 0;
-        $paymentsTeegonCount = 0;
-        foreach($payments as $key=>$payment)
-        {
-            if($payment['app_id'] == 'deposit')
-            {
-                unset($payments[$key]);
-                continue;
-            }
-
-            if(!in_array($payment['app_id'], ['teegonali', 'teegonwxpay']))
-            {
-                $paymentsCount ++;
-                $paymentsNoTeegonCount ++;
-            }
-            else
-            {
-                $paymentsCount ++;
-                $paymentsTeegonCount ++;
-            }
-
-            $pagedata['count']['paymentsCount'] = $paymentsCount;
-            $pagedata['count']['paymentsNoTeegonCount'] = $paymentsNoTeegonCount;
-            $pagedata['count']['paymentsTeegonCount'] = $paymentsTeegonCount;
-        }
-
-        $pagedata['amount']   = $amount;
-        $pagedata['payments'] = $payments;
-
-        $this->action_view = "deposit/recharge_pay.html";
-        return $this->page('topc/member/deposit/recharge_pay.html',$pagedata);
-    }
-
-    //预存款充值之充值动作
-    public function doRecharge()
-    {
-        $payment['user_id'] = userAuth::id();
-        $payment['user_name'] = userAuth::getLoginName();
-
-        $payment['money'] = input::get('amount');
-
-        $payment['pay_app_id'] = input::get('pay_app_id');
-        $payment['platform'] = 'pc';
-
-        try{
-            $this->checkoutAmount($payment['money']);
-
-            if($payment['pay_app_id'] == 'deposit'){
-                throw new LogicException('充值方式不可使用预存款!');
-            }
-            if(!$payment['pay_app_id']){
-                throw new LogicException('请选择支付方式！');
-            }
-        }
-        catch(Exception $e)
-        {
-            return $this->splash('error',null,$e->getMessage());
-        }
-
-        $result = app::get('topc')->rpcCall('payment.deposit.recharge', $payment);
-        $paymentId = $result['paymentId'];
-
-        return redirect::action('topc_ctl_member_deposit@rechargeResult', ['payment_id'=>$paymentId]);
-
-    }
-
-    //返回结果页面
-    public function rechargeResult() {
-        $paymentId = input::get('payment_id');
-
-        $payment = app::get('topc')->rpcCall('payment.bill.get', ['payment_id'=>$paymentId, 'fields'=>'status,cur_money']);
-        if($payment['status'] == 'succ')
-        {
-            return $this->page('topc/member/deposit/recharge_success.html',$pagedata);
-        }
-        else
-        {
-            return $this->page('topc/member/deposit/recharge_failed.html',$pagedata);
-        }
-    }
-
-    //修改预存款密码之输入登录密码页面
+    //修改支付密码之输入登录密码页面
     public function modifyPasswordCheckLoginPassword()
     {
         $this->action_view = "deposit/modifyPasswordCheckLoginPassword.html";
         return $this->output($pagedata);
     }
 
-    //修改预存款密码之判断登录密码
+    //修改支付密码之判断登录密码
     public function doModifyPasswordCheckLoginPassword()
     {
         $password = input::get('password');
@@ -161,7 +30,7 @@ class topc_ctl_member_deposit extends topc_ctl_member{
         return $this->splash('succ', $url, '验证成功');
     }
 
-    //修改预存款密码之修改页面
+    //修改支付密码之修改页面
     public function modifyPassword()
     {
 
@@ -181,7 +50,7 @@ class topc_ctl_member_deposit extends topc_ctl_member{
         return $this->output($pagedata);
     }
 
-    //修改预存款密码之保存动作
+    //修改支付密码之保存动作
     public function doModifyPassword()
     {
         try
@@ -210,7 +79,7 @@ class topc_ctl_member_deposit extends topc_ctl_member{
             {
                 $returnUrl = url::action('topc_ctl_member@security');
             }
-            
+
             if($depositPasswordFlag)
             {
                 $requestParams = ['user_id'=>$userId, 'old_password'=>$oldPassword, 'new_password'=>$newPassword];
@@ -237,7 +106,7 @@ class topc_ctl_member_deposit extends topc_ctl_member{
         return redirect::action('topc_ctl_member@security');
     }
 
-    //忘记预存款密码之找回预存款密码页面
+    //忘记支付密码之找回支付密码页面
     public function forgetPassword()
     {
         $userId = userAuth::id();
@@ -258,7 +127,7 @@ class topc_ctl_member_deposit extends topc_ctl_member{
         return $this->page('topc/member/deposit/forgetPassword.html', $pagedata);
     }
 
-    //忘记预存款密码之设置云存款密码页面
+    //忘记支付密码之设置云存款密码页面
     public function forgetPasswordSetPassword()
     {
         $postData = input::get();
@@ -288,7 +157,7 @@ class topc_ctl_member_deposit extends topc_ctl_member{
         return $this->page('topc/member/deposit/forgetPasswordSetPassword.html', $pagedata);
     }
 
-    //忘记预存款密码之修改的密码保存动作
+    //忘记支付密码之修改的密码保存动作
     public function forgetPasswordFinished()
     {
 
@@ -338,7 +207,7 @@ class topc_ctl_member_deposit extends topc_ctl_member{
 
     }
 
-    //忘记预存款密码的时候发送验证码
+    //忘记支付密码的时候发送验证码
     public function forgetPasswordSendVcode()
     {
 
@@ -391,135 +260,6 @@ class topc_ctl_member_deposit extends topc_ctl_member{
         {
             return $this->splash('success',null,"验证码发送成功");
         }
-
-
-    }
-
-    //提现页面
-    public function cashApplyPage()
-    {
-        $userId = userAuth::id();
-        $config = app::get('topc')->rpcCall('user.deposit.getCashConf', ['user_id'=>$userId]);
-        $depositPasswordFlag = app::get('topc')->rpcCall('user.deposit.password.has', ['user_id'=>$userId]);
-        if(!$depositPasswordFlag['result'])
-            return redirect::action('topc_ctl_member_deposit@modifyPasswordCheckLoginPassword');
-
-        $this->action_view = "deposit/cashApply.html";
-        return $this->output(['config'=>$config]);
-    }
-
-    //提现信息确认页
-    public function cashCheckPage()
-    {
-        $cash = input::get();
-
-        $userId = userAuth::id();
-        try{
-
-            if($cash['amount'] == null)
-                throw new LogicException(app::get('sysuser')->_('金额不能为空'));
-            if (!preg_match('/^[0-9]+(.[0-9]{1,2})?$/', $cash['amount']))
-            {
-                throw new LogicException(app::get('sysuser')->_('金额必须是两位小数'));
-            }
-
-            $result = app::get('topc')->rpcCall('user.deposit.checkCash', ['user_id'=>$userId, 'amount'=>$cash['amount']]);
-            if(!$result['result'])
-                throw new LogicException($result['msg']);
-
-        }catch(Exception $e) {
-            return redirect::action('topc_ctl_member_deposit@errorPage',array('msg'=>$e->getMessage()) )->send();
-        }
-
-        $pagedata['cash'] = $cash;
-        $this->action_view = "deposit/cashCheck.html";
-        return $this->output($pagedata);
-    }
-
-    //提现动作提交页面
-    public function cashApply()
-    {
-        $cash = input::get();
-        $userId = userAuth::id();
-        try{
-
-        $cashResult = app::get('topc')->rpcCall(
-            'user.deposit.applyCash',
-            [
-                'user_id'         =>$userId,
-                'amount'          =>$cash['amount'],
-                'bank_card_id'    =>$cash['bank_card_id'],
-                'bank_name'       =>$cash['bank_name'],
-                'bank_card_owner' =>$cash['bank_card_owner'],
-                'password'        =>$cash['password'],
-            ]
-        );
-        if($cashResult['cash_id'])
-            return redirect::action('topc_ctl_member_deposit@succPage',array('title'=>app::get('topc')->_('申请成功！'), 'msg'=>app::get('topc')->_('提现申请已提交，待平台进行处理，提示完成后，金额到账需要一定时间，请耐心等待。')))->send();
-        else
-            throw new RuntimeException(app::get('topc')->_('提现申请提交失败，请重试或联系平台。'));
-        }catch(Exception $e){
-            return redirect::action('topc_ctl_member_deposit@errorPage',array('msg'=>$e->getMessage()))->send();
-        }
-
-    }
-
-    public function cashList()
-    {
-        $userId = userAuth::id();
-        $page = input::get('pages') ? input::get('pages') : 1;
-        $rowNum = 10;
-
-        $list = app::get('topc')->rpcCall('user.deposit.getCash', ['user_id'=>$userId, 'fields'=>'cash_id,create_time,amount,status,serial_id', 'page'=>intval($page), 'row_num'=>intval($rowNum)]);
-
-        $pagedata['cashes'] = $list['list'];
-        $pagedata['action'] = 'topc_ctl_member_deposit@cashList';
-        $pagedata['status'] = array(
-            'TO_VERIFY' => app::get('sysuser')->_('已申请'),
-            'VERIFIED' => app::get('sysuser')->_('已审核'),
-            'DENIED' => app::get('sysuser')->_('已驳回'),
-            'COMPELETE' => app::get('sysuser')->_('已完成'),
-        );
-        $pagedata['color'] = array(
-            'TO_VERIFY' => 'black',
-            'VERIFIED' => 'black',
-            'DENIED' => 'red',
-            'COMPELETE' => 'green',
-        );
-
-
-        //分页处理
-        $pagedata['pagers'] = array(
-            'link'=>url::action('topc_ctl_member_deposit@cashList',['pages'=>time()]),
-            'current'=>$page ? $page : 1,
-            'total'=>ceil($list['count'] / $rowNum),
-            'token'=>time(),
-        );
-
-        $this->action_view = "deposit/cashList.html";
-        return $this->output($pagedata);
-    }
-
-    public function errorPage()
-    {
-        $msg = input::get('msg');
-        $title = input::get('title');
-
-        $pagedata['msg'] = $msg;
-        $pagedata['title'] = $title ? $title : app::get('topc')->_('提现失败！');
-        $this->action_view = "deposit/cashResultFail.html";
-        return $this->output($pagedata);
-    }
-
-    public function succPage()
-    {
-        $msg = input::get('msg');
-        $title = input::get('title');
-
-        $pagedata['msg'] = $msg;
-        $pagedata['title'] = $title ? $title : app::get('topc')->_('提现成功！');
-        $this->action_view = "deposit/cashResultSucc.html";
-        return $this->output($pagedata);
     }
 
     //一个session的写入抽象
@@ -540,7 +280,7 @@ class topc_ctl_member_deposit extends topc_ctl_member{
         return $value ? $value : $default;
     }
 
-    //验证预存款密码复杂度
+    //验证支付密码复杂度
     private function checkPassword($newPassword)
     {
         $a = 0;
@@ -555,24 +295,6 @@ class topc_ctl_member_deposit extends topc_ctl_member{
             return true;
 
         throw new LogicException('6-20个字符，不能与登录密码一致，至少包含数字、大写英文、小写英文中的两种。');
-    }
-
-    //检查充值金额
-    private function checkoutAmount($amount)
-    {
-
-        if( !is_numeric($amount) )
-            throw new LogicException('充值金额必须为数字');
-
-        if( $amount <= 0 )
-            throw new LogicException('充值金额必须大于0');
-
-        if( $amount >= 10000000)
-            throw new LogicException('请勿充值过大的金额');
-
-        if(  ( (int)($amount*100) ) != ($amount * 100)  )
-            throw new LogicException('充值金额的最小单位不得小于分');
-
     }
 
 }

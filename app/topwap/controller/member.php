@@ -41,10 +41,7 @@ class topwap_ctl_member extends topwap_controller{
         $pagedata['canceled'] = $cancelData['total'];
         $pagedata['nurate'] = app::get('topwap')->rpcCall('trade.notrate.count',array('user_id'=>$userId));
 
-        //预存款金额
-        $pagedata['deposit'] = app::get('topwap')->rpcCall('user.deposit.getInfo',['user_id'=>$userId]);
-        $depositConf = app::get('topwap')->rpcCall('payment.get.conf',['app_id'=>'deposit']);
-        $pagedata['noDeposit'] = $depositConf['status'] == 'true' ? false : true;
+        $pagedata['hongbaoCount'] = app::get('topwap')->rpcCall('user.hongbao.count',['user_id'=>$userId]);
 
         //优惠劵数量
         $pagedata['coupon'] = app::get('topwap')->rpcCall('user.coupon.list', ['user_id'=>$userId, 'is_valid'=>'1', 'page_size'=>1]);

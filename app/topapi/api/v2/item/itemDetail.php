@@ -107,7 +107,7 @@ class topapi_api_v2_item_itemDetail implements topapi_interface_api{
         }
 
         //获取赠品促销信息
-        $giftDetail = app::get('topapi')->rpcCall('promotion.gift.item.info',array('item_id'=>$itemId,'valid'=>1));
+        $giftDetail = app::get('topapi')->rpcCall('promotion.gift.item.info',array('item_id'=>$itemId,'valid'=>1))['0'];
         if($giftDetail)
         {
             foreach ($giftDetail['gift_item'] as $gv)
@@ -140,6 +140,8 @@ class topapi_api_v2_item_itemDetail implements topapi_interface_api{
             ];
         }
 
+        $pagedata['package'] = $this->__getPackage($itemId);
+
         // 格式化规格信息
         if($detailData['spec_desc'])
         {
@@ -157,9 +159,6 @@ class topapi_api_v2_item_itemDetail implements topapi_interface_api{
             $pagedata['shop']['shop_logo'] = base_storager::modifier($pagedata['shop']['shop_logo'], 't');
         }
 
-        //商品收藏和店铺收藏情况
-        $pagedata['collect'] = $this->__CollectInfo($itemId,$pagedata['shop']['shop_id']);
-
         // 获取当前平台设置的货币符号和精度
         $cur_symbol = app::get('topapi')->rpcCall('currency.get.symbol',array());
         $pagedata['cur_symbol'] = $cur_symbol;
@@ -167,29 +166,49 @@ class topapi_api_v2_item_itemDetail implements topapi_interface_api{
         return $pagedata;
     }
 
-    //当前商品收藏和店铺收藏的状态
-    private function __CollectInfo($itemId,$shopId)
+    // 获取商品的组合促销商品
+    private function __getPackage($itemId)
     {
-        $userId = userAuth::id();
-        $collect = unserialize($_COOKIE['collect']);
-        if(in_array($itemId, $collect['item']))
+        $params['item_id'] = $itemId;
+        $package = app::get('topapi')->rpcCall('promotion.package.getPackageItemsByItemId', $params);
+
+        $packageList = null;
+        foreach($package['data'] as &$v)
         {
-            $pagedata['itemCollect'] = 1;
-        }
-        else
-        {
-            $pagedata['itemCollect'] = 0;
-        }
-        if(in_array($shopId, $collect['shop']))
-        {
-            $pagedata['shopCollect'] = 1;
-        }
-        else
-        {
-            $pagedata['shopCollect'] = 0;
+            //全场可用或者用于APP
+            if( in_array($v['used_platform'], ['0','3']) )
+            {
+                $oldTotalPrice = 0;
+                $packageTotalPrice = 0;
+                $packageItems = [];
+                foreach($v['items'] as $v1)
+                {
+                    $packageItems[] = [
+                        'item_id' => $v1['item_id'],
+                        'title' => $v1['title'],
+                        'image_default_id' => $v1['image_default_id'],
+                        'package_price' => $v1['package_price'],
+                        'price' => $v1['price'],
+                    ];
+                    $oldTotalPrice += $v1['price'];
+                    $packageTotalPrice = ecmath::number_plus(array($v1['package_price'],$packageTotalPrice));
+                }
+
+                $packageList[] = [
+                    'package_id' => $v['package_id'],
+                    'package_name' => $v['package_name'],
+                    'valid_grade' => $v['valid_grade'],
+                    'free_postage' => $v['free_postage'],
+                    'promotion_tag' => $v['promotion_tag'],
+                    'old_total_price' => $oldTotalPrice,
+                    'package_total_price' => $packageTotalPrice,
+                    'cut_total_price' => ecmath::number_minus(array($oldTotalPrice, package_total_price)),
+                    'items' => $packageItems
+                ];
+            }
         }
 
-        return $pagedata;
+        return $packageList;
     }
 
     private function __getSpec($spec, $sku, $activityPrice)

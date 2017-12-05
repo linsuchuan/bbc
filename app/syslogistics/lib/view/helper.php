@@ -27,9 +27,10 @@ class syslogistics_view_helper {
     public function modifier_areaNameById($areaIds)
     {
         $areaIdArr = explode(',',$areaIds);
-        $areaKvdata = area::areaKvdata();
         foreach( $areaIdArr as $id )
         {
+            $areaKvdata[$id] = area::areaKvdata($id);
+
             if( $areaKvdata[$id]['parentId'] == 1 || !area::getAreaNameById($areaKvdata[$id]['parentId']) )
             {
                 $areaNameArr[] =  area::getAreaNameById($id);

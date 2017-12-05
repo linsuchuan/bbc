@@ -37,22 +37,25 @@
           </div>
         </div>
         <{if $row.gift_data}>
+        <{assign var=count value=0}>
         <{foreach from=$row.gift_data item=giftdata}>
-        <div class="shopex-table-cell shopex-col-xs-7 checkout-goods-list">
-          <div class="checkout-goods-warp">
-            <div class="thumbnail">
-              <div class="thumb-img">
-                <{if $giftdata.image_default_id }>
-                <img src="<{$giftdata.image_default_id|storager:t}>">
-                <{else}>
-                <img src="<{$defaultImageId.T.default_image|storager}>">
-                <{/if}>
+          <{if !$giftdata.withoutReturn}>
+            <div class="shopex-table-cell shopex-col-xs-7 checkout-goods-list">
+              <div class="checkout-goods-warp">
+                <div class="thumbnail">
+                  <div class="thumb-img">
+                    <{if $giftdata.image_default_id }>
+                    <img src="<{$giftdata.image_default_id|storager:t}>">
+                    <{else}>
+                    <img src="<{$defaultImageId.T.default_image|storager}>">
+                    <{/if}>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+            <{assign var=count value=$count+1}>
+          <{/if}>
         <{/foreach}>
-        <{assign var=count value=$row.gift_data|count}>
         <{/if}>
         <div class="shopex-table-cell shopex-col-xs-2 shopex-text-right">共<{$row.num+$count}>件</div>
       </div>

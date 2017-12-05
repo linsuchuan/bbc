@@ -82,7 +82,7 @@ class sysshop_data_seller{
         $pamShopData['createtime'] = $data['createtime'] ? $data['createtime'] : time();
         $pamShopData['modified_time'] = $data['modified_time'] ? $data['modified_time'] : time();
 
-        $loginPassword = pam_encrypt::make(trim($data['login_password']));
+        $loginPassword = hash::make(trim($data['login_password']));
         $pamShopData['login_password'] = $loginPassword;
 
         return $pamShopData;

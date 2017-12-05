@@ -111,7 +111,6 @@ class ectools_payment_pay{
             }
 
             $params['pay_name'] = $arrPyMethod['app_display_name'];
-            $params['pay_ver'] = $arrPyMethod['app_version'];
         }
     }
 

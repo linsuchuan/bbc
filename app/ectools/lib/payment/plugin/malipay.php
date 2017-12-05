@@ -74,8 +74,8 @@ final class ectools_payment_plugin_malipay extends ectools_payment_app implement
      */
     public function __construct($app){
         parent::__construct($app);
-
-		$this->notify_url = kernel::openapi_url('openapi.ectools_payment/parse/' . $this->app->app_id . '/ectools_payment_plugin_malipay_server', 'callback');
+        // 付款异步返回地址
+        $this->notify_url = kernel::openapi_url('openapi.ectools_payment/parse/' . $this->app->app_id . '/ectools_payment_plugin_malipay_server', 'callback');
         if (preg_match("/^(http):\/\/?([^\/]+)/i", $this->notify_url, $matches))
         {
             $this->notify_url = str_replace('http://','',$this->notify_url);
@@ -88,7 +88,22 @@ final class ectools_payment_plugin_malipay extends ectools_payment_app implement
             $this->notify_url = preg_replace("|/+|","/", $this->notify_url);
             $this->notify_url = "https://" . $this->notify_url;
         }
-		$this->callback_url = kernel::openapi_url('openapi.ectools_payment/parse/' . $this->app->app_id . '/ectools_payment_plugin_malipay', 'callback');
+        // 退款异步返回地址
+        $this->notify_url_refund = kernel::openapi_url('openapi.ectools_payment/parse/' . $this->app->app_id . '/ectools_payment_plugin_malipay', 'refundcallback');
+        if (preg_match("/^(http):\/\/?([^\/]+)/i", $this->notify_url_refund, $matches))
+        {
+            $this->notify_url_refund = str_replace('http://','',$this->notify_url_refund);
+            $this->notify_url_refund = preg_replace("|/+|","/", $this->notify_url_refund);
+            $this->notify_url_refund = "http://" . $this->notify_url_refund;
+        }
+        else
+        {
+            $this->notify_url_refund = str_replace('https://','',$this->notify_url_refund);
+            $this->notify_url_refund = preg_replace("|/+|","/", $this->notify_url_refund);
+            $this->notify_url_refund = "https://" . $this->notify_url_refund;
+        }
+        // 付款同步返回地址
+        $this->callback_url = kernel::openapi_url('openapi.ectools_payment/parse/' . $this->app->app_id . '/ectools_payment_plugin_malipay', 'callback');
         if (preg_match("/^(http):\/\/?([^\/]+)/i", $this->callback_url, $matches))
         {
             $this->callback_url = str_replace('http://','',$this->callback_url);
@@ -101,7 +116,7 @@ final class ectools_payment_plugin_malipay extends ectools_payment_app implement
             $this->callback_url = preg_replace("|/+|","/", $this->callback_url);
             $this->callback_url = "https://" . $this->callback_url;
         }
-        $this->submit_url = $this->gateway ;
+        $this->submit_url = $this->gateway;
         $this->submit_method = 'GET';
         $this->submit_charset = $this->_input_charset;
     }
@@ -115,10 +130,6 @@ final class ectools_payment_plugin_malipay extends ectools_payment_app implement
         $regIp = isset($_SERVER['SERVER_ADDR'])?$_SERVER['SERVER_ADDR']:$_SERVER['HTTP_HOST'];
         return '<img src="' . $this->app->res_url . '/payments/images/ALIPAY.gif"><br /><b style="font-family:verdana;font-size:13px;padding:3px;color:#000"><br>ShopEx联合支付宝推出优惠套餐：无预付/年费，单笔费率低至0.7%-1.2%，无流量限制。</b><div style="padding:10px 0 0 388px"><a  href="javascript:void(0)" onclick="document.ALIPAYFORM.submit();"><img src="' . $this->app->res_url . '/payments/images/alipaysq.png"></a></div><div>如果您已经和支付宝签约了其他套餐，同样可以点击上面申请按钮重新签约，即可享受新的套餐。<br>如果不需要更换套餐，请将签约合作者身份ID等信息在下面填写即可，<a href="http://www.shopex.cn/help/ShopEx48/help_shopex48-1235733634-11323.html" target="_blank">点击这里查看使用帮助</a><form name="ALIPAYFORM" method="GET" action="http://top.shopex.cn/recordpayagent.php" target="_blank"><input type="hidden" name="postmethod" value="GET"><input type="hidden" name="payagentname" value="支付宝"><input type="hidden" name="payagentkey" value="ALIPAY"><input type="hidden" name="market_type" value="from_agent_contract"><input type="hidden" name="customer_external_id" value="C433530444855584111X"><input type="hidden" name="pro_codes" value="6AECD60F4D75A7FB"><input type="hidden" name="regIp" value="'.$regIp.'"><input type="hidden" name="domain" value="'.url::route('topc').'"></form></div>';
     }
-   /* public function admin_intro(){
-        $regIp = isset($_SERVER['SERVER_ADDR'])?$_SERVER['SERVER_ADDR']:$_SERVER['HTTP_HOST'];
-        return '<img src="' . $this->app->res_url . '/payments/images/ALIPAY.gif"><br /><b style="font-family:verdana;font-size:13px;padding:3px;color:#000"><br>ShopEx联合支付宝推出优惠套餐：无预付/年费，单笔费率低至0.7%-1.2%，无流量限制。</b><div style="padding:10px 0 0 388px"><a  href="javascript:void(0)" onclick="document.ALIPAYFORM.submit();"><img src="' . $this->app->res_url . '/payments/images/alipaysq.png"></a></div><div>如果您已经和支付宝签约了其他套餐，同样可以点击上面申请按钮重新签约，即可享受新的套餐。<br>如果不需要更换套餐，请将签约合作者身份ID等信息在下面填写即可，<a href="http://www.shopex.cn/help/ShopEx48/help_shopex48-1235733634-11323.html" target="_blank">点击这里查看使用帮助</a><form name="ALIPAYFORM" method="GET" action="http://top.shopex.cn/recordpayagent.php" target="_blank"><input type="hidden" name="postmethod" value="GET"><input type="hidden" name="payagentname" value="支付宝"><input type="hidden" name="payagentkey" value="ALIPAY"><input type="hidden" name="market_type" value="from_agent_contract"><input type="hidden" name="customer_external_id" value="C433530444855584111X"><input type="hidden" name="pro_codes" value="6AECD60F4D75A7FB"><input type="hidden" name="regIp" value="'.$regIp.'"><input type="hidden" name="domain" value="'.$this->app->base_url(true).'"></form></div>';
-    }*/
 
      /**
      * 后台配置参数设置
@@ -152,11 +163,6 @@ final class ectools_payment_plugin_malipay extends ectools_payment_app implement
                 'type'=>'string',
                 'label'=>app::get('ectools')->_('整数值越小,显示越靠前,默认值为1'),
             ),
-            // 'support_cur'=>array(
-            //     'title'=>app::get('ectools')->_('支持币种'),
-            //     'type'=>'text hidden cur',
-            //     'options'=>$this->arrayCurrencyOptions,
-            // ),
             'pay_desc'=>array(
                 'title'=>app::get('ectools')->_('描述'),
                 'type'=>'html',
@@ -224,55 +230,47 @@ final class ectools_payment_plugin_malipay extends ectools_payment_app implement
             "partner" => $mer_id,
             "out_user" => ''
         );
-        //        $result = $this->mobile_merchant_paychannel($pms_0,$mer_key);
-        // if($result != "验签失败"){
-            $pms_1 = array (
-                "req_data"      => '<direct_trade_create_req><subject>' . $subject_tmp . '</subject><out_trade_no>' .
-               $payment['payment_id'] . '</out_trade_no><total_fee>' . $price  . "</total_fee><seller_account_name>" . $seller_account_name .
-                "</seller_account_name><notify_url>" . $this->notify_url . "</notify_url><out_user>" . '' .
-                "</out_user><merchant_url>" . $merchant_url . "</merchant_url><cashier_code>" . '' .
-                "</cashier_code>" . "<call_back_url>" . $this->callback_url . "</call_back_url></direct_trade_create_req>",
-                "service"       => $this->Service1,
-                "sec_id"        => $this->sec_id,
-                "partner"       => $mer_id,
-                "req_id"        => date("Ymdhis"),
-                "format"        => $this->format,
-                "v"             => $this->v
-            );
-            $token=$this->alipay_wap_trade_create_direct($pms_1,$mer_key);
 
-            // if($token != '签名不正确'){
-                // 验证和发送信息与跳转手机支付宝收银台.
-                $req_data = '<auth_and_execute_req><request_token>'.$token.'</request_token></auth_and_execute_req>';
-                $pms2 = array (
-                    "req_data"      => $req_data,
-                    "service"       => $this->Service2,
-                    "sec_id"        => $this->sec_id,
-                    "partner"       => $mer_id,
-                    "call_back_url" => $this->callback_url,
-                    "format"        => $this->format,
-                    "app_pay"       => 'Y',
-                    "v"             => $this->v
-                );
-                $parameter = $this->para_filter($pms2);
-                $mysign    = $this->build_mysign($this->arg_sort($parameter), $mer_key, $this->sec_id);
-                $this->add_field('req_data',$req_data);
-                $this->add_field('service',$this->Service2);
-                $this->add_field('sec_id',$this->sec_id);
-                $this->add_field('partner',$mer_id);
-                $this->add_field('call_back_url',$this->callback_url);
-                $this->add_field('format',$this->format);
-                $this->add_field('v',$this->v);
-                $this->add_field('app_pay', 'Y');
-                $this->add_field('sign',urlencode($mysign));
-                echo $this->get_html();exit;
-        //     }else{
-        //         echo '签名不正确';
-        //         return false;
-        //     }
-        // }else{
-        //     return false;
-        // }
+        $pms_1 = array (
+            "req_data"      => '<direct_trade_create_req><subject>' . $subject_tmp . '</subject><out_trade_no>' .
+           $payment['payment_id'] . '</out_trade_no><total_fee>' . $price  . "</total_fee><seller_account_name>" . $seller_account_name .
+            "</seller_account_name><notify_url>" . $this->notify_url . "</notify_url><out_user>" . '' .
+            "</out_user><merchant_url>" . $merchant_url . "</merchant_url><cashier_code>" . '' .
+            "</cashier_code>" . "<call_back_url>" . $this->callback_url . "</call_back_url></direct_trade_create_req>",
+            "service"       => $this->Service1,
+            "sec_id"        => $this->sec_id,
+            "partner"       => $mer_id,
+            "req_id"        => date("Ymdhis"),
+            "format"        => $this->format,
+            "v"             => $this->v
+        );
+        $token=$this->alipay_wap_trade_create_direct($pms_1,$mer_key);
+
+        // 验证和发送信息与跳转手机支付宝收银台.
+        $req_data = '<auth_and_execute_req><request_token>'.$token.'</request_token></auth_and_execute_req>';
+        $pms2 = array (
+            "req_data"      => $req_data,
+            "service"       => $this->Service2,
+            "sec_id"        => $this->sec_id,
+            "partner"       => $mer_id,
+            "call_back_url" => $this->callback_url,
+            "format"        => $this->format,
+            "app_pay"       => 'Y',
+            "v"             => $this->v
+        );
+        $parameter = $this->para_filter($pms2);
+        $mysign    = $this->build_mysign($this->arg_sort($parameter), $mer_key, $this->sec_id);
+        $this->add_field('req_data',$req_data);
+        $this->add_field('service',$this->Service2);
+        $this->add_field('sec_id',$this->sec_id);
+        $this->add_field('partner',$mer_id);
+        $this->add_field('call_back_url',$this->callback_url);
+        $this->add_field('format',$this->format);
+        $this->add_field('v',$this->v);
+        $this->add_field('app_pay', 'Y');
+        $this->add_field('sign',urlencode($mysign));
+
+        echo $this->get_html();exit;
     }
 
     /**
@@ -287,7 +285,6 @@ final class ectools_payment_plugin_malipay extends ectools_payment_app implement
         $req_data = $this->create_linkstring($parameter).'&sign='.urlencode($mysign).'&sign_type='.$sign_type;  //配置post请求数据，注意sign签名需要urlencode
 
         //模拟get请求方法
-        //$result = $this->get($this->gateway_paychannel,$req_data);
         $url = $this->gateway_paychannel . $req_data;
         $result = kernel::single('base_httpclient')->get($url);
         //调用处理Json方法
@@ -340,11 +337,8 @@ final class ectools_payment_plugin_malipay extends ectools_payment_app implement
         $parameter['sign'] = urlencode($mysign);
 
         //Post提交请求
-        //$res = $this->post($this->gateway,$req_data);
-        //$url = $this->gateway.$req_data;
         $url = $this->gateway;
         
-        //$res = kernel::single('base_httpclient')->get($url);
         $res = client::get($url, ['query' => $parameter])->getBody();
         
         //调用GetToken方法，并返回token
@@ -498,16 +492,8 @@ final class ectools_payment_plugin_malipay extends ectools_payment_app implement
         return true;
     }
 
-    /**
-     * 生成支付表单 - 自动提交
-     * @params null
-     * @return null
-     */
-    public function gen_form()
-    {
-      return '';
-    }
 
+    public function gen_form(){}
 
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓公共函数部分↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
@@ -588,13 +574,6 @@ final class ectools_payment_plugin_malipay extends ectools_payment_app implement
     function getDataForXML($res_data)
     {
         return kernel::single('site_utility_xml')->xml2array($res_data);
-        // $xml = simplexml_load_string($res_data);
-        // $result = $xml->xpath($node);
-
-        // while(list( , $node) = each($result))
-        // {
-        //     return $node;
-        // }
     }
     function getApJs()
     {
@@ -602,5 +581,221 @@ final class ectools_payment_plugin_malipay extends ectools_payment_app implement
     }
 
 //↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑公共函数部分↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+
+/* 以下为退款代码 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ */
+
+    /**
+     * 提交退款支付信息的接口
+     * @param array 提交信息的数组
+     * @return mixed false or null
+     */
+    public function dorefund($payment)
+    {
+        $mer_id    = trim($this->getConf('mer_id',    __CLASS__));
+        $mer_key   = trim($this->getConf('mer_key',   __CLASS__));
+        $mer_email = trim($this->getConf('seller_account_name', __CLASS__));
+
+        if(!$mer_id || !$mer_key || !$mer_email)
+        {
+            throw new Exception('请检查手机支付宝后台配置信息是否都填写了');
+        }
+        if($payment['refund_fee']<=0)
+        {
+            throw new Exception('退款金额必须要大于0');
+        }
+
+        $detail = array(
+            'trade_no' => $payment['trade_no'], //交易号
+            'refund_fee'    => $payment['refund_fee'], //退款金额
+            'remark'   => "协议退款", //退款理由
+        );
+        $detail_data = $detail['trade_no'] . "^" . $detail['refund_fee'] . "^" . $detail['remark'];
+        //构造请求参数
+        $this->add_field('service',        'refund_fastpay_by_platform_pwd');
+        $this->add_field('partner',        $mer_id);
+        $this->add_field('_input_charset', $this->submit_charset);
+        $this->add_field('sign_type',      'MD5');
+        $this->add_field('notify_url',     $this->notify_url_refund);
+        $this->add_field('seller_email',   $mer_email);
+        $this->add_field('seller_user_id', $mer_id);
+        $this->add_field('refund_date',    date("Y-m-d H:i:s"));
+        $this->add_field('batch_no',       date("Ymd") . $payment['refund_id']);
+        $this->add_field('batch_num',      1);
+        $this->add_field('detail_data',    $detail_data);
+        $sign = $this->md5Sign($this->fields, $mer_key);
+        $this->add_field('sign', $sign);
+        logger::info('请求malipay参数：'.var_export($this->fields,1));
+
+        // Generate html and send payment.
+        $submit_html = $this->gen_refund_form();
+        // echo $this->gen_refund_form();exit;
+        return [
+          'status'=>'progress',
+          'refund_id'=>$payment['refund_id'],
+          'trade_no'=>$payment['trade_no'],
+          'submit_html'=>$submit_html,
+        ];
+    }
+
+    /**
+     * 处理第三方支付方式退款返回的信息
+     * @param array 第三方支付方式返回的信息
+     * @return mixed
+     */
+    public function refundcallback(&$recv)
+    {
+        // 验证支付宝通知信息
+        $verify_result = $this->verifyNotify($recv);
+
+        if($verify_result)
+        {
+            // 由于退款时每次只退一条，所以返回数据也就是一条
+            $result_details = explode('^', $recv['result_details']); // 交易号^退款金额^处理结果$退费账号^退费账户ID^退费金额^处理结果
+            $ret['refund_id']   = substr($recv['batch_no'], 8); // 原请求退款批次号,前八位为日期，后面的为系统的refund_id
+            $ret['money']       = $result_details['1'];
+            $ret['cur_money']   = $result_details['1'];
+            $ret['trade_no']    = $result_details['0']; //支付宝的交易号，退款时候传过去的支付宝交易号
+            $ret['memo']        = $recv['detail_data'];
+
+            if(strtoupper($result_details['2'])=='SUCCESS')
+            {
+                $ret['status'] = 'REFUND_SUCCESS';
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
+     * 支付成功回打支付成功信息给支付网关
+     */
+    public function refund_result($paymentId)
+    {
+        echo "success";exit;
+    }
+
+    /**
+     * 获取远程服务器ATN结果,验证返回URL是否来自支付宝
+     * @param $notify_id 通知校验ID
+     * @return 服务器ATN结果
+     * 验证结果集：
+     * invalid命令参数不对 出现这个错误，请检测返回处理中partner和key是否为空 
+     * true 返回正确信息
+     * false 请检查防火墙或者是服务器阻止端口问题以及验证时间是否超过一分钟
+     */
+    private function verifyNotifySource($notify_id)
+    {
+        $mer_id = trim($this->getConf('mer_id', __CLASS__));
+        $veryfy_url = 'https://mapi.alipay.com/gateway.do?service=notify_verify&';
+
+        $veryfy_url = $veryfy_url."partner=" . $mer_id . "&notify_id=" . $notify_id;
+        $responseTxt = client::get($veryfy_url)->getBody();
+        return $responseTxt;
+    }
+
+    /**
+     * 针对notify_url验证消息是否是支付宝发出的合法消息
+     * @return 验证结果
+     */
+    private function verifyNotify($recv)
+    {
+        if(!$recv)
+        {
+            return false;
+        }
+        else
+        {
+            $mer_id    = trim($this->getConf('mer_id',  __CLASS__));
+            $mer_key   = trim($this->getConf('mer_key', __CLASS__));
+            //生成签名结果
+            $sign = $this->md5Sign($recv, $mer_key);
+            //获取支付宝远程服务器ATN结果（验证是否是支付宝发来的消息）
+            $responseTxt = 'false';
+            if( !empty($recv['notify_id']) )
+            {
+                $responseTxt = $this->verifyNotifySource($recv['notify_id']);
+            }
+            
+            //写日志记录
+            if($recv['sign']==$sign)
+            {
+                $isSignStr = '验签通过';
+            }
+            else
+            {
+                $isSignStr = '验签失败';
+            }
+            #记录返回信息
+            $log_text  = app::get('ectools')->_('支付宝退款验证来源返回信息：') . $responseTxt . "\n";
+            $log_text .= app::get('ectools')->_('验签结果：') . $isSignStr . "\n";
+            $log_text .= app::get('ectools')->_('支付宝退款异步通知数据：') . http_build_query($recv);
+            logger::error($log_text);
+
+            //验证
+            //$responsetTxt的结果不是true，与服务器设置问题、合作身份者ID、notify_id一分钟失效有关
+            //isSign的结果不是true，与安全校验码、请求时的参数格式（如：带自定义参数等）、编码格式有关
+            if( preg_match("/true$/i", $responseTxt) && ($recv['sign']==$sign) )
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * 生成支付表单 - 自动提交
+     * @params null
+     * @return null
+     */
+    public function gen_refund_form()
+    {
+        $refund_submit_url = 'https://mapi.alipay.com/gateway.do?_input_charset=utf-8';
+        $sHtml = "<form id='applyForm' target='_blank' name='applyForm' method='POST' action='" . $refund_submit_url . "'>";
+        foreach($this->fields as $key => $val)
+        {
+            $sHtml .= "<input type='hidden' name='" . $key . "' value='" . $val . "'/>";
+        }
+        $sHtml = $sHtml . "<input type='submit' value='submitForm'></form>";
+        $sHtml = $sHtml."<script>document.forms['applyForm'].submit();</script>";
+        return $sHtml;
+    }
+
+    /**
+     * 生成签名
+     * @param mixed $form 包含签名数据的数组
+     * @param mixed $key 签名用到的私钥
+     * @access private
+     * @return string
+     */
+    private function md5Sign($para, $mer_key)
+    {
+        ksort($para);
+        reset($para);
+        $signstr = '';
+        foreach($para as $k=>$v)
+        {
+            if( $k != 'sign' && $k != 'sign_type' && $v!='')
+            {
+                $signstr .= $k . '=' . $v . '&';
+            }
+        }
+        //去掉最后一个&字符
+        $signstr = rtrim($signstr, '&');
+        //如果存在转义字符，那么去掉转义
+        if(get_magic_quotes_gpc())
+        {
+            $signstr = stripslashes($signstr);
+        }
+        $sign = md5($signstr . $mer_key);
+        return $sign;
+    }
+
+/* 以上为退款代码 ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑ */
+
+
 
 }

@@ -74,13 +74,14 @@ class systrade_cart_object_package implements systrade_interface_cart_object{
         $packageParams = array(
             'page_no' => 1,
             'page_size' => 10,
-            'fields' =>'item_id',
+            'fields' =>'item_id,sku_ids',
             'package_id' => $params['package_id'],
         );
         $packageItemList = app::get('topc')->rpcCall('promotion.packageitem.list', $packageParams);
         foreach ($packageItemList['list'] as $key => $value)
         {
             $itemIds[] = $value['item_id'];
+            $packageSku[$value['item_id']] = $value['sku_ids'] ? explode(',',$value['sku_ids']) : null;
         }
         //组合促销货品信息
         $skuIds = explode(',',$params['package_sku_ids']);
@@ -91,6 +92,11 @@ class systrade_cart_object_package implements systrade_interface_cart_object{
         foreach ($skusData as $key => $value)
         {
             if(!in_array($value['item_id'],$itemIds))
+            {
+                throw new \LogicException(app::get('systrade')->_("该货品不在组合促销范围内!"));
+            }
+            //判断加入的货品是否在组合促销绑定的sku中
+            elseif( $packageSku[$value['item_id']] && !in_array($value['sku_id'],$packageSku[$value['item_id']]) )
             {
                 throw new \LogicException(app::get('systrade')->_("该货品不在组合促销范围内!"));
             }
@@ -202,10 +208,10 @@ class systrade_cart_object_package implements systrade_interface_cart_object{
         $total_discount_price = $discount_price = $total_weight = $total_price = $inValidSkuNum = 0;
 
         //会员信息
-        $userInfo = app::get('systrade')->rpcCall('user.get.info', array('user_id'=>$row['user_id']),'buyer');
+        // $userInfo = app::get('systrade')->rpcCall('user.get.info', array('user_id'=>$row['user_id']),'buyer');
         foreach($skusData as $skuId=>$v)
         {
-            if( !in_array($userInfo['grade_id'],explode(',',$packageInfo['valid_grade'])) )
+            if( !in_array($row['grade_id'],explode(',',$packageInfo['valid_grade'])) )
             {
                 $skuCartInfo[$skuId]['valid'] = false;
             }

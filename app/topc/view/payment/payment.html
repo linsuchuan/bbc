@@ -34,7 +34,7 @@
           <{if $payments}>
           <div class="payment-choose-list payment-type form-row">
             <{foreach from=$payments item=item}>
-            <{if $item.app_id != teegonali and $item.app_id != teegonwxpay}>
+            <{if $item.app_id != teegonali and $item.app_id != teegonwxpay and $item.app_id != teegonchinapay and $item.app_id != teegonchinapayb2c}>
             <div class="payment-choose-item <{if $item.def_payment}> on <{/if}>">
               <label class="choose-item-content">
                 <input data-password="<{$hasDepositPassword.result}>" type="radio" name="payment[pay_app_id]" value="<{$item.app_id}>" data-validate="onerequired" <{if $item.def_payment}> checked <{/if}> > <img src="<{$item.img|storager}>" alt="<{$item.app_name}>" >
@@ -46,14 +46,14 @@
             <{/foreach}>
             </div>
             <{foreach from=$payments item=item}>
-            <{if $item.app_id == teegonali or $item.app_id == teegonwxpay}>
+            <{if $item.app_id == teegonali or $item.app_id == teegonwxpay or $item.app_id == teegonchinapay or $item.app_id == teegonchinapayb2c}>
               <div class="payment-choose-title">选择天工支付</div>
               <div class="payment-choose-list payment-type form-row">
               <{break}>
             <{/if}>
             <{/foreach}>
             <{foreach from=$payments item=item}>
-            <{if $item.app_id == teegonali or $item.app_id == teegonwxpay}>
+            <{if $item.app_id == teegonali or $item.app_id == teegonwxpay or $item.app_id == teegonchinapay or $item.app_id == teegonchinapayb2c}>
             <div class="payment-choose-item">
               <label class="choose-item-content">
                 <input data-password="<{$hasDepositPassword.result}>" type="radio" name="payment[pay_app_id]" value="<{$item.app_id}>" data-validate="onerequired"> <img src="<{$item.img|storager}>" alt="<{$item.app_name}>" >
@@ -173,8 +173,7 @@ $('.act-next').click(function(){
   var $input = $('.payment-choose-item.on').find('input');
 
   var redpacket_total_money = getTotalRedpacketMoney();
-  if(($input.val() === "deposit" || redpacket_total_money > 0) && $('input[name="depositpwd"]').val() === "") {
-    console.log('true');
+  if(redpacket_total_money > 0 && $('input[name="depositpwd"]').val() === "") {
     $("#password_dialog").dialog({
       width: 440,
       height: 260,
@@ -186,7 +185,7 @@ $('.act-next').click(function(){
 
   var depositPasswordInput = $('input[name="deposit_password"]').val();
   var choosePacketLength = $('.payment-redpacket-choose-list').find('.payment-redpacket-choose-item').length;
-  if((input.val() == 'deposit' || choosePacketLength > 0) && depositPasswordInput.length <= 0){
+  if(choosePacketLength > 0 && depositPasswordInput.length <= 0){
     showPayPasswordDialog();
     return;
   }
@@ -201,17 +200,13 @@ $('.act-next').click(function(){
           }
     });
   }else{
-    if(input.val() == 'deposit'){
-      $('#dopay_form').attr('target', '_self');
-    }else{
-      $('#pay-dialog').dialog({
-        width:480,
-        height:240,
-        title:'支付状态',
-        modal:true
-      });
-    }
-   $('#dopay_form').submit();
+    $('#pay-dialog').dialog({
+      width:480,
+      height:240,
+      title:'支付状态',
+      modal:true
+    });
+    $('#dopay_form').submit();
   }
 });
 
@@ -359,17 +354,15 @@ function showPayPasswordDialog() {
                   }
             });
           }else{
-            if($input.val() == 'deposit'){
-              $('#dopay_form').attr('target', '_self');
-            }else{
-              $('#pay-dialog').dialog({
-                width:480,
-                height:240,
-                title:'支付状态',
-                modal:true
-              });
-            }
-           $('#dopay_form').submit();
+
+            $('#pay-dialog').dialog({
+              width:480,
+              height:240,
+              title:'支付状态',
+              modal:true
+            });
+
+            $('#dopay_form').submit();
           }
         }
       });

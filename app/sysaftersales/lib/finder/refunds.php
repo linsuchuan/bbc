@@ -12,7 +12,7 @@ class sysaftersales_finder_refunds {
             //3 商家审核通过，5 商家强制关单 6 平台强制关单
             if( in_array($row['status'],['3','5','6']) )
             {
-                $url = '?app=sysaftersales&ctl=refunds&act=refundsPay&finder_id='.$_GET['_finder']['finder_id'].'&p[refunds_id]='.$row['refunds_id'];
+                $url = '?app=sysaftersales&ctl=refunds&act=refundsPay&_finder[finder_id]='.$_GET['_finder']['finder_id'].'&p[refunds_id]='.$row['refunds_id'];
                 $target = 'dialog::{title:\''.app::get('sysaftersales')->_('处理退款').'\', width:800, height:400}';
                 $title = app::get('sysaftersales')->_('退款');
                 $colList[$k] = '<a href="' . $url . '" target="' . $target . '">' . $title . '</a>';
@@ -35,9 +35,10 @@ class sysaftersales_finder_refunds {
     {
         $objRefunds = app::get('sysaftersales')->model('refunds');
         $refundRow = $objRefunds->getRow('*', array('refunds_id' => $Id));
+        $user = app::get('sysaftersales')->rpcCall('user.get.account.name',array('user_id'=>$refundRow['user_id']),'buyer');
+        $refundRow['user_name'] = $user[$refundRow['user_id']];
 
         $refundRow['refundFee'] = ecmath::number_minus(array($refundRow['refund_fee'], $refundRow['hongbao_fee']));
-
         if(! $refundRow)
         {
             return false;

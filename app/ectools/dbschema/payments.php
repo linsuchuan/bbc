@@ -150,12 +150,6 @@ return array (
             'type' => 'money',
             'comment' => app::get('ectools')->_('支付网关费用'),
         ),
-        'pay_ver' => array (
-            //'type' => 'varchar(50)',
-            'type' => 'string',
-            'length' => 50,
-            'comment' => app::get('ectools')->_('支付版本号'),
-        ),
         'ip' => array (
             'type' => 'ipaddr',
             'comment' => app::get('ectools')->_('支付IP'),
@@ -169,7 +163,7 @@ return array (
             'is_title' => true,
         ),
         'modified_time' => array (
-            'type' => 'time',
+            'type' => 'last_modify',
             'comment' => app::get('ectools')->_('最后更新时间'),
         ),
         'memo' => array (
@@ -191,7 +185,7 @@ return array (
             //'type' => 'varchar(30)',
             'type' => 'string',
             'length' => 30,
-            'comment' => app::get('ectools')->_('支付单交易编号'),
+            'comment' => app::get('ectools')->_('支付单交易编号(第三方交易号)'),
         ),
         'thirdparty_account' => array (
             //'type' => 'varchar(50)',
@@ -215,6 +209,6 @@ return array (
         'ind_disabled' => ['columns' => ['disabled']],
     ),
     'version' => '$Rev: 43384 $',
-    'comment' => app::get('ectools')->_('支付记录'),
+    'comment' => app::get('ectools')->_('支付单表'),
 );
 

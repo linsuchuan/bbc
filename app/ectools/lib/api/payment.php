@@ -5,7 +5,7 @@
  * @copyright  Copyright (c) 2005-2010 ShopEx Technologies Inc. (http://www.shopex.cn)
  * @license  http://ecos.shopex.cn/ ShopEx License
  */
- 
+
 /**
  * 支付api接口，提供方法和外接通讯
  * @auther shopex ecstore dev dev@shopex.cn
@@ -29,7 +29,7 @@ class ectools_api_payment
         $this->app = $app;
         $this->objMath = kernel::single("ectools_math");
     }
-	
+
     /**
      * 获取所有开启（激活）的支付方式
      * @param mixed 过滤条件
@@ -46,16 +46,13 @@ class ectools_api_payment
 				case 'offline':
 					$payout_type = 'offline';
 					break;
-				case 'deposit':
-					$payout_type = 'deposit';
-					break;
 				default:
 					$payout_type = 'online';
 					break;
 			}
 			$strPayment = $this->app->getConf(get_class($obj));
 			$arrPaymnet = unserialize($strPayment);
-			
+
 			if (isset($arrPaymnet['status']) && $arrPaymnet['status'] == 'true')
 			{
 				$arr_payments[$obj->app_key] = array(
@@ -64,8 +61,8 @@ class ectools_api_payment
 					'payment_id'=>(isset($obj->app_rpc_key) && $obj->app_rpc_key) ? $obj->app_rpc_key : $obj->app_key,
 				);
 			}
-		}		
-		
+		}
+
 		return $arr_payments;
 	}
 }
